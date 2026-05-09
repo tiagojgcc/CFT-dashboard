@@ -127,19 +127,24 @@ const Banco = {
     let count = 0;
     while (files.hasNext()) {
       const f = files.next();
-      if (processed.has(f.getId())) continue;
+      if (processed.has(f.getId())) {
+        results.push({ file: f.getName(), skipped: true });
+        continue;
+      }
       if (count > 0) Utilities.sleep(5000);  // throttle Gemini RPM
       count++;
       try {
         const transfers = this.extractTransfers(f.getId());
         this.saveTransfers(f.getName(), f.getId(), transfers);
         results.push({ file: f.getName(), inserted: transfers.length, ok: true });
+        Logger.log(f.getName() + ': ' + transfers.length + ' transferências');
       } catch (e) {
         results.push({ file: f.getName(), error: e.message, ok: false });
+        Logger.log(f.getName() + ': ERRO ' + e.message);
       }
     }
-    this.matchAll();
-    return { processed: results.length, results };
+    const matchResult = this.matchAll();
+    return { processed: count, results, totalMatched: matchResult.matched };
   },
 
   // Normaliza IBAN: remove espaços e maiúsculas

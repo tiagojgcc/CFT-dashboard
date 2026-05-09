@@ -65,7 +65,8 @@ const Inscricoes = {
       a.duplicate_warning = group.length > 1;
       a.duplicate_ids = a.duplicate_warning ? group.filter(x => x !== a.id_inscricao) : [];
     });
-    // Counts úteis: atletas únicos, inscrições, vagas ocupadas por semana
+    // Counts úteis: atletas únicos, inscrições (= soma das semanas), vagas por semana.
+    // Definição combinada com user: 1 atleta em 2 semanas = 1 atleta + 2 inscrições.
     const ativos = atletas.filter(a => a.ativo);
     const uniqueKey = a => (String(a.atleta || '').trim().toLowerCase().replace(/\s+/g, ' ')) + '|' + (String(a.encarregado || a.email || '').trim().toLowerCase());
     const uniqueAtletas = new Set(ativos.map(uniqueKey)).size;
@@ -73,7 +74,7 @@ const Inscricoes = {
     ativos.forEach(a => {
       Pricing.parseSems(a.semanas_atuais).forEach(s => { if (vagasPorSemana[s] !== undefined) vagasPorSemana[s]++; });
     });
-    const totalVagas = vagasPorSemana[1] + vagasPorSemana[2] + vagasPorSemana[3];
+    const totalInscricoes = vagasPorSemana[1] + vagasPorSemana[2] + vagasPorSemana[3];
     return {
       atletas,
       historico: Historico.list().slice(0, 200),  // últimos 200 eventos (mais novos primeiro)
@@ -81,10 +82,11 @@ const Inscricoes = {
       config: Config.all(),
       clube_counts: cc,
       counts: {
-        inscricoes_ativas: ativos.length,
-        atletas_unicos: uniqueAtletas,
+        atletas_ativos: ativos.length,        // linhas de Atletas com ativo=true
+        atletas_unicos: uniqueAtletas,        // pessoas únicas (descontando duplicados encarregado+nome)
+        inscricoes:     totalInscricoes,      // soma das semanas (1 atleta×2 sem = 2 inscrições)
         vagas_por_semana: vagasPorSemana,
-        total_vagas_ocupadas: totalVagas
+        total_vagas_ocupadas: totalInscricoes // alias para clareza — vagas == inscrições
       },
       lastUpdate: new Date().toISOString()
     };

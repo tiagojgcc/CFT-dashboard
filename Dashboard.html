@@ -1161,7 +1161,6 @@ function isResolved(id){ return !!resolucoes[id]; }
 // ============ APPBAR STATS ============
 function renderAppbar(){
   const cc = clubeCounts();
-  const inscricoes = data.length;
   let totalDevido = 0, totalPago = 0;
   data.forEach(r => {
     const {total: t} = calcTotal(r, cc);
@@ -1177,16 +1176,17 @@ function renderAppbar(){
     data.forEach(r => set.add((String(r.nome||'').trim().toLowerCase()) + '|' + String(r.email_enc||'').toLowerCase()));
     return set.size;
   })();
-  const vagasOcupadas = counts.total_vagas_ocupadas || data.reduce((s, r) => s + parseSems(r.semana).length, 0);
+  // Inscrições = soma das semanas (1 atleta em 2 sem = 2 inscrições)
+  const inscricoes = counts.inscricoes || data.reduce((s, r) => s + parseSems(r.semana).length, 0);
 
   document.getElementById('ab-stats').innerHTML = `
     <div class="ab-stat ab-stat--accent">
-      <div class="ab-stat-lbl">Atletas · Inscrições</div>
-      <div class="ab-stat-num">${atletasUnicos}<span class="of"> · ${inscricoes}</span></div>
+      <div class="ab-stat-lbl">Atletas únicos</div>
+      <div class="ab-stat-num">${atletasUnicos}</div>
     </div>
     <div class="ab-stat">
-      <div class="ab-stat-lbl">Vagas ocupadas</div>
-      <div class="ab-stat-num">${vagasOcupadas}<span class="of"> /${VAGAS_TOTAL}</span></div>
+      <div class="ab-stat-lbl">Inscrições</div>
+      <div class="ab-stat-num">${inscricoes}<span class="of"> /${VAGAS_TOTAL}</span></div>
     </div>
     <div class="ab-stat">
       <div class="ab-stat-lbl">Recebido</div>
@@ -1586,8 +1586,11 @@ function renderTable(){
       <td style="text-align:center;">${confCell}</td>
     </tr>`;
   }).join('');
-  document.getElementById('tcount').textContent = `${rows.length} de ${data.length} inscritos`;
-  document.getElementById('list-sub').textContent = `${rows.length} visíveis · ${data.length} total · ${selected.size} selecionados`;
+  const counts = (Api && Api._cache && Api._cache.counts) || {};
+  const atletasU = counts.atletas_unicos || data.length;
+  const inscr = counts.inscricoes || data.reduce((s, r) => s + parseSems(r.semana).length, 0);
+  document.getElementById('tcount').textContent = `${rows.length} de ${data.length} atletas (${atletasU} únicos · ${inscr} inscrições)`;
+  document.getElementById('list-sub').textContent = `${rows.length} visíveis · ${data.length} atletas · ${inscr} inscrições · ${selected.size} selecionados`;
   updateSelectionUI();
 }
 
