@@ -530,7 +530,27 @@
     margin-bottom: 10px; overflow: hidden; transition: border-color 200ms;
   }
   .trab-item.selected { border-color: var(--green-dark); }
-  .trab-item.resolved { opacity: 0.4; }
+  .trab-item.resolved {
+    opacity: 0.55; background: var(--beige-mid);
+    text-decoration: line-through; text-decoration-color: rgba(0,0,0,0.4);
+  }
+  .trab-item.resolved .trab-msg, .trab-item.resolved .trab-recipient { text-decoration: none; }
+  /* Sub-tabs Trabalho */
+  .trab-view-tabs { display: inline-flex; gap: 0; margin-left: auto; align-items: center; }
+  .trab-view-tab {
+    padding: 6px 14px; font-family: var(--font-condensed); font-weight: 700; font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; user-select: none;
+    border: 1px solid var(--sand); color: var(--mid-gray);
+  }
+  .trab-view-tab:first-child { border-radius: 4px 0 0 4px; border-right: none; }
+  .trab-view-tab:last-child  { border-radius: 0 4px 4px 0; }
+  .trab-view-tab.active { background: var(--charcoal); color: var(--off-white); border-color: var(--charcoal); }
+  .trab-view-tab:not(.active):hover { background: var(--beige-mid); color: var(--charcoal); }
+  .trab-view-count {
+    background: rgba(255,255,255,0.2); color: inherit; font-size: 10px;
+    padding: 1px 7px; border-radius: 999px; margin-left: 6px;
+  }
+  .trab-view-tab:not(.active) .trab-view-count { background: var(--sand); }
   .trab-item-head {
     display: flex; align-items: center; gap: 10px; padding: 10px 14px;
     cursor: pointer; user-select: none;
@@ -581,9 +601,11 @@
   .contact-btn.em:hover { background: var(--green-dark); color: white; border-color: var(--green-dark); }
   /* Badge "a devolver" amarelo */
   .badge.b-devolver { background: #ffc857; color: #5b3e00; border: 1px solid #b8860b; }
-  /* Tabela apertada: nome + icons na mesma linha, sem wrap */
-  td.atleta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px; }
-  td.atleta .row-flag, td.atleta .contact-btn, td.atleta .row-act { vertical-align: middle; }
+  /* Atleta cell: nome em cima, icons em baixo */
+  td.atleta { white-space: normal; vertical-align: top; padding-top: 8px; padding-bottom: 8px; }
+  .atleta-name { font-weight: 500; white-space: normal; word-break: break-word; line-height: 1.3; }
+  .atleta-icons { margin-top: 5px; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+  .atleta-icons .row-flag, .atleta-icons .contact-btn, .atleta-icons .row-act { vertical-align: middle; }
   .row-actions { white-space: nowrap; }
   .contact-btns { white-space: nowrap; }
   .th-sort { cursor: pointer; user-select: none; position: relative; }
@@ -747,6 +769,10 @@
   <div class="panel" id="panel-trabalho">
     <div class="panel-head">
       <div class="panel-title">Trabalho</div>
+      <div class="trab-view-tabs">
+        <span class="trab-view-tab active" data-view="active"   onclick="setTrabView('active')">Por resolver <span class="trab-view-count" id="trab-count-active">0</span></span>
+        <span class="trab-view-tab"        data-view="resolved" onclick="setTrabView('resolved')">Resolvidos <span class="trab-view-count" id="trab-count-resolved">0</span></span>
+      </div>
       <div class="panel-sub" id="trabalho-summary">—</div>
     </div>
     <div class="trabalho-toolbar">
@@ -1378,7 +1404,10 @@ function renderTable(){
     return `<tr class="${isSel ? 'selected' : ''}" data-id="${r.id}">
       <td class="col-check"><span class="row-check ${isSel ? 'checked' : ''}" onclick="toggleRow('${r.id}')">${isSel ? '✓' : ''}</span></td>
       <td class="num-cell">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</td>
-      <td class="atleta">${escHtml(r.nome)}${flags}${contactBtns}${acts}</td>
+      <td class="atleta">
+        <div class="atleta-name">${escHtml(r.nome)}${flags}</div>
+        <div class="atleta-icons">${contactBtns}${acts}</div>
+      </td>
       <td class="clube">${escHtml(r.clube)}</td>
       <td>${semBadge(r.semana)}</td>
       <td>${r.tipo === 'Interno' ? '<span class="badge b-int">int</span>' : '<span class="badge b-ext">ext</span>'}</td>
@@ -1432,11 +1461,21 @@ function waLinkFor(r){
   return `https://wa.me/${phone}?text=${encodeURIComponent(defaultMessage(r, 'wa'))}`;
 }
 
+function gmailComposeUrl(to, subject, body, bcc){
+  // Path segment com email força routing para essa conta (se sessão iniciada).
+  const base = `https://mail.google.com/mail/u/${encodeURIComponent(SENDER)}/?view=cm&fs=1&tf=1`;
+  const params = [];
+  if (to)  params.push('to='  + encodeURIComponent(to));
+  if (bcc) params.push('bcc=' + encodeURIComponent(bcc));
+  if (subject) params.push('su='   + encodeURIComponent(subject));
+  if (body)    params.push('body=' + encodeURIComponent(body));
+  return base + '&' + params.join('&');
+}
 function mailLinkFor(r){
   if (!r.email_enc) return null;
   const subject = `[CFT 2026] Inscrição de ${r.nome || ''}`;
   const body = defaultMessage(r, 'em');
-  return `https://mail.google.com/mail/u/?authuser=${encodeURIComponent(SENDER)}&view=cm&fs=1&tf=1&to=${encodeURIComponent(r.email_enc)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return gmailComposeUrl(r.email_enc, subject, body, null);
 }
 
 function toggleRow(id){
@@ -1577,7 +1616,7 @@ async function sendCompose(){
     toast('Falha a registar email: ' + e.message, true);
   }
   // 2. Abre Gmail compose
-  const url = `https://mail.google.com/mail/u/?authuser=${encodeURIComponent(SENDER)}&view=cm&fs=1&tf=1&bcc=${encodeURIComponent(recipients.join(','))}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const url = gmailComposeUrl(null, subject, body, recipients.join(','));
   window.open(url, '_blank');
   closeCompose();
   refreshNow();
@@ -1784,11 +1823,37 @@ async function confirmDel(){
 
 // ============ TRABALHO (vista única, multi-select, BCC) ============
 let trabSelected = new Set();
-let trabResolvedLocal = new Set();
+let trabResolvedLocal = new Set();   // resolved nesta sessão (não-persistido ainda)
+let trabUnresolvedLocal = new Set(); // re-aberto nesta sessão (não-persistido ainda)
 let trabMessages = {}; // id → texto editado
+let trabView = 'active'; // 'active' | 'resolved'
 
 function trabSubject(item){
   return `[CFT 2026] ${item.subjectShort} — ${item.atleta.nome}`;
+}
+
+// Constrói mapa { itemId → timestamp da última resolução } a partir do Histórico do backend
+function buildResolvedMap(){
+  const events = (historicoBackend || []).slice().reverse();  // ordem cronológica (asc)
+  const map = {};
+  events.forEach(h => {
+    if (h.tipo === 'trabalho_resolvido' && h.depois) {
+      map[h.depois] = h.timestamp;
+    } else if (h.tipo === 'trabalho_reaberto' && h.antes) {
+      delete map[h.antes];
+    }
+  });
+  // Ajustes locais (instantâneos antes do backend confirmar):
+  trabResolvedLocal.forEach(id => { if (!map[id]) map[id] = new Date().toISOString(); });
+  trabUnresolvedLocal.forEach(id => { delete map[id]; });
+  return map;
+}
+
+function setTrabView(v){
+  trabView = v;
+  document.querySelectorAll('.trab-view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
+  trabSelected.clear();
+  renderTrabalho();
 }
 
 function buildTrabalhoItems(){
@@ -1839,19 +1904,51 @@ function buildTrabalhoItems(){
       });
     }
   });
-  return items.filter(it => !trabResolvedLocal.has(it.id));
+  return items;
 }
 
 function renderTrabalho(){
-  const items = buildTrabalhoItems();
+  const allItems = buildTrabalhoItems();
+  const resolvedMap = buildResolvedMap();
+  const cutoff = Date.now() - 24 * 3600 * 1000; // 24h ago
+  // Anota cada item com estado resolvido
+  allItems.forEach(it => {
+    const tsRaw = resolvedMap[it.id];
+    if (tsRaw) {
+      const tsMs = new Date(tsRaw).getTime();
+      it.resolvedAt = tsMs;
+      it.resolvedRecent = (tsMs >= cutoff);
+    } else {
+      it.resolvedAt = null;
+      it.resolvedRecent = false;
+    }
+  });
+  // Counts
+  const activeItems = allItems.filter(it => !it.resolvedAt || it.resolvedRecent);
+  const archivedItems = allItems.filter(it => it.resolvedAt && !it.resolvedRecent);
+  document.getElementById('trab-count-active').textContent = activeItems.filter(it => !it.resolvedAt).length;
+  document.getElementById('trab-count-resolved').textContent = archivedItems.length;
+  // Items a mostrar consoante a sub-vista
+  const items = (trabView === 'resolved') ? archivedItems : activeItems;
+  // Active sort: não-resolvidos primeiro, recently-resolved no fundo
+  items.sort((a, b) => {
+    const ar = a.resolvedAt ? 1 : 0, br = b.resolvedAt ? 1 : 0;
+    if (ar !== br) return ar - br;
+    if (b.resolvedAt && a.resolvedAt) return b.resolvedAt - a.resolvedAt;
+    return 0;
+  });
   const sub = document.getElementById('trabalho-summary');
-  if (sub) sub.textContent = items.length + ' problema' + (items.length === 1 ? '' : 's') + ' a resolver';
   const tcBadge = document.getElementById('tc-trabalho');
-  if (tcBadge) tcBadge.textContent = items.length;
+  if (tcBadge) tcBadge.textContent = activeItems.filter(it => !it.resolvedAt).length;
+  if (sub) sub.textContent = trabView === 'resolved'
+    ? `${archivedItems.length} resolvido${archivedItems.length === 1 ? '' : 's'} (>24h)`
+    : `${activeItems.filter(it => !it.resolvedAt).length} por resolver · ${activeItems.filter(it => it.resolvedAt).length} resolvidos hoje`;
   const host = document.getElementById('trabalho-items');
   if (!host) return;
   if (items.length === 0) {
-    host.innerHTML = '<div class="empty-trab"><div class="h">Nada a resolver agora 🎉</div><div class="s" style="font-size:12px;">Quando houver pagamentos por confirmar ou outros problemas, aparecem aqui.</div></div>';
+    host.innerHTML = trabView === 'resolved'
+      ? '<div class="empty-trab"><div class="h">Sem resolvidos arquivados</div><div class="s" style="font-size:12px;">Os problemas resolvidos há mais de 24h aparecem aqui.</div></div>'
+      : '<div class="empty-trab"><div class="h">Nada a resolver agora 🎉</div><div class="s" style="font-size:12px;">Quando houver pagamentos por confirmar ou outros problemas, aparecem aqui.</div></div>';
     trabUpdateToolbar();
     return;
   }
@@ -1860,17 +1957,21 @@ function renderTrabalho(){
     const isSel = trabSelected.has(it.id);
     const wa = waLinkForCustom(r, trabMessages[it.id] || it.body);
     const em = mailLinkForCustom(r, trabSubject(it), trabMessages[it.id] || it.body);
-    return `<div class="trab-item ${isSel ? 'selected' : ''}" data-id="${it.id}">
+    const isResolved = !!it.resolvedAt;
+    const resolvedAgo = isResolved ? ` · resolvido ${fmtRelativeShort(it.resolvedAt)}` : '';
+    return `<div class="trab-item ${isSel ? 'selected' : ''} ${isResolved ? 'resolved' : ''}" data-id="${it.id}">
       <div class="trab-item-head">
         <input type="checkbox" class="trab-check" ${isSel ? 'checked' : ''} onclick="event.stopPropagation(); trabToggle('${it.id}')">
         <span class="trab-tipo trab-tipo--${it.tipoClass}">${it.tipoLabel}</span>
         <span class="trab-atleta" onclick="trabToggleOpen(this.parentElement.parentElement)">${escHtml(r.nome)}</span>
-        <span class="trab-detail">${escHtml(it.detail)}</span>
+        <span class="trab-detail">${escHtml(it.detail)}${resolvedAgo}</span>
         <span class="trab-spacer"></span>
         <span class="trab-actions">
-          ${em ? `<a class="trab-btn em" href="${escAttr(em)}" target="_blank" rel="noopener" title="Abrir Gmail">✉ Email</a>` : ''}
+          ${em ? `<a class="trab-btn em" href="${escAttr(em)}" target="_blank" rel="noopener" title="Abrir Gmail (com geral@camposft.com)">✉ Email</a>` : ''}
           ${wa ? `<a class="trab-btn wa" href="${escAttr(wa)}" target="_blank" rel="noopener" title="Abrir WhatsApp">💬 WA</a>` : ''}
-          <button class="trab-btn ok" onclick="event.stopPropagation(); trabResolveOne('${it.id}')" title="Marcar como resolvido (esconde até refrescar)">✓ Resolver</button>
+          ${isResolved
+            ? `<button class="trab-btn" onclick="event.stopPropagation(); trabReopen('${it.id}')" title="Reabrir item">↺ Reabrir</button>`
+            : `<button class="trab-btn ok" onclick="event.stopPropagation(); trabResolveOne('${it.id}')" title="Marcar como resolvido">✓ Resolver</button>`}
         </span>
       </div>
       <div class="trab-item-body">
@@ -1931,21 +2032,60 @@ async function trabBulkEmail(){
   } catch (e) {
     toast('Falha a registar email: ' + e.message, true);
   }
-  const url = `https://mail.google.com/mail/u/?authuser=${encodeURIComponent(SENDER)}&view=cm&fs=1&tf=1&bcc=${encodeURIComponent(recipients.join(','))}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const url = gmailComposeUrl(null, subject, body, recipients.join(','));
   window.open(url, '_blank');
 }
-function trabResolveOne(id){
+function fmtRelativeShort(ts){
+  if (!ts) return '';
+  const ms = Date.now() - new Date(ts).getTime();
+  const min = Math.floor(ms / 60000);
+  if (min < 1) return 'agora mesmo';
+  if (min < 60) return `há ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `há ${h}h`;
+  const d = Math.floor(h / 24);
+  return `há ${d} dia${d === 1 ? '' : 's'}`;
+}
+async function trabResolveOne(id){
+  const items = buildTrabalhoItems();
+  const it = items.find(x => x.id === id);
+  if (!it) return;
   trabResolvedLocal.add(id);
+  trabUnresolvedLocal.delete(id);
   trabSelected.delete(id);
   renderTrabalho();
-  toast('Resolvido (escondido até próximo refresh)');
+  toast('Resolvido');
+  try {
+    await Api.markTrabalhoResolved(id, it.atleta.id, it.atleta.nome);
+  } catch (e) {
+    toast('Erro a guardar: ' + e.message, true);
+  }
 }
-function trabBulkResolve(){
-  if (!confirm(`Marcar ${trabSelected.size} itens como resolvidos? (Aviso: estado é local — desaparece da vista até próximo refresh)`)) return;
-  trabSelected.forEach(id => trabResolvedLocal.add(id));
+async function trabReopen(id){
+  const items = buildTrabalhoItems();
+  const it = items.find(x => x.id === id);
+  if (!it) return;
+  trabUnresolvedLocal.add(id);
+  trabResolvedLocal.delete(id);
+  renderTrabalho();
+  toast('Item reaberto');
+  try {
+    await Api.unmarkTrabalhoResolved(id, it.atleta.id, it.atleta.nome);
+  } catch (e) {
+    toast('Erro a guardar: ' + e.message, true);
+  }
+}
+async function trabBulkResolve(){
+  if (!confirm(`Marcar ${trabSelected.size} itens como resolvidos?`)) return;
+  const items = buildTrabalhoItems();
+  const toResolve = items.filter(x => trabSelected.has(x.id));
+  toResolve.forEach(it => { trabResolvedLocal.add(it.id); trabUnresolvedLocal.delete(it.id); });
   trabSelected.clear();
   renderTrabalho();
   toast('Marcados como resolvidos');
+  for (const it of toResolve) {
+    try { await Api.markTrabalhoResolved(it.id, it.atleta.id, it.atleta.nome); } catch (e) { /* continua */ }
+  }
 }
 
 // Variantes que usam mensagem custom (em vez do default)
@@ -1956,7 +2096,7 @@ function waLinkForCustom(r, message){
 }
 function mailLinkForCustom(r, subject, body){
   if (!r.email_enc) return null;
-  return `https://mail.google.com/mail/u/?authuser=${encodeURIComponent(SENDER)}&view=cm&fs=1&tf=1&to=${encodeURIComponent(r.email_enc)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return gmailComposeUrl(r.email_enc, subject, body, null);
 }
 
 // ============ ROW ACTIONS (otimistas: UI atualiza já, servidor depois) ============

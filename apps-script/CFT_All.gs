@@ -31,6 +31,14 @@ function handle_(e, method) {
       case 'addNota':          result = Inscricoes.addNota(params.id, params.nota, user); break;
       case 'logEmail':         result = Emails.log(params, user); break;
       case 'markEmailSent':    result = Emails.markSent(params.id, user); break;
+      case 'markTrabalhoResolved':
+        Historico.append({ utilizador: user, id_atleta: params.atletaId || '', atleta: params.atletaNome || '', tipo: 'trabalho_resolvido', antes: '', depois: params.itemId, motivo: params.motivo || '' });
+        result = { ok: true };
+        break;
+      case 'unmarkTrabalhoResolved':
+        Historico.append({ utilizador: user, id_atleta: params.atletaId || '', atleta: params.atletaNome || '', tipo: 'trabalho_reaberto', antes: params.itemId, depois: '', motivo: params.motivo || '' });
+        result = { ok: true };
+        break;
       case 'readComprovativo': result = Comprovativo.readAndSave(params.id, user); break;
       case 'readAllPending':   result = Comprovativo.readAllPending(user); break;
       default: throw new Error('Unknown action: ' + action);

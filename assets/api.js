@@ -115,7 +115,9 @@
     logEmail(p)                       { return this._call('logEmail', p); },
     markEmailSent(id)                 { return this._call('markEmailSent',  { id }); },
     readComprovativo(id)              { return this._call('readComprovativo', { id }); },
-    readAllPending()                  { return this._call('readAllPending'); }
+    readAllPending()                  { return this._call('readAllPending'); },
+    markTrabalhoResolved(itemId, atletaId, atletaNome) { return this._call('markTrabalhoResolved', { itemId, atletaId, atletaNome }); },
+    unmarkTrabalhoResolved(itemId, atletaId, atletaNome){ return this._call('unmarkTrabalhoResolved', { itemId, atletaId, atletaNome }); }
   };
 
   window.Api = Api;
