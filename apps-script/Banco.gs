@@ -154,6 +154,37 @@ const Banco = {
     return { ok: true };
   },
 
+  // Apaga todos os movimentos que correspondem aos padrões de débito (Perguicar, Google, etc.)
+  cleanFalsePositives() {
+    const sh = this.sheet();
+    const last = sh.getLastRow();
+    if (last < 2) return { deleted: 0 };
+    const data = sh.getRange(2, 1, last - 1, 16).getValues();
+    let deleted = 0;
+    for (let i = data.length - 1; i >= 0; i--) {
+      const t = {
+        nome_ordenante: data[i][6],
+        info_adicional: data[i][8],
+        referencia: data[i][9]
+      };
+      if (this._isFalsePositive(t)) {
+        Logger.log('Apagado: ' + data[i][6] + ' / ' + data[i][8] + ' / ' + data[i][5] + '€');
+        sh.deleteRow(i + 2);
+        deleted++;
+      }
+    }
+    return { deleted };
+  },
+
+  // Apaga TUDO e re-extrai com o prompt atual. Perde confirmações.
+  forceReprocessAll() {
+    const sh = this.sheet();
+    if (sh.getLastRow() >= 2) {
+      sh.deleteRows(2, sh.getLastRow() - 1);
+    }
+    return this.processAll();
+  },
+
   // Reprocessa um ficheiro específico: apaga todos os seus movimentos e re-extrai
   reprocessFile(fileId) {
     const sh = this.sheet();
@@ -403,9 +434,25 @@ NÃO INCLUI (✗ — são débitos/saídas, NUNCA extrair):
 - Qualquer linha onde o valor aparece na coluna DÉBITO
 ==============================
 
-Foca-te na secção "AVISOS DE LANÇAMENTO" (páginas 3+) que tem o detalhe COMPLETO de cada CRÉDITO recebido: Banco Ordenante, IBAN Ordenante, Nome Ordenante, Referência Ordenante, Informação Adicional, Montante.
+FONTES de transferências CRÉDITO (extrai de AMBAS):
 
-Cada item dos AVISOS DE LANÇAMENTO é UMA transferência crédito. Conta-os e extrai todos.
+A) **Página 2 — "MOVIMENTOS DE CONTA"**: tabela com colunas DATA · DATA VALOR · DESCRITIVO · DÉBITO · CRÉDITO · SALDO. Extrai TODAS as linhas onde o valor está na coluna CRÉDITO (e nada na coluna DÉBITO). Os descritivos são tipicamente:
+   - "Trf Imediata Sepa+ De [Nome]" — RECEBIDA
+   - "Trf Cred Intrab De [Nome]" — RECEBIDA (transferência interna dentro do NovoBanco; **estas NÃO têm detalhe em AVISOS, mas DEVEM ser extraídas**)
+   - "Trf Sepa+ De [Nome]" — RECEBIDA
+
+   Para estas, usa:
+   - data_operacao = 1ª coluna de data
+   - data_valor = 2ª coluna de data
+   - valor = valor da coluna CRÉDITO
+   - nome_ordenante = parte após "De " no descritivo (em maiúsculas)
+   - iban_ordenante = "" (não disponível em "Trf Cred Intrab")
+   - info_adicional = "" (não disponível)
+   - referencia = "" (não disponível)
+
+B) **Páginas 3+ — "AVISOS DE LANÇAMENTO"**: detalhe das transferências SEPA com IBAN, Nome Ordenante, Referência, Informação Adicional. Cada bloco que começa com "N° Contrato a Crédito" é UMA transferência crédito a extrair.
+
+IMPORTANTE: extrai TODAS as transferências crédito, mesmo as que aparecem só na página 2 (Trf Cred Intrab) e não têm detalhe nos AVISOS. NÃO duplicar — uma transferência aparece em A) ou em A)+B), conta como uma só (preferir os dados de B) quando ambos disponíveis).
 
 Formato esperado para cada transferência (objeto JSON):
 - data_operacao: "YYYY-MM-DD"
