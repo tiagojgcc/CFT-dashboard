@@ -1,0 +1,47 @@
+/**
+ * Router. Substituir SHEET_ID pela cópia de teste primeiro.
+ */
+const SHEET_ID = '1yLPtKZk-vjs-0lLBLzjw3VyOl9xo7Tz54vdK26dfPbc';
+
+function doGet(e)  { return handle_(e, 'GET'); }
+function doPost(e) { return handle_(e, 'POST'); }
+
+function handle_(e, method) {
+  try {
+    const body = (method === 'POST' && e.postData && e.postData.contents)
+      ? JSON.parse(e.postData.contents) : {};
+    const params = Object.assign({}, e.parameter || {}, body);
+    const action = params.action;
+    if (!action) throw new Error('Missing action');
+
+    const user = Auth.verify(params.token);
+
+    let result;
+    switch (action) {
+      case 'getAll':           result = Inscricoes.getAll(); break;
+      case 'updateSemanas':    result = Inscricoes.updateSemanas(params.id, params.novas, params.motivo, user); break;
+      case 'softDelete':       result = Inscricoes.softDelete(params.id, params.motivo, user); break;
+      case 'reactivate':       result = Inscricoes.reactivate(params.id, params.motivo, user); break;
+      case 'updatePagamento':  result = Inscricoes.updatePagamento(params.id, params.valor, user, params.confirm === true); break;
+      case 'confirmValor':     result = Inscricoes.confirmValor(params.id, params.valor, user); break;
+      case 'unconfirmValor':   result = Inscricoes.unconfirmValor(params.id, user); break;
+      case 'setDevidoOverride':result = Inscricoes.setDevidoOverride(params.id, params.valor, user); break;
+      case 'setDescontoOutro': result = Inscricoes.setDescontoOutro(params.id, params.motivo, user); break;
+      case 'toggleIrmao':      result = Inscricoes.toggleIrmao(params.id, params.valor, user); break;
+      case 'addNota':          result = Inscricoes.addNota(params.id, params.nota, user); break;
+      case 'logEmail':         result = Emails.log(params, user); break;
+      case 'markEmailSent':    result = Emails.markSent(params.id, user); break;
+      case 'readComprovativo': result = Comprovativo.readAndSave(params.id, user); break;
+      case 'readAllPending':   result = Comprovativo.readAllPending(user); break;
+      default: throw new Error('Unknown action: ' + action);
+    }
+    return json_({ ok: true, user: user, data: result });
+  } catch (err) {
+    return json_({ ok: false, error: String(err && err.message || err) });
+  }
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}

@@ -1,0 +1,1255 @@
+/**
+ * Router. Substituir SHEET_ID pela cópia de teste primeiro.
+ */
+const SHEET_ID = '1yLPtKZk-vjs-0lLBLzjw3VyOl9xo7Tz54vdK26dfPbc';
+
+function doGet(e)  { return handle_(e, 'GET'); }
+function doPost(e) { return handle_(e, 'POST'); }
+
+function handle_(e, method) {
+  try {
+    const body = (method === 'POST' && e.postData && e.postData.contents)
+      ? JSON.parse(e.postData.contents) : {};
+    const params = Object.assign({}, e.parameter || {}, body);
+    const action = params.action;
+    if (!action) throw new Error('Missing action');
+
+    const user = Auth.verify(params.token);
+
+    let result;
+    switch (action) {
+      case 'getAll':           result = Inscricoes.getAll(); break;
+      case 'updateSemanas':    result = Inscricoes.updateSemanas(params.id, params.novas, params.motivo, user); break;
+      case 'softDelete':       result = Inscricoes.softDelete(params.id, params.motivo, user); break;
+      case 'reactivate':       result = Inscricoes.reactivate(params.id, params.motivo, user); break;
+      case 'updatePagamento':  result = Inscricoes.updatePagamento(params.id, params.valor, user, params.confirm === true); break;
+      case 'confirmValor':     result = Inscricoes.confirmValor(params.id, params.valor, user); break;
+      case 'unconfirmValor':   result = Inscricoes.unconfirmValor(params.id, user); break;
+      case 'setDevidoOverride':result = Inscricoes.setDevidoOverride(params.id, params.valor, user); break;
+      case 'setDescontoOutro': result = Inscricoes.setDescontoOutro(params.id, params.motivo, user); break;
+      case 'toggleIrmao':      result = Inscricoes.toggleIrmao(params.id, params.valor, user); break;
+      case 'addNota':          result = Inscricoes.addNota(params.id, params.nota, user); break;
+      case 'logEmail':         result = Emails.log(params, user); break;
+      case 'markEmailSent':    result = Emails.markSent(params.id, user); break;
+      case 'readComprovativo': result = Comprovativo.readAndSave(params.id, user); break;
+      case 'readAllPending':   result = Comprovativo.readAllPending(user); break;
+      default: throw new Error('Unknown action: ' + action);
+    }
+    return json_({ ok: true, user: user, data: result });
+  } catch (err) {
+    return json_({ ok: false, error: String(err && err.message || err) });
+  }
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+/**
+ * Verifica ID token Google e valida contra whitelist em Config.
+ * Retorna o email do utilizador autenticado ou lança erro.
+ */
+const Auth = {
+  verify(token) {
+    if (!token) throw new Error('Missing token');
+    const url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(token);
+    const resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (resp.getResponseCode() !== 200) throw new Error('Invalid token');
+    const info = JSON.parse(resp.getContentText());
+    if (info.email_verified === false || info.email_verified === 'false') {
+      throw new Error('Email not verified');
+    }
+    if (!info.email) throw new Error('Token has no email');
+    const expectedAud = Config.get('client_id');
+    if (expectedAud && info.aud !== expectedAud) {
+      throw new Error('Token audience mismatch');
+    }
+    const wl = String(Config.get('whitelist_emails') || '')
+      .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    if (wl.indexOf(info.email.toLowerCase()) === -1) {
+      throw new Error('Email not authorized: ' + info.email);
+    }
+    return info.email.toLowerCase();
+  }
+};
+/**
+ * Aba Config: key/value/notas. Lê tudo de uma vez para evitar I/O repetido.
+ */
+const Config = {
+  _cache: null,
+
+  sheet() {
+    return SpreadsheetApp.openById(SHEET_ID).getSheetByName('Config');
+  },
+
+  all() {
+    if (this._cache) return this._cache;
+    const sh = this.sheet();
+    const last = sh.getLastRow();
+    const o = {};
+    if (last >= 2) {
+      const values = sh.getRange(2, 1, last - 1, 2).getValues();
+      values.forEach(([k, v]) => { if (k) o[k] = v; });
+    }
+    this._cache = o;
+    return o;
+  },
+
+  get(key) {
+    return this.all()[key];
+  },
+
+  invalidate() { this._cache = null; }
+};
+/**
+ * Lógica de preços CFT 2026.
+ *
+ * Externo: 275 € por semana, fixo.
+ * Interno + inscrição até 31 mar:
+ *    pronto: 330 (s/desc) | 295 (c/desc)
+ *    prestações: 375 total (s/desc) | 330 total (c/desc) — 120 + (255 ou 210)
+ * Interno + inscrição depois de 31 mar:
+ *    pronto obrigatório: 375 (s/desc) | 330 (c/desc)
+ *
+ * Desconto se: irmao_desconto = TRUE  OU  nSem >= 2  OU  clube_count >= 8.
+ *
+ * Classificação a partir de valor_pago: o admin tipa o valor depois de ver o
+ * comprovativo; o sistema classifica em pago / parcial_1 / parcial_2 / valor_errado.
+ */
+const Pricing = {
+  parseSems(s) {
+    if (s === null || s === undefined) return [];
+    return String(s).split(/[,;+\s]+/)
+      .map(x => parseInt(x, 10))
+      .filter(n => !isNaN(n) && n >= 1 && n <= 3);
+  },
+
+  isExterno(opcao) {
+    return String(opcao || '').trim().toLowerCase() === 'externo';
+  },
+
+  hasDesconto(atleta, clubeCounts) {
+    if (atleta.irmao_desconto === true || atleta.irmao_desconto === 'TRUE') return true;
+    if (this.parseSems(atleta.semanas_atuais).length >= 2) return true;
+    if ((clubeCounts[atleta.clube] || 0) >= 8) return true;
+    if (atleta.desconto_outro_motivo && String(atleta.desconto_outro_motivo).trim()) return true;
+    return false;
+  },
+
+  // Devolve a razão textual do desconto (ou null se não há)
+  descontoMotivo(atleta, clubeCounts) {
+    if (atleta.irmao_desconto === true || atleta.irmao_desconto === 'TRUE') return 'irmão';
+    if ((clubeCounts[atleta.clube] || 0) >= 8) return '8 atletas';
+    if (this.parseSems(atleta.semanas_atuais).length >= 2) return '≥2 semanas';
+    if (atleta.desconto_outro_motivo && String(atleta.desconto_outro_motivo).trim()) {
+      return String(atleta.desconto_outro_motivo).trim();
+    }
+    return null;
+  },
+
+  isBeforeCutoff(timestamp) {
+    const raw = Config.get('cutoff_desconto') || '2026-03-31';
+    let cutoff;
+    if (raw instanceof Date) {
+      cutoff = new Date(raw.getFullYear(), raw.getMonth(), raw.getDate(), 23, 59, 59);
+    } else {
+      cutoff = new Date(String(raw) + 'T23:59:59');
+    }
+    if (isNaN(cutoff.getTime())) cutoff = new Date('2026-03-31T23:59:59');
+    return new Date(timestamp) <= cutoff;
+  },
+
+  calc(atleta, clubeCounts) {
+    const nSem = this.parseSems(atleta.semanas_atuais).length;
+    if (nSem === 0) {
+      return { tipo: 'sem_semanas', desc: false, prontoTotal: 0, prestTotal: null, prest1: null, prest2: null, nSem: 0 };
+    }
+    if (this.isExterno(atleta.opcao_inscricao)) {
+      return { tipo: 'externo', desc: false, prontoTotal: 275 * nSem, prestTotal: null, prest1: null, prest2: null, nSem };
+    }
+    const desc = this.hasDesconto(atleta, clubeCounts);
+    const before = this.isBeforeCutoff(atleta.timestamp_inscricao);
+    const prontoPS = before ? (desc ? 295 : 330) : (desc ? 330 : 375);
+    const prestPS  = before ? (desc ? 330 : 375) : null;
+    const prontoTotal = prontoPS * nSem;
+    const prestTotal  = prestPS ? prestPS * nSem : null;
+    const prest1 = prestTotal !== null ? 120 * nSem : null;
+    const prest2 = prestTotal !== null ? prestTotal - prest1 : null;
+    return { tipo: 'interno', desc, before, prontoTotal, prestTotal, prest1, prest2, nSem };
+  },
+
+  classify(atleta, valorPago, clubeCounts) {
+    const p = this.calc(atleta, clubeCounts);
+    const v = Number(valorPago) || 0;
+    // Override manual do devido (admin pode forçar valor diferente para descontos especiais)
+    const overrideRaw = atleta.valor_devido_override;
+    const hasOverride = overrideRaw !== '' && overrideRaw !== null && overrideRaw !== undefined && !isNaN(Number(overrideRaw));
+    if (hasOverride) {
+      const devido = Number(overrideRaw);
+      let estado;
+      if (v === 0) estado = 'pendente';
+      else if (v === devido) estado = 'pago';
+      else if (v < devido) estado = 'parcial_1';
+      else estado = 'valor_errado';
+      return { estado, regime: 'manual', devido, falta: Math.max(0, devido - v), info: p, override: true };
+    }
+    if (p.tipo === 'sem_semanas') return { estado: 'sem_semanas', regime: null, devido: 0, falta: 0, info: p };
+    if (v === 0) return { estado: 'pendente', regime: null, devido: p.prontoTotal, falta: p.prontoTotal, info: p };
+    if (p.tipo === 'externo') {
+      if (v === p.prontoTotal) return { estado: 'pago', regime: 'externo', devido: p.prontoTotal, falta: 0, info: p };
+      return { estado: 'valor_errado', regime: 'externo', devido: p.prontoTotal, falta: p.prontoTotal - v, info: p };
+    }
+    if (v === p.prontoTotal) return { estado: 'pago', regime: 'pronto', devido: p.prontoTotal, falta: 0, info: p };
+    if (p.prestTotal !== null) {
+      if (v === p.prestTotal) return { estado: 'pago', regime: 'prestacoes', devido: p.prestTotal, falta: 0, info: p };
+      if (v === p.prest1)     return { estado: 'parcial_1', regime: 'prestacoes', devido: p.prestTotal, falta: p.prest2, info: p };
+      if (v === p.prest2)     return { estado: 'parcial_2', regime: 'prestacoes', devido: p.prestTotal, falta: p.prest1, info: p };
+    }
+    // Sobrepagou: pago > maior valor possível esperado → "a devolver"
+    const maxExpected = Math.max(p.prontoTotal, p.prestTotal || 0);
+    if (v > maxExpected) {
+      return { estado: 'a_devolver', regime: null, devido: maxExpected, sobra: v - maxExpected, falta: 0, info: p };
+    }
+    return { estado: 'valor_errado', regime: null, devido: p.prontoTotal, falta: p.prontoTotal - v, info: p };
+  }
+};
+/**
+ * Operações sobre a aba Atletas (escrita + leitura).
+ * Cada mutação:
+ *   1. valida (motivo obrigatório onde aplicável)
+ *   2. usa LockService para evitar race entre os 2 admins
+ *   3. atualiza ultima_alteracao_em / por
+ *   4. escreve evento em Historico
+ */
+
+// Mapeamento coluna (1-indexed) na aba Atletas — bate certo com Backfill.setupSheets
+const ATL_COLS = {
+  id_inscricao: 1, timestamp_inscricao: 2, atleta: 3, data_nascimento: 4,
+  clube: 5, encarregado: 6, email: 7, telefone: 8,
+  opcao_inscricao: 9, semanas_originais: 10, semanas_atuais: 11,
+  tshirt: 12, tshirt_num: 13, tshirt_nome: 14,
+  alergia_alim: 15, alergia_alim_qual: 16,
+  medicacao: 17, medicacao_qual: 18,
+  doenca: 19, doenca_qual: 20,
+  alergia_med: 21, alergia_med_qual: 22,
+  cc: 23, nif: 24, posicao: 25, melhorar: 26, contacto_emerg: 27,
+  decl_responsabilidade: 28, decl_imagem: 29, decl_saida: 30,
+  iban: 31, comprovativo_url: 32,
+  valor_pago: 33, irmao_desconto: 34, ativo: 35,
+  motivo_eliminacao: 36, eliminado_em: 37, eliminado_por: 38,
+  notas_internas: 39, ultima_alteracao_em: 40, ultima_alteracao_por: 41,
+  valor_confirmado: 42, valor_devido_override: 43, desconto_outro_motivo: 44,
+  num_inscricao: 45
+};
+const ATL_NCOLS = 45;
+
+const Inscricoes = {
+  sheet() { return SpreadsheetApp.openById(SHEET_ID).getSheetByName('Atletas'); },
+
+  getAll() {
+    const sh = this.sheet();
+    const last = sh.getLastRow();
+    const atletas = [];
+    if (last >= 2) {
+      const values = sh.getRange(2, 1, last - 1, ATL_NCOLS).getValues();
+      values.forEach(row => atletas.push(this._rowToObj(row)));
+    }
+    const cc = {};
+    atletas.forEach(a => {
+      if (a.ativo === true || a.ativo === 'TRUE') {
+        cc[a.clube] = (cc[a.clube] || 0) + 1;
+      }
+    });
+    // Deteção de possíveis duplicados: mesmo nome + mesmas semanas (entre atletas ativos)
+    const dupGroups = {};
+    atletas.forEach(a => {
+      if (!a.ativo) return;
+      const sems = Pricing.parseSems(a.semanas_atuais).join(',');
+      const nome = String(a.atleta || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      if (!nome) return;
+      const key = nome + '|' + sems;
+      (dupGroups[key] = dupGroups[key] || []).push(a.id_inscricao);
+    });
+    atletas.forEach(a => {
+      a.pricing = Pricing.classify(a, a.valor_pago, cc);
+      a.desconto_motivo = Pricing.descontoMotivo(a, cc);
+      const sems = Pricing.parseSems(a.semanas_atuais).join(',');
+      const nome = String(a.atleta || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const key = nome + '|' + sems;
+      const group = dupGroups[key] || [];
+      a.duplicate_warning = group.length > 1;
+      a.duplicate_ids = a.duplicate_warning ? group.filter(x => x !== a.id_inscricao) : [];
+    });
+    // Counts úteis: atletas únicos, inscrições, vagas ocupadas por semana
+    const ativos = atletas.filter(a => a.ativo);
+    const uniqueKey = a => (String(a.atleta || '').trim().toLowerCase().replace(/\s+/g, ' ')) + '|' + (String(a.encarregado || a.email || '').trim().toLowerCase());
+    const uniqueAtletas = new Set(ativos.map(uniqueKey)).size;
+    const vagasPorSemana = { 1: 0, 2: 0, 3: 0 };
+    ativos.forEach(a => {
+      Pricing.parseSems(a.semanas_atuais).forEach(s => { if (vagasPorSemana[s] !== undefined) vagasPorSemana[s]++; });
+    });
+    const totalVagas = vagasPorSemana[1] + vagasPorSemana[2] + vagasPorSemana[3];
+    return {
+      atletas,
+      historico: Historico.list(),
+      emails: Emails.list(),
+      config: Config.all(),
+      clube_counts: cc,
+      counts: {
+        inscricoes_ativas: ativos.length,
+        atletas_unicos: uniqueAtletas,
+        vagas_por_semana: vagasPorSemana,
+        total_vagas_ocupadas: totalVagas
+      },
+      lastUpdate: new Date().toISOString()
+    };
+  },
+
+  _rowToObj(row) {
+    const o = {};
+    Object.keys(ATL_COLS).forEach(k => { o[k] = row[ATL_COLS[k] - 1]; });
+    o.ativo = (o.ativo === true || o.ativo === 'TRUE' || o.ativo === '');
+    o.irmao_desconto = (o.irmao_desconto === true || o.irmao_desconto === 'TRUE');
+    o.valor_confirmado = (o.valor_confirmado === true || o.valor_confirmado === 'TRUE');
+    return o;
+  },
+
+  _findRow(id) {
+    const sh = this.sheet();
+    const last = sh.getLastRow();
+    if (last < 2) throw new Error('Atleta não encontrado: ' + id);
+    const ids = sh.getRange(2, ATL_COLS.id_inscricao, last - 1, 1).getValues().flat();
+    const idx = ids.indexOf(id);
+    if (idx === -1) throw new Error('Atleta não encontrado: ' + id);
+    return idx + 2;
+  },
+
+  _stampUser(sh, r, user) {
+    sh.getRange(r, ATL_COLS.ultima_alteracao_em).setValue(new Date());
+    sh.getRange(r, ATL_COLS.ultima_alteracao_por).setValue(user);
+  },
+
+  _withLock(fn) {
+    const lock = LockService.getDocumentLock();
+    lock.waitLock(10000);
+    try { return fn(); } finally { lock.releaseLock(); }
+  },
+
+  updateSemanas(id, novas, motivo, user) {
+    if (!motivo || String(motivo).trim().length < 10) throw new Error('Motivo obrigatório (≥10 caracteres)');
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(id);
+      const antes = sh.getRange(r, ATL_COLS.semanas_atuais).getValue();
+      const novasStr = Array.isArray(novas) ? novas.join(',') : String(novas);
+      sh.getRange(r, ATL_COLS.semanas_atuais).setValue(novasStr);
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'alteracao_semanas', antes: String(antes), depois: novasStr, motivo });
+      return { id, semanas_atuais: novasStr };
+    });
+  },
+
+  softDelete(id, motivo, user) {
+    if (!motivo || String(motivo).trim().length < 10) throw new Error('Motivo obrigatório (≥10 caracteres)');
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(id);
+      sh.getRange(r, ATL_COLS.ativo).setValue(false);
+      sh.getRange(r, ATL_COLS.motivo_eliminacao).setValue(motivo);
+      sh.getRange(r, ATL_COLS.eliminado_em).setValue(new Date());
+      sh.getRange(r, ATL_COLS.eliminado_por).setValue(user);
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'soft_delete', antes: 'ativo', depois: 'inativo', motivo });
+      return { id, ativo: false };
+    });
+  },
+
+  reactivate(id, motivo, user) {
+    if (!motivo || String(motivo).trim().length < 10) throw new Error('Motivo obrigatório (≥10 caracteres)');
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(id);
+      sh.getRange(r, ATL_COLS.ativo).setValue(true);
+      sh.getRange(r, ATL_COLS.motivo_eliminacao).setValue('');
+      sh.getRange(r, ATL_COLS.eliminado_em).setValue('');
+      sh.getRange(r, ATL_COLS.eliminado_por).setValue('');
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'reativacao', antes: 'inativo', depois: 'ativo', motivo });
+      return { id, ativo: true };
+    });
+  },
+
+  updatePagamento(id, valor, user, autoConfirm) {
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(id);
+      const antes = sh.getRange(r, ATL_COLS.valor_pago).getValue();
+      const v = Number(valor) || 0;
+      sh.getRange(r, ATL_COLS.valor_pago).setValue(v);
+      // Edição manual confirma automaticamente; OCR não confirma.
+      if (autoConfirm === true) {
+        sh.getRange(r, ATL_COLS.valor_confirmado).setValue(true);
+      }
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'pagamento', antes: String(antes), depois: String(v), motivo: autoConfirm ? 'manual+confirmado' : '' });
+      return { id, valor_pago: v, valor_confirmado: !!autoConfirm };
+    });
+  },
+
+  confirmValor(id, valor, user) {
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(id);
+      const v = Number(valor) || 0;
+      const antes = sh.getRange(r, ATL_COLS.valor_pago).getValue();
+      sh.getRange(r, ATL_COLS.valor_pago).setValue(v);
+      sh.getRange(r, ATL_COLS.valor_confirmado).setValue(true);
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'confirmacao_valor', antes: String(antes), depois: String(v), motivo: '' });
+      return { id, valor_pago: v, valor_confirmado: true };
+    });
+  },
+
+  unconfirmValor(id, user) {
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(id);
+      sh.getRange(r, ATL_COLS.valor_confirmado).setValue(false);
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'confirmacao_valor', antes: 'confirmado', depois: 'por confirmar', motivo: '' });
+      return { id, valor_confirmado: false };
+    });
+  },
+
+  setDescontoOutro(id, motivo, user) {
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(id);
+      const antes = sh.getRange(r, ATL_COLS.desconto_outro_motivo).getValue();
+      const v = String(motivo || '').trim();
+      sh.getRange(r, ATL_COLS.desconto_outro_motivo).setValue(v);
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'ajuste_desconto', antes: String(antes || ''), depois: v, motivo: 'outro motivo' });
+      return { id, desconto_outro_motivo: v };
+    });
+  },
+
+  setDevidoOverride(id, valor, user) {
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(id);
+      const antes = sh.getRange(r, ATL_COLS.valor_devido_override).getValue();
+      const v = (valor === '' || valor === null || valor === undefined) ? '' : (Number(valor) || 0);
+      sh.getRange(r, ATL_COLS.valor_devido_override).setValue(v);
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'override_devido', antes: String(antes || ''), depois: String(v), motivo: 'desconto manual' });
+      return { id, valor_devido_override: v };
+    });
+  },
+
+  toggleIrmao(id, valor, user) {
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(id);
+      const antes = sh.getRange(r, ATL_COLS.irmao_desconto).getValue();
+      const v = !!valor;
+      sh.getRange(r, ATL_COLS.irmao_desconto).setValue(v);
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'ajuste_desconto', antes: String(antes), depois: String(v), motivo: 'toggle irmão' });
+      return { id, irmao_desconto: v };
+    });
+  },
+
+  addNota(id, nota, user) {
+    if (!nota || String(nota).trim().length < 1) throw new Error('Nota vazia');
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(id);
+      const antes = sh.getRange(r, ATL_COLS.notas_internas).getValue() || '';
+      const stamp = Utilities.formatDate(new Date(), 'Europe/Lisbon', 'yyyy-MM-dd HH:mm');
+      const novaNota = '[' + stamp + ' ' + user + '] ' + String(nota).trim();
+      const depois = antes ? (antes + '\n' + novaNota) : novaNota;
+      sh.getRange(r, ATL_COLS.notas_internas).setValue(depois);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'nota', antes: '', depois: String(nota).trim(), motivo: '' });
+      return { id, notas_internas: depois };
+    });
+  }
+};
+/**
+ * Audit log append-only.
+ * Colunas: id_evento | timestamp | utilizador | id_atleta | atleta | tipo | antes | depois | motivo
+ */
+const Historico = {
+  sheet() { return SpreadsheetApp.openById(SHEET_ID).getSheetByName('Historico'); },
+
+  append({ utilizador, id_atleta, atleta, tipo, antes, depois, motivo }) {
+    const sh = this.sheet();
+    const id = Utilities.getUuid();
+    sh.appendRow([id, new Date(), utilizador, id_atleta || '', atleta || '', tipo, antes || '', depois || '', motivo || '']);
+    return id;
+  },
+
+  list() {
+    const sh = this.sheet();
+    const last = sh.getLastRow();
+    if (last < 2) return [];
+    const values = sh.getRange(2, 1, last - 1, 9).getValues();
+    return values.map(r => ({
+      id_evento: r[0], timestamp: r[1], utilizador: r[2], id_atleta: r[3],
+      atleta: r[4], tipo: r[5], antes: r[6], depois: r[7], motivo: r[8]
+    })).reverse();
+  }
+};
+/**
+ * Registo de emails preparados/abertos no Gmail compose.
+ * Nesta fase NÃO envia email — só regista a intenção e marca quando o admin
+ * confirma que carregou em "enviar" no Gmail.
+ */
+const Emails = {
+  sheet() { return SpreadsheetApp.openById(SHEET_ID).getSheetByName('Emails'); },
+
+  log({ template, assunto, corpo, destinatarios, ids_atletas }, user) {
+    const sh = this.sheet();
+    const id = Utilities.getUuid();
+    sh.appendRow([
+      id, new Date(), user,
+      template || 'livre',
+      assunto || '', corpo || '',
+      Array.isArray(destinatarios) ? destinatarios.join(',') : String(destinatarios || ''),
+      Array.isArray(ids_atletas) ? ids_atletas.join(',') : String(ids_atletas || ''),
+      false
+    ]);
+    Historico.append({
+      utilizador: user, id_atleta: '', atleta: '(múltiplos)',
+      tipo: 'email_preparado', antes: '', depois: assunto || '', motivo: template || ''
+    });
+    return { id };
+  },
+
+  markSent(id, user) {
+    const sh = this.sheet();
+    const last = sh.getLastRow();
+    if (last < 2) throw new Error('Email log vazio');
+    const ids = sh.getRange(2, 1, last - 1, 1).getValues().flat();
+    const idx = ids.indexOf(id);
+    if (idx === -1) throw new Error('Email log não encontrado: ' + id);
+    sh.getRange(idx + 2, 9).setValue(true);
+    Historico.append({
+      utilizador: user, id_atleta: '', atleta: '(múltiplos)',
+      tipo: 'email_enviado', antes: '', depois: id, motivo: ''
+    });
+    return { id, abriu_no_gmail: true };
+  },
+
+  list() {
+    const sh = this.sheet();
+    const last = sh.getLastRow();
+    if (last < 2) return [];
+    const values = sh.getRange(2, 1, last - 1, 9).getValues();
+    return values.map(r => ({
+      id: r[0], timestamp: r[1], enviado_por: r[2], template: r[3],
+      assunto: r[4], corpo: r[5], destinatarios: r[6], ids_atletas: r[7], abriu_no_gmail: r[8]
+    })).reverse();
+  }
+};
+/**
+ * Lê o valor pago a partir do comprovativo (PDF/imagem no Drive),
+ * usando a Google Gemini API (visão multimodal) com a skill
+ * "extrator-valor-comprovativos" como system instruction.
+ *
+ * GRATUITO no plano Free: 1500 calls/dia, sem cartão de crédito.
+ *
+ * SETUP (uma vez, no Apps Script):
+ *   1. Abre https://aistudio.google.com/app/apikey
+ *   2. Faz login com Google → "Create API key" → escolhe o projeto (ou cria novo) → copia
+ *   3. No editor Apps Script: ⚙️ Configurações do projeto → Propriedades do script →
+ *      Adicionar: GEMINI_API_KEY = AIza...
+ */
+const Comprovativo = {
+  MODEL: 'gemini-2.5-flash-lite',
+  API_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
+  MAX_FILE_BYTES: 20 * 1024 * 1024,  // 20 MB — limite Gemini inline
+
+  extractFileId(url) {
+    if (!url) return null;
+    const patterns = [
+      /\/file\/d\/([a-zA-Z0-9_-]+)/,
+      /[?&]id=([a-zA-Z0-9_-]+)/,
+      /\/d\/([a-zA-Z0-9_-]+)/,
+      /^([a-zA-Z0-9_-]{20,})$/
+    ];
+    for (let i = 0; i < patterns.length; i++) {
+      const m = String(url).match(patterns[i]);
+      if (m) return m[1];
+    }
+    return null;
+  },
+
+  /**
+   * Pede ao Gemini o valor exacto transferido. Devolve número (float) ou null.
+   */
+  extractValue(fileId) {
+    const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY não definida. Vai a https://aistudio.google.com/app/apikey criar uma chave grátis e mete-a em ⚙️ Configurações do projeto → Propriedades do script.');
+    }
+    const file = DriveApp.getFileById(fileId);
+    let mime = file.getMimeType();
+    let blob;
+    if (mime === 'application/vnd.google-apps.document' ||
+        mime === 'application/vnd.google-apps.spreadsheet') {
+      blob = file.getAs('application/pdf');
+      mime = 'application/pdf';
+    } else {
+      blob = file.getBlob();
+    }
+    const bytes = blob.getBytes();
+    if (bytes.length > this.MAX_FILE_BYTES) {
+      throw new Error('Ficheiro grande demais (' + Math.round(bytes.length / 1024 / 1024) + ' MB)');
+    }
+    const base64 = Utilities.base64Encode(bytes);
+
+    // Gemini aceita: image/* (jpeg, png, gif, webp, heic, heif), application/pdf, text/*
+    const supported = (
+      mime === 'application/pdf' ||
+      mime.indexOf('image/') === 0 ||
+      mime === 'text/plain'
+    );
+    if (!supported) {
+      throw new Error('Tipo de ficheiro não suportado: ' + mime);
+    }
+
+    const payload = {
+      system_instruction: { parts: [{ text: SKILL_PROMPT }] },
+      contents: [{
+        role: 'user',
+        parts: [
+          { inline_data: { mime_type: mime, data: base64 } },
+          { text: 'Extrai o valor transferido neste comprovativo. Devolve apenas o número decimal (ex: 120.00) ou null.' }
+        ]
+      }],
+      generationConfig: {
+        temperature: 0,
+        maxOutputTokens: 20,
+        responseMimeType: 'text/plain'
+      }
+    };
+
+    const resp = UrlFetchApp.fetch(this.API_URL + '?key=' + encodeURIComponent(apiKey), {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+
+    const code = resp.getResponseCode();
+    if (code !== 200) {
+      const body = resp.getContentText().slice(0, 300);
+      throw new Error('Gemini API ' + code + ': ' + body);
+    }
+    const json = JSON.parse(resp.getContentText());
+    const text = (json.candidates && json.candidates[0] && json.candidates[0].content
+                  && json.candidates[0].content.parts && json.candidates[0].content.parts[0]
+                  && json.candidates[0].content.parts[0].text)
+      ? String(json.candidates[0].content.parts[0].text).trim() : '';
+    if (!text || /^null$/i.test(text)) return null;
+    const m = text.match(/-?\d+([.,]\d+)?/);
+    if (!m) return null;
+    const num = parseFloat(m[0].replace(',', '.'));
+    if (isNaN(num)) return null;
+    if (num < 0 || num > 10000) return null;
+    return Math.abs(num);
+  },
+
+  forAtleta(atletaId) {
+    const sh = Inscricoes.sheet();
+    const r = Inscricoes._findRow(atletaId);
+    const url = sh.getRange(r, ATL_COLS.comprovativo_url).getValue();
+    const fileId = this.extractFileId(url);
+    if (!fileId) return { amount: null, error: 'URL de comprovativo inválido ou vazio', url: url };
+    try {
+      const amount = this.extractValue(fileId);
+      return { amount: amount, url: url, fileId: fileId };
+    } catch (e) {
+      return { amount: null, error: e.message, url: url };
+    }
+  },
+
+  readAndSave(atletaId, user) {
+    const result = this.forAtleta(atletaId);
+    if (result.amount === null) {
+      throw new Error(result.error || 'Não consegui extrair valor do comprovativo. Verifica o ficheiro manualmente.');
+    }
+    Inscricoes.updatePagamento(atletaId, result.amount, user);
+    return { id: atletaId, valor_pago: result.amount };
+  },
+
+  readAllPending(user) {
+    const all = Inscricoes.getAll();
+    const pending = all.atletas.filter(function (a) {
+      const v = Number(a.valor_pago) || 0;
+      return v === 0 && a.comprovativo_url && a.ativo;
+    });
+    const results = [];
+    pending.forEach(function (a, idx) {
+      // Throttle: 5 segundos entre chamadas → ~12 RPM, abaixo dos 15 do plano grátis.
+      if (idx > 0) Utilities.sleep(5000);
+      try {
+        const res = Comprovativo.forAtleta(a.id_inscricao);
+        if (res.amount !== null) {
+          Inscricoes.updatePagamento(a.id_inscricao, res.amount, user);
+          results.push({ atleta: a.atleta, amount: res.amount, ok: true });
+        } else {
+          results.push({ atleta: a.atleta, error: res.error || 'sem valor extraído', ok: false });
+        }
+      } catch (e) {
+        results.push({ atleta: a.atleta, error: e.message, ok: false });
+      }
+    });
+    return { processed: results.length, results: results };
+  }
+};
+
+// ============ SKILL PROMPT (extrator-valor-comprovativos) ============
+const SKILL_PROMPT =
+'# Extrator de Valor de Comprovativos de Pagamento\n' +
+'\n' +
+'## Tarefa\n' +
+'Extrair o valor exato transferido num comprovativo de pagamento bancário português.\n' +
+'OUTPUT: apenas o número decimal no formato XXX.XX (ponto como separador decimal, sem símbolo de moeda, sem texto à volta).\n' +
+'- Output válido: 330.00, 120.00, 75.50\n' +
+'- Output inválido: €330,00, "330 EUR", "O valor é 330.00"\n' +
+'- Se não conseguir extrair com confiança razoável: devolver exatamente null\n' +
+'\n' +
+'## Regra fundamental\n' +
+'O valor só conta se estiver associado a um destes labels:\n' +
+'Montante, Montante e Moeda, Valor, Valor da Transferência, Importância a Transferir, Amount.\n' +
+'Em apps bancárias, aceitar número grande visualmente em destaque, mas confirmar que NÃO é saldo.\n' +
+'\n' +
+'## Lista negra: NUNCA extrair valor destes contextos\n' +
+'- Capital social no rodapé legal (ex: "Capital Social: 1.391.779.674 €", "4.525.714.495,00 €", "Cap. Soc. EUR 314.938.565,00") — ARMADILHA MAIS FREQUENTE\n' +
+'- Número de conta / IBAN (ex: 000314774939020)\n' +
+'- Referência de operação (ex: 6922INE05166713, OP000001070)\n' +
+'- Cartão de cidadão (ex: CC31439321)\n' +
+'- NIF / NIPC\n' +
+'- Saldo disponível (ex: "Disponível 5008,24 €")\n' +
+'- Comissão / Imposto / IVA / Custos / Total\n' +
+'- Desconto narrado em descrição (ex: "considerando o desconto 75 euros")\n' +
+'- Print Id, ID documento\n' +
+'- Hora/data com formato numérico\n' +
+'\n' +
+'## Algoritmo\n' +
+'1. Localizar label mais forte (preferência: Montante > Valor da Transferência > Importância a Transferir > Valor solto > número visualmente destacado).\n' +
+'2. Ler número imediatamente adjacente ao label.\n' +
+'3. Normalizar: 330,00 EUR → 330.00, EUR 275,00 → 275.00.\n' +
+'4. Validar plausibilidade: 50 ≤ valor ≤ 600 EUR (intervalo típico de inscrições). Se obtiver valor fora deste intervalo, está provavelmente errado — voltar a procurar.\n' +
+'5. Sinal negativo é informacional ("saída de conta"): output sempre positivo.\n' +
+'\n' +
+'## Casos especiais\n' +
+'- Desconto narrado: o Montante já reflete o valor final. Ignorar o desconto narrado.\n' +
+'- Talão Multibanco: label é "IMPORTÂNCIA A TRANSFERIR".\n' +
+'- App bancária com número grande: aceitar SE for visualmente o protagonista E não estiver rotulado como "Disponível".\n' +
+'- Comprovativo com comissão: valor a extrair é o Montante (o que chega), NÃO o Total. Ex: Montante 330,00 + Comissão 1,04 = Total 331,04 → output 330.00.\n' +
+'- Documento ilegível: devolver null.\n' +
+'\n' +
+'## Exemplos\n' +
+'\n' +
+'Ex 1 — "Montante e Moeda: 120,00 EUR" → 120.00\n' +
+'\n' +
+'Ex 2 — "Valor: 120,00€ ... Capital Social: 1.391.779.674 €" → 120.00 (NÃO 674)\n' +
+'\n' +
+'Ex 3 — "Montante: 330,00EUR ... Capital Social 4.525.714.495,00 €" → 330.00 (NÃO 495)\n' +
+'\n' +
+'Ex 4 — "Montante: 330,00 € / Total custos 1,04 € / Cap. Soc. EUR 314.938.565,00" → 330.00\n' +
+'\n' +
+'Ex 5 — "Conta origem: 000314774939020 / Montante: 345,00 EUR" → 345.00\n' +
+'\n' +
+'Ex 6 — "Descrição: Vicente Ferraria CC31439321 / Valor da Transferência: EUR 120,00 / Imposto: EUR 0,00" → 120.00\n' +
+'\n' +
+'Ex 7 — App: "Enviado 330 €" topo / "Disponível 5008,24 €" → 330.00\n' +
+'\n' +
+'Ex 8 — "Pgt Gonçalo Reis (considerando o desconto 75 euros) / Montante: 220,00 EUR" → 220.00 (NÃO 75)\n' +
+'\n' +
+'Ex 9 — Talão MB: "IMPORTÂNCIA A TRANSFERIR: 295,00 EURO / N.CAIXA: 0010/0295/03 / CONTA: 002524237000001" → 295.00\n' +
+'\n' +
+'Ex 10 — Email: "Valor -275,00€" → 275.00\n' +
+'\n' +
+'Ex 11 — Imagem ilegível ou documento que não é comprovativo → null\n' +
+'\n' +
+'## Verificação final\n' +
+'1. Valor entre 50 e 600 EUR?\n' +
+'2. Label associado é dos labels válidos?\n' +
+'3. NÃO é capital social, conta, referência, NIF, CC, saldo, comissão ou data?\n' +
+'\n' +
+'Se as 3 são SIM: devolver o número.\n' +
+'Senão: devolver null.\n' +
+'\n' +
+'OUTPUT FINAL: apenas o número decimal (ex: 120.00) ou a palavra null. Nada mais.\n';
+/**
+ * Trigger onFormSubmit: cria UUID na linha do Forms e replica para Atletas.
+ * Instalar uma vez via Triggers.install().
+ */
+const Triggers = {
+  install() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    // Remove triggers antigos com o mesmo handler para evitar duplicação
+    ScriptApp.getProjectTriggers().forEach(t => {
+      if (t.getHandlerFunction() === 'onFormSubmitTrigger_') {
+        ScriptApp.deleteTrigger(t);
+      }
+    });
+    ScriptApp.newTrigger('onFormSubmitTrigger_')
+      .forSpreadsheet(ss)
+      .onFormSubmit()
+      .create();
+    Logger.log('Trigger onFormSubmit instalado.');
+  }
+};
+
+// Top-level (Apps Script triggers exigem função global, não método)
+function onFormSubmitTrigger_(e) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const formSheet = ss.getSheetByName('Respostas do Formulário 1');
+  if (!formSheet) {
+    Logger.log('Aba "Respostas do Formulário 1" não encontrada — trigger abortado.');
+    return;
+  }
+  const row = e.range.getRow();
+  let id = formSheet.getRange(row, 34).getValue();
+  if (!id) {
+    id = Utilities.getUuid();
+    formSheet.getRange(row, 34).setValue(id);
+  }
+  formSheet.getRange(row, 35).setValue(new Date());
+  Backfill.migrateRow_(row, formSheet, ss.getSheetByName('Atletas'));
+  // Atribuir número de inscrição + renomear ficheiro no Drive
+  try {
+    Backfill.assignNumeroAndRename_(id);
+  } catch (e) {
+    Logger.log('Numeração/rename falhou para ' + id + ': ' + e.message);
+  }
+  // Ler comprovativo automaticamente
+  try {
+    Comprovativo.readAndSave(id, 'auto-trigger');
+  } catch (e) {
+    Logger.log('OCR auto falhou para ' + id + ': ' + e.message);
+  }
+}
+/**
+ * Setup uma vez:
+ *   Backfill.setupSheets()  — cria/garante abas Atletas, Historico, Emails, Config
+ *                             + coloca id_inscricao e migrado_em na aba do Forms
+ *   Backfill.run()          — copia respostas existentes do Forms para Atletas
+ *   Triggers.install()      — instala onFormSubmit para inscrições futuras
+ *
+ * Mapeamento de colunas do Forms (1-indexed):
+ *   1 Carimbo de data/hora       18 Alergia alimentar qual
+ *   2 Endereço de email          19 Faz medicação?
+ *   3 Semana de inscrição        20 Medicação qual
+ *   4 Como tomou conhecimento    21 Tem alguma doença?
+ *   5 Treinador (nome)           22 Doença qual
+ *   6 Opção de inscrição         23 Alergia medicamentosa?
+ *   7 Nome completo do atleta    24 Alergia medicamentosa qual
+ *   8 Nº Cartão de Cidadão       25 Nome encarregado
+ *   9 Data de nascimento         26 Email
+ *  10 NIF                        27 Telemóvel
+ *  11 Tamanho equipamento        28 Contacto de emergência
+ *  12 Número equipamento         29 Decl. responsabilidade
+ *  13 Nome equipamento           30 Decl. imagem
+ *  14 Clube                      31 Decl. saída
+ *  15 Posição                    32 IBAN devolução
+ *  16 O que pretende melhorar    33 Comprovativo pagamento
+ *  17 Alergia alimentar?         34 id_inscricao  (acrescentado)
+ *                                35 migrado_em   (acrescentado)
+ */
+const Backfill = {
+  setupSheets() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+
+    // 1. Atletas
+    let sh = ss.getSheetByName('Atletas');
+    if (!sh) sh = ss.insertSheet('Atletas');
+    if (sh.getLastRow() === 0) {
+      const headers = [
+        'id_inscricao','timestamp_inscricao','atleta','data_nascimento','clube',
+        'encarregado','email','telefone','opcao_inscricao','semanas_originais',
+        'semanas_atuais','tshirt','tshirt_num','tshirt_nome','alergia_alim',
+        'alergia_alim_qual','medicacao','medicacao_qual','doenca','doenca_qual',
+        'alergia_med','alergia_med_qual','cc','nif','posicao','melhorar',
+        'contacto_emerg','decl_responsabilidade','decl_imagem','decl_saida',
+        'iban','comprovativo_url','valor_pago','irmao_desconto','ativo',
+        'motivo_eliminacao','eliminado_em','eliminado_por','notas_internas',
+        'ultima_alteracao_em','ultima_alteracao_por',
+        'valor_confirmado','valor_devido_override','desconto_outro_motivo',
+        'num_inscricao'
+      ];
+      sh.appendRow(headers);
+      sh.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
+      sh.setFrozenRows(1);
+    }
+
+    // 2. Historico
+    sh = ss.getSheetByName('Historico');
+    if (!sh) sh = ss.insertSheet('Historico');
+    if (sh.getLastRow() === 0) {
+      const headers = ['id_evento','timestamp','utilizador','id_atleta','atleta','tipo','antes','depois','motivo'];
+      sh.appendRow(headers);
+      sh.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
+      sh.setFrozenRows(1);
+    }
+
+    // 3. Emails
+    sh = ss.getSheetByName('Emails');
+    if (!sh) sh = ss.insertSheet('Emails');
+    if (sh.getLastRow() === 0) {
+      const headers = ['id','timestamp','enviado_por','template','assunto','corpo','destinatarios','ids_atletas','abriu_no_gmail'];
+      sh.appendRow(headers);
+      sh.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
+      sh.setFrozenRows(1);
+    }
+
+    // 4. Config
+    sh = ss.getSheetByName('Config');
+    if (!sh) sh = ss.insertSheet('Config');
+    if (sh.getLastRow() === 0) {
+      sh.appendRow(['key','value','notas']);
+      sh.appendRow(['whitelist_emails','geral@camposft.com','separar por vírgula']);
+      sh.appendRow(['client_id','','OAuth client ID do frontend (preencher após criar)']);
+      sh.appendRow(['vagas_total','180','60 × 3 semanas']);
+      sh.appendRow(['vagas_por_semana','60','']);
+      sh.appendRow(['cutoff_desconto','2026-03-31','até esta data: pronto pagamento mais barato']);
+      sh.appendRow(['prazo_pagamento','2026-06-21','liquidação 2ª prestação']);
+      sh.appendRow(['edicao','4','4ª edição']);
+      sh.getRange(1, 1, 1, 3).setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
+      sh.setFrozenRows(1);
+    }
+    Config.invalidate();
+
+    // 5. Aba Forms — acrescentar id_inscricao e migrado_em à direita
+    sh = ss.getSheetByName('Respostas do Formulário 1');
+    if (sh) {
+      const lastCol = sh.getLastColumn();
+      const headers = sh.getRange(1, 1, 1, Math.max(lastCol, 35)).getValues()[0];
+      if (headers[33] !== 'id_inscricao') sh.getRange(1, 34).setValue('id_inscricao');
+      if (headers[34] !== 'migrado_em')   sh.getRange(1, 35).setValue('migrado_em');
+    } else {
+      Logger.log('AVISO: aba "Respostas do Formulário 1" não encontrada.');
+    }
+
+    Logger.log('setupSheets OK.');
+  },
+
+  run() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const formSheet = ss.getSheetByName('Respostas do Formulário 1');
+    const atletas = ss.getSheetByName('Atletas');
+    if (!formSheet) throw new Error('Aba Forms não encontrada');
+    if (!atletas) throw new Error('Aba Atletas não encontrada (corre setupSheets primeiro)');
+    const last = formSheet.getLastRow();
+    let migrated = 0;
+    for (let r = 2; r <= last; r++) {
+      let id = formSheet.getRange(r, 34).getValue();
+      if (!id) {
+        id = Utilities.getUuid();
+        formSheet.getRange(r, 34).setValue(id);
+      }
+      const migrado = formSheet.getRange(r, 35).getValue();
+      if (migrado) continue;
+      this.migrateRow_(r, formSheet, atletas);
+      formSheet.getRange(r, 35).setValue(new Date());
+      migrated++;
+    }
+    Logger.log('Backfill: ' + migrated + ' linhas migradas. Total Atletas: ' + (atletas.getLastRow() - 1));
+  },
+
+  // Lê uma célula extraindo a URL escondida em hyperlink (se existir),
+  // senão devolve o valor visível. Usado para a coluna do comprovativo (col 33),
+  // que muitas vezes vem como rich-text com URL Drive por baixo.
+  getCellUrl_(sheet, row, col) {
+    const range = sheet.getRange(row, col);
+    try {
+      const rich = range.getRichTextValue();
+      if (rich) {
+        const linkUrl = rich.getLinkUrl();
+        if (linkUrl) return linkUrl;
+        // Pode ter runs com URLs separados — apanha o primeiro
+        const runs = rich.getRuns();
+        for (let i = 0; i < runs.length; i++) {
+          const u = runs[i].getLinkUrl();
+          if (u) return u;
+        }
+      }
+    } catch (e) {}
+    const formula = range.getFormula();
+    if (formula) {
+      const m = formula.match(/HYPERLINK\s*\(\s*"([^"]+)"/i);
+      if (m) return m[1];
+    }
+    return range.getValue();
+  },
+
+  migrateRow_(row, formSheet, atletas) {
+    const f = formSheet.getRange(row, 1, 1, 35).getValues()[0]; // f[0..34]
+    const id = f[33];
+    if (!id) throw new Error('Linha ' + row + ' sem id_inscricao');
+    // Verificar se já existe em Atletas (idempotência)
+    const last = atletas.getLastRow();
+    if (last >= 2) {
+      const existing = atletas.getRange(2, 1, last - 1, 1).getValues().flat();
+      if (existing.indexOf(id) !== -1) return;
+    }
+    const atletaRow = [
+      id,        // 1  id_inscricao
+      f[0],      // 2  timestamp_inscricao  ← Carimbo
+      f[6],      // 3  atleta
+      f[8],      // 4  data_nascimento
+      f[13],     // 5  clube
+      f[24],     // 6  encarregado
+      f[25],     // 7  email
+      f[26],     // 8  telefone
+      f[5],      // 9  opcao_inscricao  ← "interno"/"externo"
+      f[2],      // 10 semanas_originais
+      f[2],     // 11 semanas_atuais (=originais inicialmente)
+      f[10],     // 12 tshirt
+      f[11],     // 13 tshirt_num
+      f[12],     // 14 tshirt_nome
+      f[16],     // 15 alergia_alim
+      f[17],     // 16 alergia_alim_qual
+      f[18],     // 17 medicacao
+      f[19],     // 18 medicacao_qual
+      f[20],     // 19 doenca
+      f[21],     // 20 doenca_qual
+      f[22],     // 21 alergia_med
+      f[23],     // 22 alergia_med_qual
+      f[7],      // 23 cc
+      f[9],      // 24 nif
+      f[14],     // 25 posicao
+      f[15],     // 26 melhorar
+      f[27],     // 27 contacto_emerg
+      f[28],     // 28 decl_responsabilidade
+      f[29],     // 29 decl_imagem
+      f[30],     // 30 decl_saida
+      f[31],     // 31 iban
+      this.getCellUrl_(formSheet, row, 33),  // 32 comprovativo_url (extrai hyperlink real)
+      0,         // 33 valor_pago
+      false,     // 34 irmao_desconto
+      true,      // 35 ativo
+      '',        // 36 motivo_eliminacao
+      '',        // 37 eliminado_em
+      '',        // 38 eliminado_por
+      '',        // 39 notas_internas
+      '',        // 40 ultima_alteracao_em
+      '',        // 41 ultima_alteracao_por
+      false,     // 42 valor_confirmado
+      '',        // 43 valor_devido_override
+      '',        // 44 desconto_outro_motivo
+      ''         // 45 num_inscricao (preenchido depois por assignNumeros / trigger)
+    ];
+    atletas.appendRow(atletaRow);
+  },
+
+  // Re-extrai os URLs dos comprovativos da aba Forms para a aba Atletas,
+  // apanhando os hyperlinks "escondidos" (texto visível ≠ URL real).
+  // Idempotente — pode correr quantas vezes quiseres.
+  fixComprovativoUrls() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const formSheet = ss.getSheetByName('Respostas do Formulário 1');
+    const atletas = ss.getSheetByName('Atletas');
+    if (!formSheet || !atletas) throw new Error('Abas em falta');
+    const formLast = formSheet.getLastRow();
+    const formIds = formSheet.getRange(2, 34, formLast - 1, 1).getValues().flat();
+    const atletasLast = atletas.getLastRow();
+    const atletasIds = atletas.getRange(2, ATL_COLS.id_inscricao, atletasLast - 1, 1).getValues().flat();
+    let fixed = 0;
+    for (let i = 0; i < formIds.length; i++) {
+      const id = formIds[i];
+      if (!id) continue;
+      const formRow = i + 2;
+      let url = this.getCellUrl_(formSheet, formRow, 33);
+      // Fallback: se ainda for filename plain text, procurar no Drive por nome
+      if (typeof url === 'string' && url && !/^https?:\/\//i.test(url)) {
+        const filename = url.trim();
+        try {
+          const safe = filename.replace(/'/g, "\\'");
+          const files = DriveApp.searchFiles("title = '" + safe + "' and trashed = false");
+          if (files.hasNext()) {
+            url = files.next().getUrl();
+          }
+        } catch (e) { /* ignora, mantém o filename original */ }
+      }
+      const atletasIdx = atletasIds.indexOf(id);
+      if (atletasIdx === -1) continue;
+      const atletasRow = atletasIdx + 2;
+      const current = atletas.getRange(atletasRow, ATL_COLS.comprovativo_url).getValue();
+      if (String(url || '') !== String(current || '')) {
+        atletas.getRange(atletasRow, ATL_COLS.comprovativo_url).setValue(url);
+        fixed++;
+      }
+    }
+    Logger.log('fixComprovativoUrls: ' + fixed + ' URLs atualizados.');
+  },
+
+  // Idempotente: garante que as colunas 42, 43 e 44 existem na aba Atletas.
+  upgradeAtletas() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sh = ss.getSheetByName('Atletas');
+    if (!sh) throw new Error('Aba Atletas não existe — corre setupSheets primeiro');
+    const lastCol = sh.getLastColumn();
+    const headers = sh.getRange(1, 1, 1, Math.max(lastCol, 44)).getValues()[0];
+    if (headers[41] !== 'valor_confirmado') {
+      sh.getRange(1, 42).setValue('valor_confirmado').setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
+      const lastRow = sh.getLastRow();
+      if (lastRow >= 2) sh.getRange(2, 42, lastRow - 1, 1).setValue(false);
+    }
+    if (headers[42] !== 'valor_devido_override') {
+      sh.getRange(1, 43).setValue('valor_devido_override').setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
+    }
+    if (headers[43] !== 'desconto_outro_motivo') {
+      sh.getRange(1, 44).setValue('desconto_outro_motivo').setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
+    }
+    if (headers[44] !== 'num_inscricao') {
+      sh.getRange(1, 45).setValue('num_inscricao').setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
+    }
+    Logger.log('upgradeAtletas OK.');
+  },
+
+  // ============ Numeração e renomeação ============
+  shortName_(fullName) {
+    const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'sem_nome';
+    if (parts.length === 1) return parts[0];
+    return parts[0] + ' ' + parts[parts.length - 1];
+  },
+
+  formatDateDMY_(d) {
+    if (!d) return '';
+    const date = (d instanceof Date) ? d : new Date(d);
+    if (isNaN(date.getTime())) return '';
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    return dd + '-' + mm + '-' + date.getFullYear();
+  },
+
+  formatNum_(n) {
+    return String(Number(n) || 0).padStart(2, '0');
+  },
+
+  buildFilename_(num, atleta, dateInscricao, ext) {
+    return this.formatNum_(num) + '_' + this.shortName_(atleta) + '_' + this.formatDateDMY_(dateInscricao) + '.' + ext;
+  },
+
+  // Atribui números 1..N a todos os atletas, ordenados por timestamp_inscricao ascendente.
+  // Idempotente — pode correr quantas vezes quiseres.
+  assignNumeros() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sh = ss.getSheetByName('Atletas');
+    const last = sh.getLastRow();
+    if (last < 2) { Logger.log('Atletas vazia'); return; }
+    const data = sh.getRange(2, 1, last - 1, ATL_NCOLS).getValues();
+    const indexed = data.map(function (r, i) {
+      return {
+        sheetRow: i + 2,
+        timestamp: r[ATL_COLS.timestamp_inscricao - 1] || new Date(0)
+      };
+    });
+    indexed.sort(function (a, b) {
+      return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+    });
+    indexed.forEach(function (entry, i) {
+      sh.getRange(entry.sheetRow, ATL_COLS.num_inscricao).setValue(i + 1);
+    });
+    Logger.log('assignNumeros: ' + indexed.length + ' atletas numerados.');
+  },
+
+  // Renomeia ficheiros no Drive: NN_NomeCurto_DD-MM-YYYY.<ext>
+  renameComprovativos() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sh = ss.getSheetByName('Atletas');
+    const last = sh.getLastRow();
+    if (last < 2) return { renamed: 0, errors: [] };
+    const data = sh.getRange(2, 1, last - 1, ATL_NCOLS).getValues();
+    let renamed = 0;
+    const errors = [];
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const num = row[ATL_COLS.num_inscricao - 1];
+      const nome = row[ATL_COLS.atleta - 1];
+      const ts = row[ATL_COLS.timestamp_inscricao - 1];
+      const url = row[ATL_COLS.comprovativo_url - 1];
+      if (!num || !nome || !url) continue;
+      const fileId = Comprovativo.extractFileId(url);
+      if (!fileId) { errors.push({ atleta: nome, error: 'sem fileId — URL: ' + url }); continue; }
+      try {
+        const file = DriveApp.getFileById(fileId);
+        const oldName = file.getName();
+        const extMatch = oldName.match(/\.([a-zA-Z0-9]{2,5})$/);
+        const ext = extMatch ? extMatch[1].toLowerCase() : 'bin';
+        const newName = this.buildFilename_(num, nome, ts, ext);
+        if (oldName !== newName) {
+          file.setName(newName);
+          renamed++;
+        }
+      } catch (e) {
+        errors.push({ atleta: nome, error: e.message });
+      }
+    }
+    Logger.log('renameComprovativos: ' + renamed + ' renomeados. ' + errors.length + ' erros.');
+    if (errors.length > 0) errors.forEach(function (e) { Logger.log('  ✗ ' + e.atleta + ': ' + e.error); });
+    return { renamed: renamed, errors: errors };
+  },
+
+  // Atribui número e renomeia comprovativo para 1 atleta (chamado pelo trigger).
+  assignNumeroAndRename_(atletaId) {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sh = ss.getSheetByName('Atletas');
+    const last = sh.getLastRow();
+    if (last < 2) return;
+    const ids = sh.getRange(2, ATL_COLS.id_inscricao, last - 1, 1).getValues().flat();
+    const idx = ids.indexOf(atletaId);
+    if (idx === -1) return;
+    const sheetRow = idx + 2;
+    // Próximo número = max(existentes) + 1
+    const allNums = sh.getRange(2, ATL_COLS.num_inscricao, last - 1, 1).getValues().flat()
+      .map(function (n) { return Number(n) || 0; });
+    const nextNum = Math.max.apply(null, allNums.concat([0])) + 1;
+    sh.getRange(sheetRow, ATL_COLS.num_inscricao).setValue(nextNum);
+    // Rename do comprovativo
+    const nome = sh.getRange(sheetRow, ATL_COLS.atleta).getValue();
+    const ts = sh.getRange(sheetRow, ATL_COLS.timestamp_inscricao).getValue();
+    const url = sh.getRange(sheetRow, ATL_COLS.comprovativo_url).getValue();
+    const fileId = Comprovativo.extractFileId(url);
+    if (fileId) {
+      try {
+        const file = DriveApp.getFileById(fileId);
+        const oldName = file.getName();
+        const extMatch = oldName.match(/\.([a-zA-Z0-9]{2,5})$/);
+        const ext = extMatch ? extMatch[1].toLowerCase() : 'bin';
+        const newName = this.buildFilename_(nextNum, nome, ts, ext);
+        if (oldName !== newName) file.setName(newName);
+      } catch (e) {
+        Logger.log('Rename trigger falhou: ' + e.message);
+      }
+    }
+  }
+};
+
+// ============ TOP-LEVEL ENTRY POINTS ============
+function setupSheets()         { return Backfill.setupSheets(); }
+function backfillRun()         { return Backfill.run(); }
+function upgradeAtletas()      { return Backfill.upgradeAtletas(); }
+function fixComprovativoUrls() { return Backfill.fixComprovativoUrls(); }
+function assignNumeros()       { return Backfill.assignNumeros(); }
+function renameComprovativos() { return Backfill.renameComprovativos(); }
+function installTrigger()      { return Triggers.install(); }
+function readAllComprovativos(){ return Comprovativo.readAllPending('tiagojgcc@gmail.com'); }
+function fixAuth()             { var d = DocumentApp.create('cft_tmp'); DriveApp.getFileById(d.getId()).setTrashed(true); }
