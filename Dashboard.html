@@ -629,6 +629,35 @@
   .empty-banco { text-align: center; padding: 30px; color: var(--mid-gray); }
   /* ✓✓ duplo no atleta da Lista quando bank_confirmed */
   .conf-box.conf-bank { background: #2e6b27; color: white; border: none; }
+  /* Atleta detail modal */
+  .atleta-name { cursor: pointer; }
+  .atleta-name:hover { color: var(--green-dark); text-decoration: underline; }
+  .ad-section { margin: 14px 0; }
+  .ad-section-title { font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--sand); }
+  .ad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; font-size: 12.5px; }
+  .ad-grid b { font-weight: 600; }
+  .ad-row { padding: 8px 10px; border-bottom: 1px solid var(--sand); display: grid; grid-template-columns: 80px 80px 1fr auto; gap: 10px; align-items: center; }
+  .ad-row:last-child { border-bottom: none; }
+  .ad-row.confirmado { background: #f1f8f1; }
+  .ad-row .ad-data { font-family: var(--font-condensed); font-size: 11.5px; color: var(--mid-gray); }
+  .ad-row .ad-valor { font-family: var(--font-display); font-size: 18px; color: var(--green-dark); }
+  .ad-row .ad-valor.neg { color: #c0392b; }
+  .ad-row .ad-source { font-size: 11.5px; color: var(--mid-gray); }
+  .ad-totals {
+    background: var(--beige-mid); border: 1px solid var(--sand-dark);
+    padding: 10px 14px; border-radius: 6px; margin-top: 12px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; text-align: center;
+  }
+  .ad-total-num { font-family: var(--font-display); font-size: 22px; line-height: 1; }
+  .ad-total-lbl { font-family: var(--font-condensed); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mid-gray); margin-top: 4px; }
+  .ad-state-banner {
+    margin-top: 10px; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  }
+  .ad-state-banner.pago     { background: #d6f0d2; color: #2e6b27; }
+  .ad-state-banner.parcial  { background: #ffe9c2; color: #8a5a00; }
+  .ad-state-banner.problema { background: #f8d7d2; color: #8a1a1a; }
+  .ad-state-banner.devolver { background: #ffd97d; color: #5b3e00; }
+  .ad-state-banner.pendente { background: var(--beige-mid); color: var(--mid-gray); }
   /* Per-row contact buttons */
   .contact-btns { display: inline-flex; gap: 3px; margin-left: 6px; }
   .contact-btn {
@@ -900,7 +929,7 @@
     <div class="panel-head">
       <div class="panel-title">Banco · Reconciliação</div>
       <div class="banco-toolbar">
-        <button class="ab-refresh" id="banco-process-btn" onclick="bancoProcessAll()" title="Lê PDFs novos da pasta partilhada e extrai movimentos">⚙ Processar extratos novos</button>
+        <button class="btn-confirm" id="banco-process-btn" onclick="bancoProcessAll()" title="Lê PDFs novos da pasta partilhada e extrai movimentos" style="padding:8px 16px;">⚙ Processar extratos novos</button>
         <select id="banco-filter" class="search" style="max-width:220px;">
           <option value="pendente">Por confirmar</option>
           <option value="sem_match">Sem match</option>
@@ -940,6 +969,18 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeSem()">Cancelar</button>
       <button class="btn-confirm" id="sem-confirm-btn" onclick="confirmSem()" disabled>Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================ MODAL: HISTÓRICO DO DINHEIRO ================ -->
+<div class="modal-overlay" id="atleta-detail-overlay">
+  <div class="modal large" style="max-width:760px;">
+    <div class="modal-title">Histórico do dinheiro</div>
+    <div class="modal-sub" id="atleta-detail-sub">—</div>
+    <div id="atleta-detail-content"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeAtletaDetail()">Fechar</button>
     </div>
   </div>
 </div>
@@ -1531,7 +1572,7 @@ function renderTable(){
       <td class="col-check"><span class="row-check ${isSel ? 'checked' : ''}" onclick="toggleRow('${r.id}')">${isSel ? '✓' : ''}</span></td>
       <td class="num-cell">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</td>
       <td class="atleta">
-        <div class="atleta-name">${escHtml(r.nome)}${flags}</div>
+        <div class="atleta-name" onclick="openAtletaDetail('${r.id}')" title="Ver histórico do dinheiro">${escHtml(r.nome)}${flags}</div>
         <div class="atleta-icons">${contactBtns}${acts}</div>
       </td>
       <td class="clube">${escHtml(r.clube)}</td>
@@ -1945,6 +1986,118 @@ async function confirmDel(){
     closeDel();
     await refreshNow();
   } catch (e) { toast('Erro: ' + e.message, true); btn.disabled = false; }
+}
+
+// ============ ATLETA DETAIL (Histórico do dinheiro) ============
+async function openAtletaDetail(atletaId){
+  const r = (dataAll || []).find(a => a.id === atletaId);
+  if (!r) return;
+  document.getElementById('atleta-detail-sub').textContent = r.nome + ' · ' + (r.clube || '') + ' · ' + (r.tipo || '');
+  document.getElementById('atleta-detail-content').innerHTML = '<div style="text-align:center;padding:30px;color:var(--mid-gray);">A carregar movimentos…</div>';
+  document.getElementById('atleta-detail-overlay').classList.add('open');
+  let movs = [];
+  try { movs = await Api.banco_listForAtleta(atletaId); } catch (e) { movs = []; }
+  renderAtletaDetail(r, movs);
+}
+function closeAtletaDetail(){ document.getElementById('atleta-detail-overlay').classList.remove('open'); }
+document.addEventListener('click', e => {
+  if (e.target && e.target.id === 'atleta-detail-overlay') closeAtletaDetail();
+});
+
+function renderAtletaDetail(r, movs){
+  const p = r.pricing || {};
+  const status = paymentStatus(r);
+  const compHtml = r.comprovativo_url
+    ? `<a href="${escAttr(r.comprovativo_url)}" target="_blank" rel="noopener" style="color:var(--green-dark);">📄 Abrir comprovativo</a>`
+    : '<span style="color:var(--mid-gray);">sem comprovativo</span>';
+  // Movimentos sorted by date asc
+  movs.sort((a, b) => new Date(a.data_operacao) - new Date(b.data_operacao));
+  let totalRecebido = 0, totalDevolvido = 0;
+  movs.forEach(m => {
+    if (m.confirmado) {
+      if (m.valor >= 0) totalRecebido += Number(m.valor) || 0;
+      else totalDevolvido += Math.abs(Number(m.valor) || 0);
+    }
+  });
+  const saldo = totalRecebido - totalDevolvido;
+  const devido = p.devido || 0;
+  const diff = saldo - devido;
+  let estadoLabel = 'pendente';
+  let estadoBanner = 'pendente';
+  if (saldo === 0) { estadoLabel = 'sem entradas confirmadas em conta'; estadoBanner = 'pendente'; }
+  else if (Math.abs(diff) < 0.01) { estadoLabel = 'pago integralmente · OK'; estadoBanner = 'pago'; }
+  else if (diff < 0) { estadoLabel = `falta receber ${Math.abs(diff).toFixed(0)}€`; estadoBanner = 'parcial'; }
+  else { estadoLabel = `excesso de ${diff.toFixed(0)}€ · a devolver`; estadoBanner = 'devolver'; }
+
+  const html = `
+    <div class="ad-section">
+      <div class="ad-section-title">Identidade</div>
+      <div class="ad-grid">
+        <div><b>Encarregado:</b> ${escHtml(r.encarregado || '—')}</div>
+        <div><b>Email:</b> ${escHtml(r.email_enc || '—')}</div>
+        <div><b>Telefone:</b> ${escHtml(r.telefone || '—')}</div>
+        <div><b>IBAN devolução:</b> <code style="font-size:11px;">${escHtml(r._raw && r._raw.iban || '—')}</code></div>
+      </div>
+    </div>
+    <div class="ad-section">
+      <div class="ad-section-title">Inscrição</div>
+      <div class="ad-grid">
+        <div><b>Semanas:</b> ${escHtml(r.semana || '—')}</div>
+        <div><b>Tipo:</b> ${escHtml(r.tipo || '—')}</div>
+        <div><b>Devido:</b> ${devido}€ ${p.info && p.info.desc ? '(com desconto: ' + (r.desconto_motivo || '—') + ')' : ''}</div>
+        <div><b>Comprovativo:</b> ${compHtml}</div>
+        <div><b>Valor lido OCR:</b> ${r.val_pago != null ? r.val_pago + '€' : '—'} ${r.valor_confirmado ? '✓ confirmado' : '⚠ por confirmar'}</div>
+      </div>
+    </div>
+    <div class="ad-section">
+      <div class="ad-section-title">Movimentos bancários</div>
+      ${movs.length === 0
+        ? '<div style="color:var(--mid-gray);font-size:12px;padding:14px;background:var(--beige-mid);border-radius:6px;">Nenhum movimento bancário associado. Pode aparecer após processar o próximo extrato.</div>'
+        : movs.map(m => `
+          <div class="ad-row ${m.confirmado ? 'confirmado' : ''}">
+            <span class="ad-data">${fmtBancoDate(m.data_operacao)}</span>
+            <span class="ad-valor ${m.valor < 0 ? 'neg' : ''}">${m.valor >= 0 ? '+' : ''}${Number(m.valor).toFixed(0)}€</span>
+            <span><b>${escHtml(m.nome_ordenante)}</b><br><span class="ad-source">${escHtml(m.filename || '')}${m.info_adicional && m.info_adicional !== 'NOTPROVIDED' ? ' · ' + escHtml(m.info_adicional) : ''}</span></span>
+            <span>
+              ${m.confirmado
+                ? `<button class="trab-btn" onclick="adUnconfirm('${m.id}', '${r.id}')">↺ Desfazer</button>`
+                : `<button class="trab-btn ok" onclick="adConfirm('${m.id}', '${r.id}')">✓ Confirmar</button>`}
+            </span>
+          </div>
+        `).join('')
+      }
+    </div>
+    <div class="ad-totals">
+      <div><div class="ad-total-num">${devido}€</div><div class="ad-total-lbl">Devido</div></div>
+      <div><div class="ad-total-num" style="color:var(--green-dark);">${totalRecebido.toFixed(0)}€</div><div class="ad-total-lbl">Recebido</div></div>
+      <div><div class="ad-total-num" style="color:#c0392b;">${totalDevolvido.toFixed(0)}€</div><div class="ad-total-lbl">Devolvido</div></div>
+      <div><div class="ad-total-num" style="color:var(--charcoal);">${saldo.toFixed(0)}€</div><div class="ad-total-lbl">Saldo</div></div>
+    </div>
+    <div class="ad-state-banner ${estadoBanner}">${estadoLabel}</div>
+  `;
+  document.getElementById('atleta-detail-content').innerHTML = html;
+}
+
+async function adConfirm(movId, atletaId){
+  try {
+    await Api.banco_confirm(movId, atletaId);
+    toast('Movimento confirmado');
+    // Re-fetch e re-render
+    const movs = await Api.banco_listForAtleta(atletaId);
+    const r = (dataAll || []).find(a => a.id === atletaId);
+    if (r) renderAtletaDetail(r, movs);
+    refreshNow();
+  } catch (e) { toast('Erro: ' + e.message, true); }
+}
+async function adUnconfirm(movId, atletaId){
+  try {
+    await Api.banco_unconfirm(movId);
+    toast('Confirmação desfeita');
+    const movs = await Api.banco_listForAtleta(atletaId);
+    const r = (dataAll || []).find(a => a.id === atletaId);
+    if (r) renderAtletaDetail(r, movs);
+    refreshNow();
+  } catch (e) { toast('Erro: ' + e.message, true); }
 }
 
 // ============ BANCO (reconciliação) ============

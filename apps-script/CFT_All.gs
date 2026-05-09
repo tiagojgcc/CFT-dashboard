@@ -43,6 +43,7 @@ function handle_(e, method) {
       case 'readAllPending':   result = Comprovativo.readAllPending(user); break;
       case 'banco_processAll': result = Banco.processAll(); break;
       case 'banco_list':       result = Banco.list(); break;
+      case 'banco_listForAtleta': result = Banco.listForAtleta(params.atletaId); break;
       case 'banco_confirm':    result = Banco.confirmMatch(params.movId, params.atletaId, user); break;
       case 'banco_unconfirm':  result = Banco.unconfirmMatch(params.movId, user); break;
       case 'banco_reassign':   result = Banco.reassignMatch(params.movId, params.atletaId, user); break;
@@ -952,54 +953,87 @@ const Banco = {
     return { processed: results.length, results };
   },
 
-  // Match algorithm: para cada movimento sem atleta, procura candidatos por valor + nome
+  // Normaliza IBAN: remove espaços e maiúsculas
+  _normIban(iban) { return String(iban || '').replace(/\s+/g, '').toUpperCase(); },
+
+  // Match algorithm em 3 níveis: IBAN > nome+valor > nome só.
+  // Não sobrescreve matches já confirmados manualmente.
   matchAll() {
     const sh = this.sheet();
     const last = sh.getLastRow();
     if (last < 2) return { matched: 0 };
     const all = Inscricoes.getAll();
-    const atletas = all.atletas;
+    const atletas = all.atletas.filter(a => a.ativo);
+    // Indexa atletas por IBAN (normalizado)
+    const byIban = {};
+    atletas.forEach(a => {
+      const ib = this._normIban(a.iban);
+      if (ib && ib.length >= 15) {
+        (byIban[ib] = byIban[ib] || []).push(a);
+      }
+    });
     const range = sh.getRange(2, 1, last - 1, 16).getValues();
     let matched = 0;
     range.forEach((row, idx) => {
-      if (row[10]) return;  // já tem match
+      if (row[12] === 'confirmado' || row[13] === true || row[13] === 'TRUE') return;  // não mexer em confirmados
       const valor = Number(row[5]) || 0;
       const ordenante = String(row[6] || '').toLowerCase();
+      const ibanOrd = this._normIban(row[7]);
       const info = String(row[8] || '').toLowerCase();
-      const candidates = atletas.filter(a => {
-        if (!a.ativo) return false;
-        if (Number(a.valor_pago) !== valor) return false;
-        // 1) match por nome do encarregado vs ordenante
-        const enc = String(a.encarregado || '').toLowerCase();
-        if (enc && ordenante) {
-          const encWords = enc.split(/\s+/).filter(w => w.length > 3);
-          const matchedWords = encWords.filter(w => ordenante.indexOf(w) !== -1);
-          if (matchedWords.length >= 2) return true;
-        }
-        // 2) match por nome do atleta vs info_adicional
-        const nome = String(a.atleta || '').toLowerCase();
-        if (nome && info && info.indexOf('notprovided') === -1) {
-          const nomeWords = nome.split(/\s+/).filter(w => w.length > 3);
-          const matchedWords = nomeWords.filter(w => info.indexOf(w) !== -1);
-          if (matchedWords.length >= 2) return true;
-        }
-        return false;
-      });
       const sheetRow = idx + 2;
-      if (candidates.length === 1) {
-        sh.getRange(sheetRow, 11).setValue(candidates[0].id_inscricao);
-        sh.getRange(sheetRow, 12).setValue(0.9);
-        sh.getRange(sheetRow, 13).setValue('auto_alta');
-        matched++;
-      } else if (candidates.length > 1) {
-        sh.getRange(sheetRow, 11).setValue(candidates[0].id_inscricao);
-        sh.getRange(sheetRow, 12).setValue(0.5);
-        sh.getRange(sheetRow, 13).setValue('auto_ambiguo');
-      } else {
-        sh.getRange(sheetRow, 13).setValue('sem_match');
+      let chosen = null;
+      let score = 0;
+      let status = 'sem_match';
+      // 1) Match por IBAN — mais fiável (não exige valor exato)
+      if (ibanOrd && byIban[ibanOrd]) {
+        const cands = byIban[ibanOrd];
+        if (cands.length === 1) {
+          chosen = cands[0]; score = 0.95; status = 'auto_iban';
+        } else {
+          // Vários atletas com mesmo IBAN (irmãos): preferir o que casa o valor
+          const exactValor = cands.find(a => Number(a.valor_pago) === valor);
+          chosen = exactValor || cands[0];
+          score = exactValor ? 0.85 : 0.6;
+          status = exactValor ? 'auto_iban' : 'auto_iban_ambiguo';
+        }
       }
+      // 2) Fallback: nome + valor
+      if (!chosen) {
+        const candidates = atletas.filter(a => {
+          if (Number(a.valor_pago) !== valor) return false;
+          const enc = String(a.encarregado || '').toLowerCase();
+          if (enc && ordenante) {
+            const encWords = enc.split(/\s+/).filter(w => w.length > 3);
+            const matchedWords = encWords.filter(w => ordenante.indexOf(w) !== -1);
+            if (matchedWords.length >= 2) return true;
+          }
+          const nome = String(a.atleta || '').toLowerCase();
+          if (nome && info && info.indexOf('notprovided') === -1) {
+            const nomeWords = nome.split(/\s+/).filter(w => w.length > 3);
+            const matchedWords = nomeWords.filter(w => info.indexOf(w) !== -1);
+            if (matchedWords.length >= 2) return true;
+          }
+          return false;
+        });
+        if (candidates.length === 1) {
+          chosen = candidates[0]; score = 0.85; status = 'auto_nome';
+        } else if (candidates.length > 1) {
+          chosen = candidates[0]; score = 0.5; status = 'auto_ambiguo';
+        }
+      }
+      // Escreve resultado
+      sh.getRange(sheetRow, 11).setValue(chosen ? chosen.id_inscricao : '');
+      sh.getRange(sheetRow, 12).setValue(score);
+      sh.getRange(sheetRow, 13).setValue(status);
+      if (chosen) matched++;
     });
     return { matched };
+  },
+
+  // Devolve lista de movimentos relacionados a um atleta específico (inclui pendentes e confirmados).
+  listForAtleta(atletaId) {
+    const all = this.list();
+    return all.filter(m => m.atleta_match_id === atletaId);
   },
 
   list() {

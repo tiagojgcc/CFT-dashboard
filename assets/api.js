@@ -153,6 +153,7 @@
     unmarkTrabalhoResolved(itemId, atletaId, atletaNome){ return this._call('unmarkTrabalhoResolved', { itemId, atletaId, atletaNome }); },
     banco_processAll()          { return this._call('banco_processAll'); },
     banco_list()                { return this._call('banco_list'); },
+    banco_listForAtleta(atletaId) { return this._call('banco_listForAtleta', { atletaId }); },
     banco_confirm(movId, atletaId)   { return this._call('banco_confirm',   { movId, atletaId }); },
     banco_unconfirm(movId)           { return this._call('banco_unconfirm', { movId }); },
     banco_reassign(movId, atletaId)  { return this._call('banco_reassign',  { movId, atletaId }); }
