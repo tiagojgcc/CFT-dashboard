@@ -604,6 +604,31 @@
   .trab-msg { width: 100%; min-height: 110px; resize: vertical; padding: 8px 10px; border: 1px solid var(--sand); border-radius: 4px; font: inherit; background: var(--white); }
   .trab-recipient { font-size: 11.5px; color: var(--mid-gray); margin-top: 6px; }
   .empty-trab { text-align: center; padding: 30px; color: var(--mid-gray); }
+  /* Banco panel */
+  .banco-toolbar { display: flex; gap: 10px; margin-left: auto; align-items: center; }
+  .banco-mov {
+    background: var(--white); border: 1px solid var(--sand); border-radius: 6px;
+    padding: 12px 14px; margin-bottom: 10px; display: grid;
+    grid-template-columns: 90px 90px 1fr 1.4fr 1fr auto; gap: 12px; align-items: center;
+  }
+  .banco-mov.confirmado { background: #f1f8f1; border-color: var(--green-bright); }
+  .banco-mov.ambiguo { border-color: var(--orange-accent); background: #fff8ec; }
+  .banco-mov.sem_match { border-color: #c0392b; background: #fef2f0; }
+  .banco-data { font-family: var(--font-condensed); font-weight: 700; font-size: 12px; color: var(--mid-gray); letter-spacing: 0.05em; }
+  .banco-valor { font-family: var(--font-display); font-size: 20px; color: var(--green-dark); }
+  .banco-ordenante { font-weight: 600; font-size: 13px; }
+  .banco-info { font-size: 11.5px; color: var(--mid-gray); font-style: italic; }
+  .banco-match-info {
+    padding: 6px 10px; border-radius: 4px; background: var(--beige-mid); font-size: 12px;
+  }
+  .banco-match-info.alta { background: #d6f0d2; }
+  .banco-match-info.ambiguo { background: #ffe9c2; }
+  .banco-match-info.semmatch { background: #f8d7d2; }
+  .banco-match-info select { width: 100%; max-width: 220px; padding: 4px; font-size: 11px; }
+  .banco-acts { display: inline-flex; gap: 6px; }
+  .empty-banco { text-align: center; padding: 30px; color: var(--mid-gray); }
+  /* ✓✓ duplo no atleta da Lista quando bank_confirmed */
+  .conf-box.conf-bank { background: #2e6b27; color: white; border: none; }
   /* Per-row contact buttons */
   .contact-btns { display: inline-flex; gap: 3px; margin-left: 6px; }
   .contact-btn {
@@ -738,7 +763,8 @@
     <div class="nav-more">
       <div class="tab nav-more-toggle" onclick="document.getElementById('nav-more-menu').classList.toggle('open')">⋯</div>
       <div class="nav-more-menu" id="nav-more-menu">
-        <div class="more-item" data-panel="historico" onclick="showTab('historico'); document.getElementById('nav-more-menu').classList.remove('open');">Histórico</div>
+        <div class="more-item" data-panel="banco"      onclick="showTab('banco'); document.getElementById('nav-more-menu').classList.remove('open');">Banco <span class="tab-count" id="tc-banco">0</span></div>
+        <div class="more-item" data-panel="historico"  onclick="showTab('historico'); document.getElementById('nav-more-menu').classList.remove('open');">Histórico</div>
         <div class="more-item" data-panel="eliminados" onclick="showTab('eliminados'); document.getElementById('nav-more-menu').classList.remove('open');">Eliminados <span class="tab-count" id="tc-eliminados">0</span></div>
       </div>
     </div>
@@ -867,6 +893,24 @@
       <div class="panel-sub" id="hist-sub">— eventos</div>
     </div>
     <div id="hist-content"></div>
+  </div>
+
+  <!-- ============ BANCO (reconciliação) ============ -->
+  <div class="panel" id="panel-banco">
+    <div class="panel-head">
+      <div class="panel-title">Banco · Reconciliação</div>
+      <div class="banco-toolbar">
+        <button class="ab-refresh" id="banco-process-btn" onclick="bancoProcessAll()" title="Lê PDFs novos da pasta partilhada e extrai movimentos">⚙ Processar extratos novos</button>
+        <select id="banco-filter" class="search" style="max-width:220px;">
+          <option value="pendente">Por confirmar</option>
+          <option value="sem_match">Sem match</option>
+          <option value="confirmado">Confirmados</option>
+          <option value="todos">Todos</option>
+        </select>
+      </div>
+      <div class="panel-sub" id="banco-summary">—</div>
+    </div>
+    <div id="banco-items"></div>
   </div>
 
   <!-- ============ ELIMINADOS ============ -->
@@ -1037,6 +1081,7 @@ function showTab(id){
   if (id === 'historico') renderHistorico();
   if (id === 'eliminados') renderEliminados();
   if (id === 'trabalho') { renderTrabalho(); }
+  if (id === 'banco') { renderBanco(); }
 }
 // Fecha o menu "⋯" se clicar fora
 document.addEventListener('click', e => {
@@ -1454,12 +1499,19 @@ function renderTable(){
       : (r.comprovativo_url ? `<span class="comp-link big" style="opacity:0.5;cursor:help;" title="URL inválido — corre fixComprovativoUrls no Apps Script. Texto: ${escAttr(r.comprovativo_url)}">📄 ?</span>` : '');
     const ocrBtn = (r.comprovativo_url && (r.val_pago == null || r.val_pago === 0))
       ? `<span class="row-act" style="font-size:11px;" title="Ler valor automaticamente do comprovativo" onclick="ocrComprovativo('${r.id}')">🔍</span>` : '';
-    // Coluna ✓: confirmação separada
-    const confCell = (r.val_pago != null && r.val_pago > 0)
-      ? (r.valor_confirmado
-          ? `<span class="conf-box conf-on" title="Valor confirmado · clica para desconfirmar" onclick="toggleConfirm('${r.id}', false)">✓</span>`
-          : `<span class="conf-box conf-off" title="Valor por confirmar (lido por OCR). Clica para confirmar." onclick="toggleConfirm('${r.id}', true)">⚠</span>`)
-      : '<span style="color:var(--mid-gray)">—</span>';
+    // Coluna ✓: confirmação separada (✓✓ verde escuro se também confirmado em conta bancária)
+    let confCell;
+    if (r.val_pago != null && r.val_pago > 0) {
+      if (r.bank_confirmed_em) {
+        confCell = `<span class="conf-box conf-bank" title="Confirmado em conta bancária · ${escAttr(r.bank_confirmed_em)}">✓✓</span>`;
+      } else if (r.valor_confirmado) {
+        confCell = `<span class="conf-box conf-on" title="Valor confirmado · clica para desconfirmar" onclick="toggleConfirm('${r.id}', false)">✓</span>`;
+      } else {
+        confCell = `<span class="conf-box conf-off" title="Valor por confirmar (lido por OCR). Clica para confirmar." onclick="toggleConfirm('${r.id}', true)">⚠</span>`;
+      }
+    } else {
+      confCell = '<span style="color:var(--mid-gray)">—</span>';
+    }
     const devidoOverridden = r.valor_devido_override != null;
     const devidoCell = `<input class="pago-edit ${devidoOverridden ? 'overridden' : ''}" type="number" min="0" step="1" value="${total}" onblur="saveDevidoOverride('${r.id}', this.value, ${total})" onkeydown="if(event.key==='Enter')this.blur();" title="${devidoOverridden ? 'Override manual ativo. Apaga e Enter para repor cálculo automático.' : 'Valor calculado. Edita para forçar valor manual.'}">${devidoOverridden ? '<span class="reset-override" onclick="saveDevidoOverride(\''+r.id+'\', \'\', '+total+')" title="Repor cálculo automático">↺</span>' : ''}`;
     // Coluna Desconto
@@ -1893,6 +1945,137 @@ async function confirmDel(){
     closeDel();
     await refreshNow();
   } catch (e) { toast('Erro: ' + e.message, true); btn.disabled = false; }
+}
+
+// ============ BANCO (reconciliação) ============
+let bancoMovimentos = [];
+async function refreshBanco(){
+  try {
+    bancoMovimentos = await Api.banco_list();
+    renderBanco();
+  } catch (e) { toast('Erro a carregar movimentos: ' + e.message, true); }
+}
+async function renderBanco(){
+  // Carrega lista do backend se ainda não carregada
+  if (bancoMovimentos.length === 0) {
+    try { bancoMovimentos = await Api.banco_list(); } catch (e) { bancoMovimentos = []; }
+  }
+  const filterEl = document.getElementById('banco-filter');
+  const filter = filterEl ? filterEl.value : 'pendente';
+  const all = bancoMovimentos || [];
+  const filtered = all.filter(m => {
+    if (filter === 'todos') return true;
+    if (filter === 'pendente') return !m.confirmado && m.match_status !== 'sem_match';
+    if (filter === 'sem_match') return m.match_status === 'sem_match';
+    if (filter === 'confirmado') return m.confirmado;
+    return true;
+  });
+  // Counters
+  const confirmados = all.filter(m => m.confirmado).length;
+  const semMatch = all.filter(m => m.match_status === 'sem_match').length;
+  const pendentes = all.filter(m => !m.confirmado && m.match_status !== 'sem_match').length;
+  const tcBanco = document.getElementById('tc-banco');
+  if (tcBanco) tcBanco.textContent = pendentes + semMatch;
+  const sub = document.getElementById('banco-summary');
+  if (sub) sub.textContent = `${all.length} movimentos · ${confirmados} confirmados · ${pendentes} por confirmar · ${semMatch} sem match`;
+  const host = document.getElementById('banco-items');
+  if (!host) return;
+  if (filtered.length === 0) {
+    host.innerHTML = '<div class="empty-banco"><div class="h">Sem movimentos para mostrar</div><div class="s" style="font-size:12px;">' + (all.length === 0 ? 'Carrega os PDFs na pasta partilhada e clica "Processar extratos novos".' : 'Nenhum movimento corresponde ao filtro atual.') + '</div></div>';
+    return;
+  }
+  // Sort by date desc
+  filtered.sort((a, b) => new Date(b.data_operacao) - new Date(a.data_operacao));
+  host.innerHTML = filtered.map(m => bancoRenderItem(m)).join('');
+}
+
+function bancoRenderItem(m){
+  const klass = m.confirmado ? 'confirmado' : (m.match_status === 'sem_match' ? 'sem_match' : (m.match_status === 'auto_ambiguo' ? 'ambiguo' : ''));
+  const atleta = (dataAll || []).find(a => a.id === m.atleta_match_id);
+  let matchInfo;
+  if (m.confirmado) {
+    matchInfo = `<div class="banco-match-info alta">✓ ${escHtml(atleta ? atleta.nome : '(?)')}</div>`;
+  } else if (atleta) {
+    const k = m.match_status === 'auto_alta' ? 'alta' : 'ambiguo';
+    matchInfo = `<div class="banco-match-info ${k}">${k === 'alta' ? '🟢' : '⚠'} ${escHtml(atleta.nome)} <small>(${escHtml(atleta.clube || '')})</small></div>`;
+  } else {
+    matchInfo = `<div class="banco-match-info semmatch">${bancoAtletaSelect(m.id)}</div>`;
+  }
+  const acts = m.confirmado
+    ? `<button class="trab-btn" onclick="bancoUnconfirm('${m.id}')" title="Desfazer confirmação">↺ Desfazer</button>`
+    : (atleta
+        ? `<button class="trab-btn ok" onclick="bancoConfirm('${m.id}', '${atleta.id}')" title="Confirmar match">✓ Confirmar</button>
+           <button class="trab-btn" onclick="bancoOpenReassign('${m.id}')" title="Mudar atleta">⇄ Mudar</button>`
+        : '');
+  return `<div class="banco-mov ${klass}" data-id="${m.id}">
+    <div class="banco-data">${fmtBancoDate(m.data_operacao)}</div>
+    <div class="banco-valor">${m.valor.toFixed(0)}€</div>
+    <div>
+      <div class="banco-ordenante">${escHtml(m.nome_ordenante || '—')}</div>
+      <div class="banco-info">${escHtml(m.info_adicional && m.info_adicional !== 'NOTPROVIDED' ? m.info_adicional : '')}</div>
+    </div>
+    ${matchInfo}
+    <div class="banco-info">${escHtml(m.filename || '')}</div>
+    <div class="banco-acts">${acts}</div>
+  </div>`;
+}
+
+function fmtBancoDate(d){
+  if (!d) return '';
+  const date = (d instanceof Date) ? d : new Date(d);
+  if (isNaN(date.getTime())) return String(d);
+  return String(date.getDate()).padStart(2,'0') + '/' + String(date.getMonth()+1).padStart(2,'0');
+}
+
+function bancoAtletaSelect(movId){
+  const opts = (data || []).map(a => `<option value="${a.id}">${escHtml(a.nome)} · ${escHtml(a.clube||'')}</option>`).join('');
+  return `<select onchange="bancoReassign('${movId}', this.value)"><option value="">— escolher atleta —</option>${opts}</select>`;
+}
+
+async function bancoProcessAll(){
+  const btn = document.getElementById('banco-process-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'A processar… (1-3 min)'; }
+  toast('A processar extratos — pode demorar 1-3 min');
+  try {
+    const r = await Api.banco_processAll();
+    toast(`Processados: ${r.processed} ficheiro${r.processed === 1 ? '' : 's'}`);
+    await refreshBanco();
+  } catch (e) {
+    toast('Erro: ' + e.message, true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '⚙ Processar extratos novos'; }
+  }
+}
+async function bancoConfirm(movId, atletaId){
+  try {
+    await Api.banco_confirm(movId, atletaId);
+    toast('Match confirmado');
+    await refreshBanco();
+    refreshNow();  // atualizar lista de atletas (✓✓)
+  } catch (e) { toast('Erro: ' + e.message, true); }
+}
+async function bancoUnconfirm(movId){
+  try {
+    await Api.banco_unconfirm(movId);
+    toast('Confirmação desfeita');
+    await refreshBanco();
+    refreshNow();
+  } catch (e) { toast('Erro: ' + e.message, true); }
+}
+async function bancoReassign(movId, atletaId){
+  if (!atletaId) return;
+  try {
+    await Api.banco_reassign(movId, atletaId);
+    toast('Atleta reatribuído — clica Confirmar para validar');
+    await refreshBanco();
+  } catch (e) { toast('Erro: ' + e.message, true); }
+}
+function bancoOpenReassign(movId){
+  // Encontra a row e substitui o match-info por um select
+  const movRow = document.querySelector(`.banco-mov[data-id="${movId}"]`);
+  if (!movRow) return;
+  const matchInfo = movRow.querySelector('.banco-match-info');
+  if (matchInfo) matchInfo.outerHTML = '<div class="banco-match-info semmatch">' + bancoAtletaSelect(movId) + '</div>';
 }
 
 // ============ TRABALHO (vista única, multi-select, BCC) ============
@@ -2360,6 +2543,9 @@ window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.th-sort').forEach(th => {
     th.addEventListener('click', () => setSort(th.dataset.sort));
   });
+  // Wire filter Banco
+  const bf = document.getElementById('banco-filter');
+  if (bf) bf.addEventListener('change', renderBanco);
 });
 </script>
 

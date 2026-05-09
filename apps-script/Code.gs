@@ -41,6 +41,11 @@ function handle_(e, method) {
         break;
       case 'readComprovativo': result = Comprovativo.readAndSave(params.id, user); break;
       case 'readAllPending':   result = Comprovativo.readAllPending(user); break;
+      case 'banco_processAll': result = Banco.processAll(); break;
+      case 'banco_list':       result = Banco.list(); break;
+      case 'banco_confirm':    result = Banco.confirmMatch(params.movId, params.atletaId, user); break;
+      case 'banco_unconfirm':  result = Banco.unconfirmMatch(params.movId, user); break;
+      case 'banco_reassign':   result = Banco.reassignMatch(params.movId, params.atletaId, user); break;
       default: throw new Error('Unknown action: ' + action);
     }
     return json_({ ok: true, user: user, data: result });

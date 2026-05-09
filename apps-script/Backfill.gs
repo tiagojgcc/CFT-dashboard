@@ -44,7 +44,7 @@ const Backfill = {
         'motivo_eliminacao','eliminado_em','eliminado_por','notas_internas',
         'ultima_alteracao_em','ultima_alteracao_por',
         'valor_confirmado','valor_devido_override','desconto_outro_motivo',
-        'num_inscricao'
+        'num_inscricao','bank_confirmed_em','bank_confirmed_por'
       ];
       sh.appendRow(headers);
       sh.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
@@ -206,7 +206,9 @@ const Backfill = {
       false,     // 42 valor_confirmado
       '',        // 43 valor_devido_override
       '',        // 44 desconto_outro_motivo
-      ''         // 45 num_inscricao (preenchido depois por assignNumeros / trigger)
+      '',        // 45 num_inscricao
+      '',        // 46 bank_confirmed_em
+      ''         // 47 bank_confirmed_por
     ];
     atletas.appendRow(atletaRow);
   },
@@ -272,6 +274,23 @@ const Backfill = {
     }
     if (headers[44] !== 'num_inscricao') {
       sh.getRange(1, 45).setValue('num_inscricao').setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
+    }
+    if (headers[45] !== 'bank_confirmed_em') {
+      sh.getRange(1, 46).setValue('bank_confirmed_em').setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
+    }
+    if (headers[46] !== 'bank_confirmed_por') {
+      sh.getRange(1, 47).setValue('bank_confirmed_por').setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
+    }
+    // Garante que aba Banco_Movimentos existe
+    Banco.setupSheet();
+    // Garante que Config tem banco_folder_id
+    const configSh = ss.getSheetByName('Config');
+    if (configSh) {
+      const configKeys = configSh.getRange(2, 1, configSh.getLastRow() - 1, 1).getValues().flat();
+      if (configKeys.indexOf('banco_folder_id') === -1) {
+        configSh.appendRow(['banco_folder_id', '', 'ID da pasta do Drive com os PDFs do extrato NovoBanco']);
+        Config.invalidate();
+      }
     }
     Logger.log('upgradeAtletas OK.');
   },

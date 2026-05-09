@@ -117,6 +117,8 @@
         motivo_eliminacao: a.motivo_eliminacao || '',
         valor_confirmado: !!a.valor_confirmado,
         valor_devido_override: (a.valor_devido_override === '' || a.valor_devido_override == null) ? null : Number(a.valor_devido_override),
+        bank_confirmed_em: a.bank_confirmed_em || null,
+        bank_confirmed_por: a.bank_confirmed_por || '',
         duplicate_warning: !!a.duplicate_warning,
         duplicate_ids: a.duplicate_ids || [],
         comprovativo_url: a.comprovativo_url || '',
@@ -148,7 +150,12 @@
     readComprovativo(id)              { return this._call('readComprovativo', { id }); },
     readAllPending()                  { return this._call('readAllPending'); },
     markTrabalhoResolved(itemId, atletaId, atletaNome) { return this._call('markTrabalhoResolved', { itemId, atletaId, atletaNome }); },
-    unmarkTrabalhoResolved(itemId, atletaId, atletaNome){ return this._call('unmarkTrabalhoResolved', { itemId, atletaId, atletaNome }); }
+    unmarkTrabalhoResolved(itemId, atletaId, atletaNome){ return this._call('unmarkTrabalhoResolved', { itemId, atletaId, atletaNome }); },
+    banco_processAll()          { return this._call('banco_processAll'); },
+    banco_list()                { return this._call('banco_list'); },
+    banco_confirm(movId, atletaId)   { return this._call('banco_confirm',   { movId, atletaId }); },
+    banco_unconfirm(movId)           { return this._call('banco_unconfirm', { movId }); },
+    banco_reassign(movId, atletaId)  { return this._call('banco_reassign',  { movId, atletaId }); }
   };
 
   window.Api = Api;
