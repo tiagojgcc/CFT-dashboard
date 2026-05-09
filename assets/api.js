@@ -36,10 +36,24 @@
       return json.data;
     },
 
+    CACHE_KEY: 'cft_dashboard_cache_v1',
+
     async getAll() {
       const data = await this._call('getAll');
       this.lastUpdate = new Date(data.lastUpdate);
       this._cache = data;
+      // Persistir snapshot para load instantâneo na próxima visita
+      try {
+        const payload = JSON.stringify({ ts: Date.now(), data });
+        // localStorage tem limite ~5MB; corta historico/emails se preciso
+        if (payload.length < 4_000_000) {
+          localStorage.setItem(this.CACHE_KEY, payload);
+        }
+      } catch (e) { /* quota cheia ou desativado — ignora */ }
+      return this._unpack(data);
+    },
+
+    _unpack(data) {
       return {
         atletas: (data.atletas || []).map(a => this.adapt(a)),
         historico: data.historico || [],
@@ -50,6 +64,23 @@
         lastUpdate: this.lastUpdate
       };
     },
+
+    // Devolve snapshot persistido (ou null). Nunca lança.
+    getCachedSync() {
+      try {
+        const raw = localStorage.getItem(this.CACHE_KEY);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        if (!obj || !obj.data) return null;
+        // Ignora cache > 24h
+        if (Date.now() - (obj.ts || 0) > 24 * 3600 * 1000) return null;
+        this._cache = obj.data;
+        this.lastUpdate = obj.data.lastUpdate ? new Date(obj.data.lastUpdate) : null;
+        return this._unpack(obj.data);
+      } catch (e) { return null; }
+    },
+
+    clearCache() { try { localStorage.removeItem(this.CACHE_KEY); } catch (e) {} },
 
     adapt(a) {
       const isExterno = String(a.opcao_inscricao || '').trim().toLowerCase() === 'externo';

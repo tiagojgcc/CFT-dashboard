@@ -2258,10 +2258,23 @@ function renderAll(){
   formatLastUpdate();
 }
 
-// Auth → first load + auto-refresh a cada 45s
+// Auth → first load + auto-refresh a cada 5min
 Auth.onChange((token, email) => {
   if (!token) return;
   document.getElementById('ab-user').textContent = email || '';
+  // 1. Render instantâneo a partir do cache local (se existir e for recente)
+  const cached = Api.getCachedSync();
+  if (cached) {
+    dataAll = cached.atletas;
+    data = dataAll.filter(a => a.ativo);
+    historicoBackend = cached.historico;
+    emailsBackend = cached.emails;
+    configBackend = cached.config;
+    renderAll();
+    const meta = document.getElementById('live-meta');
+    if (meta) meta.innerHTML = '<span class="live-dot" style="background:#ffc857;"></span>cache · a sincronizar…';
+  }
+  // 2. Refresh em background — actualiza para dados frescos
   refreshNow();
   if (refreshTimer) clearInterval(refreshTimer);
   refreshTimer = setInterval(refreshNow, 300000);  // 5 min — clica "↻ Atualizar" para forçar

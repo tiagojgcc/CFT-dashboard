@@ -76,8 +76,8 @@ const Inscricoes = {
     const totalVagas = vagasPorSemana[1] + vagasPorSemana[2] + vagasPorSemana[3];
     return {
       atletas,
-      historico: Historico.list(),
-      emails: Emails.list(),
+      historico: Historico.list().slice(0, 200),  // últimos 200 eventos (mais novos primeiro)
+      emails: Emails.list().slice(0, 100),
       config: Config.all(),
       clube_counts: cc,
       counts: {
