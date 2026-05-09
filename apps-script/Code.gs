@@ -42,6 +42,7 @@ function handle_(e, method) {
       case 'readComprovativo': result = Comprovativo.readAndSave(params.id, user); break;
       case 'readAllPending':   result = Comprovativo.readAllPending(user); break;
       case 'banco_processAll': result = Banco.processAll(); break;
+      case 'banco_matchAll':   result = Banco.matchAll(); break;
       case 'banco_list':       result = Banco.list(); break;
       case 'banco_listForAtleta': result = Banco.listForAtleta(params.atletaId); break;
       case 'banco_confirm':    result = Banco.confirmMatch(params.movId, params.atletaId, user); break;

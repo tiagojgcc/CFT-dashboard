@@ -191,10 +191,10 @@ const Banco = {
           status = exactValor ? 'auto_iban' : 'auto_iban_ambiguo';
         }
       }
-      // 2) Fallback: nome + valor
+      // 2) Match por nome (encarregado vs ordenante, ou atleta vs info_adicional).
+      // Não exige valor exato — assim apanha pagamentos parciais (ex: pai paga 120€ mas devido é 295€).
       if (!chosen) {
         const candidates = atletas.filter(a => {
-          if (Number(a.valor_pago) !== valor) return false;
           const enc = String(a.encarregado || '').toLowerCase();
           if (enc && ordenante) {
             const encWords = enc.split(/\s+/).filter(w => w.length > 3);
@@ -212,7 +212,11 @@ const Banco = {
         if (candidates.length === 1) {
           chosen = candidates[0]; score = 0.85; status = 'auto_nome';
         } else if (candidates.length > 1) {
-          chosen = candidates[0]; score = 0.5; status = 'auto_ambiguo';
+          // Mais que um atleta com mesmo encarregado (irmãos): preferir o que tem valor exato
+          const exactValor = candidates.find(a => Number(a.valor_pago) === valor);
+          chosen = exactValor || candidates[0];
+          score = exactValor ? 0.8 : 0.5;
+          status = exactValor ? 'auto_nome' : 'auto_ambiguo';
         }
       }
       // Escreve resultado
