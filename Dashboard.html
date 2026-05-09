@@ -502,6 +502,20 @@
   .conf-off:hover { background: var(--orange-light); }
   .row-flag.dup { background: #c0392b; color: #fff; font-weight: 700; }
   .num-cell { font-family: var(--font-condensed); color: var(--mid-gray); text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
+  /* Donut estado pagamentos */
+  .donut-wrap { position: relative; width: 100%; max-width: 220px; margin: 6px auto 14px; aspect-ratio: 1; }
+  .donut-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .donut-center {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; pointer-events: none;
+  }
+  .donut-center .big { font-family: var(--font-display); font-size: 30px; line-height: 1; color: var(--charcoal); }
+  .donut-center .lbl { font-family: var(--font-condensed); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mid-gray); margin-top: 4px; }
+  .donut-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; padding: 0 4px; }
+  .donut-legend-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--charcoal); }
+  .donut-legend-row .dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .donut-legend-row .lbl { flex: 1; }
+  .donut-legend-row .num { font-family: var(--font-condensed); font-weight: 700; color: var(--mid-gray); }
   /* Nav "⋯" dropdown menu */
   .nav-more { position: relative; margin-left: auto; }
   .nav-more-toggle { font-size: 18px; padding: 8px 14px !important; }
@@ -756,12 +770,25 @@
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-head">
-        <div class="card-title">Distribuição por clube</div>
-        <div class="card-meta" id="clube-meta">— clubes</div>
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Distribuição por clube</div>
+          <div class="card-meta" id="clube-meta">— clubes</div>
+        </div>
+        <div class="clubes" id="clubes"></div>
       </div>
-      <div class="clubes" id="clubes"></div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Estado dos pagamentos</div>
+          <div class="card-meta" id="pag-donut-meta">—</div>
+        </div>
+        <div class="donut-wrap">
+          <svg class="donut-svg" id="donut-svg" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg" aria-label="Estado dos pagamentos"></svg>
+          <div class="donut-center" id="donut-center"></div>
+        </div>
+        <div class="donut-legend" id="donut-legend"></div>
+      </div>
     </div>
   </div>
 
@@ -1230,6 +1257,53 @@ function renderClubes(){
       <div class="clube-name">${name}</div>
       <div class="clube-bar"><div class="clube-bar-fill" style="width:${count/max*100}%; background:${count >= 8 ? 'var(--green-dark)' : 'var(--sage)'};"></div></div>
       <div class="clube-count">${count}</div>
+    </div>
+  `).join('');
+  renderEstadoDonut();
+}
+
+function renderEstadoDonut(){
+  const buckets = { pago: 0, parcial: 0, pendente: 0, problema: 0, devolver: 0 };
+  data.forEach(r => {
+    const st = paymentStatus(r).st;
+    if (buckets[st] !== undefined) buckets[st]++;
+    else buckets.pendente++;
+  });
+  const segs = [
+    { key: 'pago',     label: 'Pago',          color: '#3a8d5a', n: buckets.pago },
+    { key: 'parcial',  label: 'Parcial',       color: '#e09a3e', n: buckets.parcial },
+    { key: 'pendente', label: 'Sem pagamento', color: '#9e9e9e', n: buckets.pendente },
+    { key: 'problema', label: 'Valor errado',  color: '#c0392b', n: buckets.problema },
+    { key: 'devolver', label: 'A devolver',    color: '#ffc857', n: buckets.devolver }
+  ];
+  const total = segs.reduce((s, x) => s + x.n, 0);
+  const svg = document.getElementById('donut-svg');
+  const center = document.getElementById('donut-center');
+  const legend = document.getElementById('donut-legend');
+  const meta = document.getElementById('pag-donut-meta');
+  if (!svg) return;
+  meta.textContent = total + ' inscriç' + (total === 1 ? 'ão' : 'ões');
+  // SVG: círculo com stroke-dasharray para fatias
+  const r = 15.91549430918954;  // raio que dá circumf=100
+  const cx = 21, cy = 21;
+  let offset = 25;  // offset inicial para começar do topo
+  const parts = [`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#eee" stroke-width="6"></circle>`];
+  if (total > 0) {
+    segs.forEach(s => {
+      if (s.n === 0) return;
+      const pct = (s.n / total) * 100;
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="6" stroke-dasharray="${pct.toFixed(2)} ${(100 - pct).toFixed(2)}" stroke-dashoffset="${offset}" stroke-linecap="butt"><title>${s.label}: ${s.n} (${pct.toFixed(0)}%)</title></circle>`);
+      offset = (offset - pct + 100) % 100;
+    });
+  }
+  svg.innerHTML = parts.join('');
+  const pctPago = total > 0 ? Math.round((buckets.pago / total) * 100) : 0;
+  center.innerHTML = `<div class="big">${pctPago}<span style="font-size:14px;">%</span></div><div class="lbl">pagos</div>`;
+  legend.innerHTML = segs.filter(s => s.n > 0).map(s => `
+    <div class="donut-legend-row">
+      <span class="dot" style="background:${s.color}"></span>
+      <span class="lbl">${s.label}</span>
+      <span class="num">${s.n}</span>
     </div>
   `).join('');
 }
