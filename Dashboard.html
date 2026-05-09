@@ -2179,8 +2179,9 @@ function bancoRenderItem(m){
     ? `<button class="trab-btn" onclick="bancoUnconfirm('${m.id}')" title="Desfazer confirmação">↺ Desfazer</button>`
     : (atleta
         ? `<button class="trab-btn ok" onclick="bancoConfirm('${m.id}', '${atleta.id}')" title="Confirmar match">✓ Confirmar</button>
-           <button class="trab-btn" onclick="bancoOpenReassign('${m.id}')" title="Mudar atleta">⇄ Mudar</button>`
-        : '');
+           <button class="trab-btn" onclick="bancoOpenReassign('${m.id}')" title="Mudar atleta">⇄ Mudar</button>
+           <button class="trab-btn" onclick="bancoDelete('${m.id}')" title="Apagar movimento (não é inscrição)" style="color:#c0392b;">🗑</button>`
+        : `<button class="trab-btn" onclick="bancoDelete('${m.id}')" title="Apagar movimento (não é inscrição)" style="color:#c0392b;">🗑 Não é inscrição</button>`);
   return `<div class="banco-mov ${klass}" data-id="${m.id}">
     <div class="banco-data">${fmtBancoDate(m.data_operacao)}</div>
     <div class="banco-valor">${m.valor.toFixed(0)}€</div>
@@ -2202,8 +2203,41 @@ function fmtBancoDate(d){
 }
 
 function bancoAtletaSelect(movId){
-  const opts = (data || []).map(a => `<option value="${a.id}">${escHtml(a.nome)} · ${escHtml(a.clube||'')}</option>`).join('');
-  return `<select onchange="bancoReassign('${movId}', this.value)"><option value="">— escolher atleta —</option>${opts}</select>`;
+  const m = bancoMovimentos.find(x => x.id === movId);
+  const ordWords = String(m && m.nome_ordenante || '').toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  // Score cada atleta por proximidade ao ordenante (palavras em comum nos nomes encarregado+atleta)
+  const scored = (data || []).map(a => {
+    const enc = String(a.encarregado || '').toLowerCase();
+    const nome = String(a.nome || '').toLowerCase();
+    const allWords = (enc + ' ' + nome).split(/\s+/).filter(w => w.length > 3);
+    const score = ordWords.reduce((s, w) => s + (allWords.includes(w) ? 1 : 0), 0);
+    // Bonus se valor pago bate
+    const valorBonus = (m && Number(a.valor_pago) === Number(m.valor)) ? 0.3 : 0;
+    return { a, score: score + valorBonus };
+  });
+  // Top com score > 0 primeiro
+  const top = scored.filter(s => s.score > 0).sort((x, y) => y.score - x.score).slice(0, 5);
+  const others = scored.filter(s => s.score === 0).map(s => s.a);
+  others.sort((x, y) => String(x.nome).localeCompare(String(y.nome)));
+  const topOpts = top.map(s => {
+    const a = s.a;
+    return `<option value="${a.id}">★ ${escHtml(a.nome)} · ${escHtml(a.clube||'')} · pago ${a.val_pago != null ? a.val_pago + '€' : '0€'}</option>`;
+  }).join('');
+  const otherOpts = others.map(a => `<option value="${a.id}">${escHtml(a.nome)} · ${escHtml(a.clube||'')} · pago ${a.val_pago != null ? a.val_pago + '€' : '0€'}</option>`).join('');
+  return `<select onchange="bancoReassign('${movId}', this.value)" style="font-size:12px;">
+    <option value="">— escolher atleta —</option>
+    ${topOpts ? '<optgroup label="Sugestões (nome ou valor)">' + topOpts + '</optgroup>' : ''}
+    <optgroup label="Todos os atletas">${otherOpts}</optgroup>
+  </select>`;
+}
+
+async function bancoDelete(movId){
+  if (!confirm('Apagar este movimento? (Útil quando Gemini extraiu por engano um débito como crédito)')) return;
+  try {
+    await Api.banco_delete(movId);
+    toast('Movimento apagado');
+    await refreshBanco();
+  } catch (e) { toast('Erro: ' + e.message, true); }
 }
 
 async function bancoRematch(){

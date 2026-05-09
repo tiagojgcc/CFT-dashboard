@@ -104,17 +104,72 @@ const Banco = {
     return arr;
   },
 
+  // Lista negra: padrões que NUNCA devem ser tratados como crédito de inscrição
+  // (Gemini às vezes confunde débitos e créditos).
+  _isFalsePositive(t) {
+    const text = ((t.nome_ordenante || '') + ' ' + (t.info_adicional || '') + ' ' + (t.referencia || '')).toLowerCase();
+    const patterns = [
+      /ordem\s+permanente/,
+      /perguicar|contabilid/,
+      /google\s*workspace|workspace_camp/,
+      /netflix|spotify|amazon\s*prime/,
+      /cart[aã]o\s+\*+|\*{4}\d{3,}\*?/,
+      /comiss[aã]o|imp\s*s\/?com|impost/,
+      /pagamento\s+servi[cç]o/,
+      /sepa\+\s+para\s+/,  // "Trf Sepa+ Para X" = saída
+      /saldo\s+anterior|saldo\s+contabil/,
+      /^trf\s+.*\s+para\s+/i
+    ];
+    return patterns.some(re => re.test(text));
+  },
+
   saveTransfers(filename, fileId, transfers) {
     const sh = this.sheet();
+    let saved = 0, skipped = 0;
     transfers.forEach(t => {
+      if (this._isFalsePositive(t)) { skipped++; return; }
+      const valor = Number(t.valor) || 0;
+      // Inscrições são tipicamente entre 50€ e 1500€. Filtra valores fora deste intervalo.
+      if (valor < 30 || valor > 2000) { skipped++; return; }
       sh.appendRow([
         Utilities.getUuid(), filename, fileId,
-        t.data_operacao || '', t.data_valor || '', Number(t.valor) || 0,
+        t.data_operacao || '', t.data_valor || '', valor,
         t.nome_ordenante || '', t.iban_ordenante || '', t.info_adicional || '', t.referencia || '',
         '', 0, 'pendente',
         false, '', ''
       ]);
+      saved++;
     });
+    if (skipped > 0) Logger.log('saveTransfers ' + filename + ': guardados ' + saved + ', filtrados ' + skipped + ' (débitos/falsos positivos)');
+  },
+
+  deleteMovimento(movId) {
+    const sh = this.sheet();
+    const last = sh.getLastRow();
+    if (last < 2) return;
+    const ids = sh.getRange(2, 1, last - 1, 1).getValues().flat();
+    const idx = ids.indexOf(movId);
+    if (idx === -1) throw new Error('Movimento não encontrado');
+    sh.deleteRow(idx + 2);
+    return { ok: true };
+  },
+
+  // Reprocessa um ficheiro específico: apaga todos os seus movimentos e re-extrai
+  reprocessFile(fileId) {
+    const sh = this.sheet();
+    const last = sh.getLastRow();
+    if (last >= 2) {
+      const fileIds = sh.getRange(2, 3, last - 1, 1).getValues().flat();
+      // Apaga de baixo para cima para não desalinhar índices
+      for (let i = fileIds.length - 1; i >= 0; i--) {
+        if (fileIds[i] === fileId) sh.deleteRow(i + 2);
+      }
+    }
+    const file = DriveApp.getFileById(fileId);
+    const transfers = this.extractTransfers(fileId);
+    this.saveTransfers(file.getName(), fileId, transfers);
+    this.matchAll();
+    return { file: file.getName(), inserted: transfers.length };
   },
 
   // Processa todos os PDFs da pasta que ainda não foram processados.
@@ -327,19 +382,40 @@ const Banco = {
 
 const BANCO_PROMPT = `Estás a analisar um extrato bancário em PDF do NovoBanco Empresas.
 
-Extrai TODAS as transferências CRÉDITO recebidas (incluindo "Trf Imediata Sepa+", "Trf Cred Intrab", "Trf Sepa+" e similares).
+OBJETIVO: extrair APENAS as transferências CRÉDITO recebidas (entradas de dinheiro de pessoas particulares).
 
-NÃO incluas: débitos (saídas), comissões, impostos, ordens permanentes a fornecedores, pagamentos de cartão.
+==============================
+INCLUI (✓):
+- "Trf Imediata Sepa+ De [Pessoa]" — RECEBIDA
+- "Trf Cred Intrab De [Pessoa]" — RECEBIDA
+- "Trf Sepa+ De [Pessoa]" — RECEBIDA
+- Qualquer transferência onde o valor aparece na coluna CRÉDITO
+- Qualquer linha com "AVISOS DE LANÇAMENTO" descrevendo entrada de dinheiro
 
-Foca-te na secção "AVISOS DE LANÇAMENTO" (páginas 3+) que tem o detalhe completo de cada transferência: Banco Ordenante, IBAN Ordenante, Nome Ordenante, Referência Ordenante, Informação Adicional, Montante.
+NÃO INCLUI (✗ — são débitos/saídas, NUNCA extrair):
+- "Ordem Permanente Sepa+ Para [Empresa]" (saída para fornecedor)
+- "Trf Sepa+ Para [Pessoa]" (saída — note "Para" em vez de "De")
+- "Google Workspace_Camp ... Eur Cartão" (subscrição/débito de cartão)
+- Movimentos com "Cartão ****1234" no descritivo (débitos de cartão)
+- Comissões, impostos, "Imp s/Com Transf"
+- Pagamentos a contabilistas (ex: "Perguicar Contabilid")
+- Saldo anterior, saldo contabilístico
+- Qualquer linha onde o valor aparece na coluna DÉBITO
+==============================
+
+Foca-te na secção "AVISOS DE LANÇAMENTO" (páginas 3+) que tem o detalhe COMPLETO de cada CRÉDITO recebido: Banco Ordenante, IBAN Ordenante, Nome Ordenante, Referência Ordenante, Informação Adicional, Montante.
+
+Cada item dos AVISOS DE LANÇAMENTO é UMA transferência crédito. Conta-os e extrai todos.
 
 Formato esperado para cada transferência (objeto JSON):
 - data_operacao: "YYYY-MM-DD"
 - data_valor: "YYYY-MM-DD"
-- valor: número decimal (ex: 120.00, sem símbolo €)
+- valor: número decimal POSITIVO (ex: 120.00, sem símbolo €, sem sinal)
 - nome_ordenante: nome completo do remetente em maiúsculas (ex: "ELISABETE FARIA DE BRITO QUESA")
 - iban_ordenante: IBAN do remetente sem espaços (ex: "PT50001000004280994000117")
-- info_adicional: campo "Informação Adicional" (pode conter "NOTPROVIDED", nome do atleta, ou descrição como "CAMPO FORMACAO BASQUETEBOL-JUL"). String vazia se não houver.
+- info_adicional: campo "Informação Adicional" (pode conter "NOTPROVIDED", nome do atleta, ou descrição). String vazia se não houver.
 - referencia: campo "Referência Ordenante". String vazia se não houver.
 
-Devolve UM array JSON com todos os objetos. Sem texto à volta, sem markdown. Se não houver transferências, devolve [].`;
+DICA: cada bloco de "AVISOS DE LANÇAMENTO" começa com "N° Contrato a Crédito" — sinal de que é uma entrada. Se o bloco diz "N° Contrato a Débito" é saída, IGNORA.
+
+Devolve UM array JSON com todos os objetos. Sem texto à volta, sem markdown. Se não houver transferências crédito, devolve [].`;
