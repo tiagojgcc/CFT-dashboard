@@ -213,6 +213,86 @@ const Backfill = {
     atletas.appendRow(atletaRow);
   },
 
+  // Re-sincroniza um atleta a partir de "Respostas do Formulário 1" (sobrescreve
+  // os campos vindos do Forms, mas PRESERVA campos operacionais — valor_pago,
+  // semanas_atuais, valor_confirmado, notas, num_inscricao, bank_confirmed_*, etc.)
+  resyncFromForms(idInscricao) {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const formSheet = ss.getSheetByName('Respostas do Formulário 1');
+    const atletas = ss.getSheetByName('Atletas');
+    if (!formSheet || !atletas) throw new Error('Abas em falta');
+    const formLast = formSheet.getLastRow();
+    if (formLast < 2) throw new Error('Forms vazio');
+    const formIds = formSheet.getRange(2, 34, formLast - 1, 1).getValues().flat();
+    const formIdx = formIds.indexOf(idInscricao);
+    if (formIdx === -1) throw new Error('Atleta não encontrado em Respostas: ' + idInscricao);
+    const formRow = formIdx + 2;
+    const atletasLast = atletas.getLastRow();
+    const atletasIds = atletas.getRange(2, ATL_COLS.id_inscricao, atletasLast - 1, 1).getValues().flat();
+    const atletasIdx = atletasIds.indexOf(idInscricao);
+    if (atletasIdx === -1) throw new Error('Atleta não está em Atletas (corre backfillRun primeiro): ' + idInscricao);
+    const atletasRow = atletasIdx + 2;
+    const f = formSheet.getRange(formRow, 1, 1, 35).getValues()[0];
+    const updates = [
+      [ATL_COLS.timestamp_inscricao,    f[0]],
+      [ATL_COLS.atleta,                 f[6]],
+      [ATL_COLS.data_nascimento,        f[8]],
+      [ATL_COLS.clube,                  f[13]],
+      [ATL_COLS.encarregado,            f[24]],
+      [ATL_COLS.email,                  f[25]],
+      [ATL_COLS.telefone,               f[26]],
+      [ATL_COLS.opcao_inscricao,        f[5]],
+      [ATL_COLS.semanas_originais,      f[2]],
+      // semanas_atuais (col 11): NÃO sobrescrever — admin pode ter alterado
+      [ATL_COLS.tshirt,                 f[10]],
+      [ATL_COLS.tshirt_num,             f[11]],
+      [ATL_COLS.tshirt_nome,            f[12]],
+      [ATL_COLS.alergia_alim,           f[16]],
+      [ATL_COLS.alergia_alim_qual,      f[17]],
+      [ATL_COLS.medicacao,              f[18]],
+      [ATL_COLS.medicacao_qual,         f[19]],
+      [ATL_COLS.doenca,                 f[20]],
+      [ATL_COLS.doenca_qual,            f[21]],
+      [ATL_COLS.alergia_med,            f[22]],
+      [ATL_COLS.alergia_med_qual,       f[23]],
+      [ATL_COLS.cc,                     f[7]],
+      [ATL_COLS.nif,                    f[9]],
+      [ATL_COLS.posicao,                f[14]],
+      [ATL_COLS.melhorar,               f[15]],
+      [ATL_COLS.contacto_emerg,         f[27]],
+      [ATL_COLS.decl_responsabilidade,  f[28]],
+      [ATL_COLS.decl_imagem,            f[29]],
+      [ATL_COLS.decl_saida,             f[30]],
+      [ATL_COLS.iban,                   f[31]],
+      [ATL_COLS.comprovativo_url,       this.getCellUrl_(formSheet, formRow, 33)]
+    ];
+    updates.forEach(([col, value]) => {
+      atletas.getRange(atletasRow, col).setValue(value);
+    });
+    return { id: idInscricao, updated: updates.length };
+  },
+
+  // Re-sincroniza TODOS os atletas a partir do Forms.
+  // Útil quando editaste linhas em "Respostas do Formulário 1" e queres propagar.
+  resyncAllFromForms() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const formSheet = ss.getSheetByName('Respostas do Formulário 1');
+    if (!formSheet) throw new Error('Aba Respostas não encontrada');
+    const last = formSheet.getLastRow();
+    if (last < 2) return { count: 0 };
+    const formIds = formSheet.getRange(2, 34, last - 1, 1).getValues().flat();
+    let count = 0;
+    const errors = [];
+    formIds.forEach(id => {
+      if (!id) return;
+      try { this.resyncFromForms(id); count++; }
+      catch (e) { errors.push({ id, error: e.message }); }
+    });
+    Logger.log('resyncAllFromForms: ' + count + ' atletas atualizados' + (errors.length ? ', ' + errors.length + ' erros' : ''));
+    if (errors.length) errors.slice(0, 5).forEach(e => Logger.log('  ✗ ' + e.id + ': ' + e.error));
+    return { count, errors };
+  },
+
   // Re-extrai os URLs dos comprovativos da aba Forms para a aba Atletas,
   // apanhando os hyperlinks "escondidos" (texto visível ≠ URL real).
   // Idempotente — pode correr quantas vezes quiseres.
