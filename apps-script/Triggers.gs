@@ -28,12 +28,18 @@ function onFormSubmitTrigger_(e) {
     return;
   }
   const row = e.range.getRow();
-  let id = formSheet.getRange(row, 34).getValue();
+  const idCol = Backfill._idCol(formSheet);
+  const migradoCol = Backfill._migradoCol(formSheet);
+  if (idCol === -1 || migradoCol === -1) {
+    Logger.log('Trigger abortado: colunas id_inscricao/migrado_em em falta');
+    return;
+  }
+  let id = formSheet.getRange(row, idCol).getValue();
   if (!id) {
     id = Utilities.getUuid();
-    formSheet.getRange(row, 34).setValue(id);
+    formSheet.getRange(row, idCol).setValue(id);
   }
-  formSheet.getRange(row, 35).setValue(new Date());
+  formSheet.getRange(row, migradoCol).setValue(new Date());
   Backfill.migrateRow_(row, formSheet, ss.getSheetByName('Atletas'));
   // Atribuir número de inscrição + renomear ficheiro no Drive
   try {

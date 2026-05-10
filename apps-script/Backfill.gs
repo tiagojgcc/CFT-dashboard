@@ -26,6 +26,22 @@
  *                                35 migrado_em   (acrescentado)
  */
 const Backfill = {
+  // Procura uma coluna na linha 1 da aba Forms pelo nome do header.
+  // Devolve índice 1-based ou -1.
+  _findFormCol(formSheet, headerName) {
+    const lastCol = formSheet.getLastColumn();
+    if (lastCol < 1) return -1;
+    const headers = formSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    for (let i = 0; i < headers.length; i++) {
+      if (String(headers[i]).trim() === headerName) return i + 1;
+    }
+    return -1;
+  },
+
+  // Coluna onde está id_inscricao (descoberta dinamicamente). Se não existe, devolve -1.
+  _idCol(formSheet) { return this._findFormCol(formSheet, 'id_inscricao'); },
+  _migradoCol(formSheet) { return this._findFormCol(formSheet, 'migrado_em'); },
+
   setupSheets() {
     const ss = SpreadsheetApp.openById(SHEET_ID);
 
@@ -88,13 +104,16 @@ const Backfill = {
     }
     Config.invalidate();
 
-    // 5. Aba Forms — acrescentar id_inscricao e migrado_em à direita
+    // 5. Aba Forms — acrescentar id_inscricao e migrado_em à direita (sem destruir colunas existentes)
     sh = ss.getSheetByName('Respostas do Formulário 1');
     if (sh) {
       const lastCol = sh.getLastColumn();
-      const headers = sh.getRange(1, 1, 1, Math.max(lastCol, 35)).getValues()[0];
-      if (headers[33] !== 'id_inscricao') sh.getRange(1, 34).setValue('id_inscricao');
-      if (headers[34] !== 'migrado_em')   sh.getRange(1, 35).setValue('migrado_em');
+      const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+      const hasId = headers.indexOf('id_inscricao') !== -1;
+      const hasMig = headers.indexOf('migrado_em') !== -1;
+      let nextCol = lastCol + 1;
+      if (!hasId) { sh.getRange(1, nextCol).setValue('id_inscricao'); nextCol++; }
+      if (!hasMig) { sh.getRange(1, nextCol).setValue('migrado_em'); }
     } else {
       Logger.log('AVISO: aba "Respostas do Formulário 1" não encontrada.');
     }
@@ -108,18 +127,21 @@ const Backfill = {
     const atletas = ss.getSheetByName('Atletas');
     if (!formSheet) throw new Error('Aba Forms não encontrada');
     if (!atletas) throw new Error('Aba Atletas não encontrada (corre setupSheets primeiro)');
+    const idCol = this._idCol(formSheet);
+    const migradoCol = this._migradoCol(formSheet);
+    if (idCol === -1 || migradoCol === -1) throw new Error('Colunas id_inscricao/migrado_em em falta — corre setupSheets primeiro');
     const last = formSheet.getLastRow();
     let migrated = 0;
     for (let r = 2; r <= last; r++) {
-      let id = formSheet.getRange(r, 34).getValue();
+      let id = formSheet.getRange(r, idCol).getValue();
       if (!id) {
         id = Utilities.getUuid();
-        formSheet.getRange(r, 34).setValue(id);
+        formSheet.getRange(r, idCol).setValue(id);
       }
-      const migrado = formSheet.getRange(r, 35).getValue();
+      const migrado = formSheet.getRange(r, migradoCol).getValue();
       if (migrado) continue;
       this.migrateRow_(r, formSheet, atletas);
-      formSheet.getRange(r, 35).setValue(new Date());
+      formSheet.getRange(r, migradoCol).setValue(new Date());
       migrated++;
     }
     Logger.log('Backfill: ' + migrated + ' linhas migradas. Total Atletas: ' + (atletas.getLastRow() - 1));
@@ -152,8 +174,10 @@ const Backfill = {
   },
 
   migrateRow_(row, formSheet, atletas) {
-    const f = formSheet.getRange(row, 1, 1, 35).getValues()[0]; // f[0..34]
-    const id = f[33];
+    const lastCol = formSheet.getLastColumn();
+    const f = formSheet.getRange(row, 1, 1, lastCol).getValues()[0];
+    const idCol = this._idCol(formSheet);
+    const id = idCol > 0 ? f[idCol - 1] : null;
     if (!id) throw new Error('Linha ' + row + ' sem id_inscricao');
     // Verificar se já existe em Atletas (idempotência)
     const last = atletas.getLastRow();
@@ -223,7 +247,9 @@ const Backfill = {
     if (!formSheet || !atletas) throw new Error('Abas em falta');
     const formLast = formSheet.getLastRow();
     if (formLast < 2) throw new Error('Forms vazio');
-    const formIds = formSheet.getRange(2, 34, formLast - 1, 1).getValues().flat();
+    const idCol = this._idCol(formSheet);
+    if (idCol === -1) throw new Error('Coluna id_inscricao em falta no Forms');
+    const formIds = formSheet.getRange(2, idCol, formLast - 1, 1).getValues().flat();
     const formIdx = formIds.indexOf(idInscricao);
     if (formIdx === -1) throw new Error('Atleta não encontrado em Respostas: ' + idInscricao);
     const formRow = formIdx + 2;
@@ -232,7 +258,8 @@ const Backfill = {
     const atletasIdx = atletasIds.indexOf(idInscricao);
     if (atletasIdx === -1) throw new Error('Atleta não está em Atletas (corre backfillRun primeiro): ' + idInscricao);
     const atletasRow = atletasIdx + 2;
-    const f = formSheet.getRange(formRow, 1, 1, 35).getValues()[0];
+    const lastCol = formSheet.getLastColumn();
+    const f = formSheet.getRange(formRow, 1, 1, lastCol).getValues()[0];
     const updates = [
       [ATL_COLS.timestamp_inscricao,    f[0]],
       [ATL_COLS.atleta,                 f[6]],
@@ -280,7 +307,9 @@ const Backfill = {
     if (!formSheet) throw new Error('Aba Respostas não encontrada');
     const last = formSheet.getLastRow();
     if (last < 2) return { count: 0 };
-    const formIds = formSheet.getRange(2, 34, last - 1, 1).getValues().flat();
+    const idCol = this._idCol(formSheet);
+    if (idCol === -1) throw new Error('Coluna id_inscricao em falta — corre setupSheets primeiro');
+    const formIds = formSheet.getRange(2, idCol, last - 1, 1).getValues().flat();
     let count = 0;
     const errors = [];
     formIds.forEach(id => {
@@ -302,7 +331,9 @@ const Backfill = {
     const atletas = ss.getSheetByName('Atletas');
     if (!formSheet || !atletas) throw new Error('Abas em falta');
     const formLast = formSheet.getLastRow();
-    const formIds = formSheet.getRange(2, 34, formLast - 1, 1).getValues().flat();
+    const idCol = this._idCol(formSheet);
+    if (idCol === -1) throw new Error('Coluna id_inscricao em falta');
+    const formIds = formSheet.getRange(2, idCol, formLast - 1, 1).getValues().flat();
     const atletasLast = atletas.getLastRow();
     const atletasIds = atletas.getRange(2, ATL_COLS.id_inscricao, atletasLast - 1, 1).getValues().flat();
     let fixed = 0;
