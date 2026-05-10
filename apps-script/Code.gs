@@ -47,6 +47,8 @@ function handle_(e, method) {
       case 'banco_reprocessFile': result = Banco.reprocessFile(params.fileId); break;
       case 'banco_list':       result = Banco.list(); break;
       case 'banco_listForAtleta': result = Banco.listForAtleta(params.atletaId); break;
+      case 'markBankConfirmed':   result = Inscricoes.markBankConfirmed(params.atletaId, user); break;
+      case 'unmarkBankConfirmed': result = Inscricoes.unmarkBankConfirmed(params.atletaId, user); break;
       case 'banco_confirm':    result = Banco.confirmMatch(params.movId, params.atletaId, user); break;
       case 'banco_unconfirm':  result = Banco.unconfirmMatch(params.movId, user); break;
       case 'banco_reassign':   result = Banco.reassignMatch(params.movId, params.atletaId, user); break;

@@ -627,6 +627,19 @@
   .banco-match-info select { width: 100%; max-width: 220px; padding: 4px; font-size: 11px; }
   .banco-acts { display: inline-flex; gap: 6px; }
   .empty-banco { text-align: center; padding: 30px; color: var(--mid-gray); }
+  /* Linha de confirmação por atleta */
+  .banco-atleta-row {
+    background: var(--white); border: 1px solid var(--sand); border-radius: 6px;
+    padding: 10px 14px; margin-bottom: 8px;
+    display: grid; grid-template-columns: 36px 60px 1.4fr 70px 2fr auto;
+    gap: 12px; align-items: center;
+  }
+  .banco-atleta-row.confirmado { background: #f1f8f1; border-color: var(--green-bright); }
+  .ba-num { font-family: var(--font-condensed); font-weight: 700; color: var(--mid-gray); text-align: center; font-size: 12px; }
+  .ba-data { font-family: var(--font-condensed); color: var(--mid-gray); font-size: 11.5px; }
+  .ba-valor { font-family: var(--font-display); font-size: 18px; color: var(--green-dark); }
+  .ba-links { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+  .ba-action { display: inline-flex; gap: 6px; align-items: center; }
   /* ✓✓ duplo no atleta da Lista quando bank_confirmed */
   .conf-box.conf-bank { background: #2e6b27; color: white; border: none; }
   /* Atleta detail modal */
@@ -924,16 +937,13 @@
     <div id="hist-content"></div>
   </div>
 
-  <!-- ============ BANCO (reconciliação) ============ -->
+  <!-- ============ BANCO (confirmação manual de entradas em conta) ============ -->
   <div class="panel" id="panel-banco">
     <div class="panel-head">
-      <div class="panel-title">Banco · Reconciliação</div>
+      <div class="panel-title">Confirmação em conta</div>
       <div class="banco-toolbar">
-        <button class="btn-confirm" id="banco-process-btn" onclick="bancoProcessAll()" title="Lê PDFs novos da pasta partilhada e extrai movimentos" style="padding:8px 16px;">⚙ Processar extratos novos</button>
-        <button class="btn-secondary" id="banco-rematch-btn" onclick="bancoRematch()" title="Re-correr o algoritmo de match para todos os movimentos (usa as regras atualizadas)">🔧 Re-correr matching</button>
         <select id="banco-filter" class="search" style="max-width:220px;">
           <option value="pendente">Por confirmar</option>
-          <option value="sem_match">Sem match</option>
           <option value="confirmado">Confirmados</option>
           <option value="todos">Todos</option>
         </select>
@@ -2104,51 +2114,106 @@ async function adUnconfirm(movId, atletaId){
   } catch (e) { toast('Erro: ' + e.message, true); }
 }
 
-// ============ BANCO (reconciliação) ============
-let bancoMovimentos = [];
-async function refreshBanco(){
-  try {
-    bancoMovimentos = await Api.banco_list();
-    renderBanco();
-  } catch (e) { toast('Erro a carregar movimentos: ' + e.message, true); }
+// ============ BANCO (confirmação manual em conta — Opção A) ============
+let bancoFiles = [];  // PDFs disponíveis na pasta de extratos (vem de Api._cache.banco_files)
+function refreshBanco(){ renderBanco(); }
+function bancoFolderUrl(){
+  const folderId = (configBackend && configBackend.banco_folder_id) || '';
+  if (!folderId) return null;
+  return 'https://drive.google.com/drive/folders/' + encodeURIComponent(String(folderId).trim());
 }
-async function renderBanco(){
-  // Carrega lista do backend se ainda não carregada
-  if (bancoMovimentos.length === 0) {
-    try { bancoMovimentos = await Api.banco_list(); } catch (e) { bancoMovimentos = []; }
-  }
+function suggestedExtratoFile(r){
+  // Calcula o PDF provável do mês de inscrição
+  if (!r.ts) return null;
+  const d = new Date(r.ts);
+  if (isNaN(d.getTime())) return null;
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const y = d.getFullYear();
+  const expected = m + '_' + y + '.pdf';
+  // Procurar nos files cached
+  const files = (Api && Api._cache && Api._cache.banco_files) || [];
+  const match = files.find(f => f.name === expected);
+  if (match) return { name: match.name, url: match.url };
+  // Tenta também o mês seguinte (pagamentos podem entrar dias depois, atravessar mês)
+  const next = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+  const m2 = String(next.getMonth() + 1).padStart(2, '0');
+  const y2 = next.getFullYear();
+  const expected2 = m2 + '_' + y2 + '.pdf';
+  const match2 = files.find(f => f.name === expected2);
+  if (match2) return { name: match2.name, url: match2.url, hint: 'mês seguinte' };
+  // Fallback: a pasta inteira
+  const folderUrl = bancoFolderUrl();
+  return folderUrl ? { name: '(pasta dos extratos)', url: folderUrl } : null;
+}
+
+function renderBanco(){
   const filterEl = document.getElementById('banco-filter');
   const filter = filterEl ? filterEl.value : 'pendente';
-  const all = bancoMovimentos || [];
-  const filtered = all.filter(m => {
-    if (filter === 'todos') return true;
-    if (filter === 'pendente') return !m.confirmado && m.match_status !== 'sem_match';
-    if (filter === 'sem_match') return m.match_status === 'sem_match';
-    if (filter === 'confirmado') return m.confirmado;
-    return true;
-  });
+  // Lista os atletas com pagamento > 0 (faz sentido confirmar quem pagou)
+  const all = (data || []).filter(r => Number(r.val_pago) > 0);
+  let filtered;
+  if (filter === 'confirmado') filtered = all.filter(r => r.bank_confirmed_em);
+  else if (filter === 'todos') filtered = all;
+  else filtered = all.filter(r => !r.bank_confirmed_em);  // pendente
+  // Sort por nº de inscrição (= ordem cronológica)
+  filtered.sort((a, b) => (a.num || 9999) - (b.num || 9999));
   // Counters
-  const confirmados = all.filter(m => m.confirmado).length;
-  const semMatch = all.filter(m => m.match_status === 'sem_match').length;
-  const pendentes = all.filter(m => !m.confirmado && m.match_status !== 'sem_match').length;
+  const confirmados = all.filter(r => r.bank_confirmed_em).length;
+  const pendentes   = all.length - confirmados;
   const tcBanco = document.getElementById('tc-banco');
-  if (tcBanco) tcBanco.textContent = pendentes + semMatch;
-  // Diagnóstico por extrato (filename → count)
-  const byFile = {};
-  all.forEach(m => { const f = m.filename || '(?)'; byFile[f] = (byFile[f] || 0) + 1; });
-  const fileSummary = Object.keys(byFile).sort().map(f => `${f}: ${byFile[f]}`).join(' · ');
+  if (tcBanco) tcBanco.textContent = pendentes;
   const sub = document.getElementById('banco-summary');
-  if (sub) sub.innerHTML = `${all.length} movimentos · ${confirmados} confirmados · ${pendentes} por confirmar · ${semMatch} sem match` +
-    (fileSummary ? `<br><small style="color:var(--mid-gray);font-size:11px;">Por extrato: ${escHtml(fileSummary)}</small>` : '');
+  if (sub) sub.textContent = `${pendentes} por confirmar · ${confirmados} confirmados em conta · de ${all.length} atletas com pagamento`;
   const host = document.getElementById('banco-items');
   if (!host) return;
   if (filtered.length === 0) {
-    host.innerHTML = '<div class="empty-banco"><div class="h">Sem movimentos para mostrar</div><div class="s" style="font-size:12px;">' + (all.length === 0 ? 'Carrega os PDFs na pasta partilhada e clica "Processar extratos novos".' : 'Nenhum movimento corresponde ao filtro atual.') + '</div></div>';
+    host.innerHTML = `<div class="empty-banco"><div class="h">${
+      filter === 'pendente' ? 'Sem nada por confirmar 🎉' : 'Sem registos para mostrar'
+    }</div><div class="s" style="font-size:12px;">${
+      filter === 'pendente' ? 'Quando um atleta pagar mas tu ainda não tiveres conferido o extrato, aparece aqui.' : ''
+    }</div></div>`;
     return;
   }
-  // Sort by date desc
-  filtered.sort((a, b) => new Date(b.data_operacao) - new Date(a.data_operacao));
-  host.innerHTML = filtered.map(m => bancoRenderItem(m)).join('');
+  host.innerHTML = filtered.map(r => bancoRenderAtleta(r)).join('');
+}
+
+function bancoRenderAtleta(r){
+  const isConf = !!r.bank_confirmed_em;
+  const compLink = r.comprovativo_url && /^https?:\/\//.test(r.comprovativo_url)
+    ? `<a href="${escAttr(r.comprovativo_url)}" target="_blank" rel="noopener" class="trab-btn em" title="Abrir comprovativo">📎 Comp.</a>`
+    : '';
+  const ext = suggestedExtratoFile(r);
+  const extLink = ext
+    ? `<a href="${escAttr(ext.url)}" target="_blank" rel="noopener" class="trab-btn" title="Abrir extrato bancário do mês de inscrição">🗂 ${escHtml(ext.name)}${ext.hint ? ' (' + ext.hint + ')' : ''}</a>`
+    : '<span style="color:var(--mid-gray);font-size:11px;">sem extrato</span>';
+  const tsLabel = r.ts ? new Date(r.ts).toLocaleDateString('pt-PT', { day:'2-digit', month:'2-digit', year:'2-digit' }) : '—';
+  const action = isConf
+    ? `<button class="trab-btn" onclick="bancoUnconfirmAtleta('${r.id}')">↺ Desfazer</button>
+       <span style="color:var(--mid-gray);font-size:10.5px;">por ${escHtml(r.bank_confirmed_por || '')} · ${fmtRelativeShort(r.bank_confirmed_em)}</span>`
+    : `<button class="trab-btn ok" onclick="bancoConfirmAtleta('${r.id}')">✓ Confirmar entrada</button>`;
+  return `<div class="banco-atleta-row ${isConf ? 'confirmado' : ''}" data-id="${r.id}">
+    <span class="ba-num">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</span>
+    <span class="ba-data">${tsLabel}</span>
+    <span class="ba-nome"><b>${escHtml(r.nome)}</b><br><small style="color:var(--mid-gray)">${escHtml(r.clube || '')}</small></span>
+    <span class="ba-valor">${r.val_pago}€</span>
+    <span class="ba-links">${compLink} ${extLink}</span>
+    <span class="ba-action">${action}</span>
+  </div>`;
+}
+
+async function bancoConfirmAtleta(atletaId){
+  _localUpdate(atletaId, { bank_confirmed_em: new Date().toISOString(), bank_confirmed_por: (Auth && Auth.email) || 'admin' });
+  renderBanco();
+  toast('Confirmado em conta');
+  try { await Api.markBankConfirmed(atletaId); _bgRefresh(); }
+  catch (e) { toast('Erro: ' + e.message, true); _bgRefresh(); }
+}
+async function bancoUnconfirmAtleta(atletaId){
+  _localUpdate(atletaId, { bank_confirmed_em: null, bank_confirmed_por: '' });
+  renderBanco();
+  toast('Desfeito');
+  try { await Api.unmarkBankConfirmed(atletaId); _bgRefresh(); }
+  catch (e) { toast('Erro: ' + e.message, true); _bgRefresh(); }
 }
 
 function bancoRenderItem(m){

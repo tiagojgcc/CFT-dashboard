@@ -82,12 +82,13 @@ const Inscricoes = {
       config: Config.all(),
       clube_counts: cc,
       counts: {
-        atletas_ativos: ativos.length,        // linhas de Atletas com ativo=true
-        atletas_unicos: uniqueAtletas,        // pessoas únicas (descontando duplicados encarregado+nome)
-        inscricoes:     totalInscricoes,      // soma das semanas (1 atleta×2 sem = 2 inscrições)
+        atletas_ativos: ativos.length,
+        atletas_unicos: uniqueAtletas,
+        inscricoes:     totalInscricoes,
         vagas_por_semana: vagasPorSemana,
-        total_vagas_ocupadas: totalInscricoes // alias para clareza — vagas == inscrições
+        total_vagas_ocupadas: totalInscricoes
       },
+      banco_files: this._getBancoFiles(),
       lastUpdate: new Date().toISOString()
     };
   },
@@ -109,6 +110,25 @@ const Inscricoes = {
     const idx = ids.indexOf(id);
     if (idx === -1) throw new Error('Atleta não encontrado: ' + id);
     return idx + 2;
+  },
+
+  _getBancoFiles() {
+    try {
+      const folderId = Config.get('banco_folder_id');
+      if (!folderId) return [];
+      const folder = DriveApp.getFolderById(String(folderId).trim());
+      const files = folder.getFilesByType(MimeType.PDF);
+      const out = [];
+      while (files.hasNext()) {
+        const f = files.next();
+        out.push({ name: f.getName(), id: f.getId(), url: f.getUrl() });
+      }
+      out.sort((a, b) => a.name.localeCompare(b.name));
+      return out;
+    } catch (e) {
+      Logger.log('_getBancoFiles erro: ' + e.message);
+      return [];
+    }
   },
 
   _stampUser(sh, r, user) {
@@ -211,6 +231,32 @@ const Inscricoes = {
       const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
       Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'confirmacao_valor', antes: 'confirmado', depois: 'por confirmar', motivo: '' });
       return { id, valor_confirmado: false };
+    });
+  },
+
+  markBankConfirmed(atletaId, user) {
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(atletaId);
+      sh.getRange(r, ATL_COLS.bank_confirmed_em).setValue(new Date());
+      sh.getRange(r, ATL_COLS.bank_confirmed_por).setValue(user);
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: atletaId, atleta: nome, tipo: 'bank_confirmed', antes: '', depois: 'sim', motivo: '' });
+      return { id: atletaId, bank_confirmed_em: new Date() };
+    });
+  },
+
+  unmarkBankConfirmed(atletaId, user) {
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(atletaId);
+      sh.getRange(r, ATL_COLS.bank_confirmed_em).setValue('');
+      sh.getRange(r, ATL_COLS.bank_confirmed_por).setValue('');
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: atletaId, atleta: nome, tipo: 'bank_confirmed', antes: 'sim', depois: '', motivo: 'desfeito' });
+      return { id: atletaId, bank_confirmed_em: null };
     });
   },
 

@@ -61,6 +61,7 @@
         config: data.config || {},
         clube_counts: data.clube_counts || {},
         counts: data.counts || { inscricoes_ativas: 0, atletas_unicos: 0, vagas_por_semana: {}, total_vagas_ocupadas: 0 },
+        banco_files: data.banco_files || [],
         lastUpdate: this.lastUpdate
       };
     },
@@ -153,6 +154,8 @@
     unmarkTrabalhoResolved(itemId, atletaId, atletaNome){ return this._call('unmarkTrabalhoResolved', { itemId, atletaId, atletaNome }); },
     banco_processAll()          { return this._call('banco_processAll'); },
     banco_matchAll()            { return this._call('banco_matchAll'); },
+    markBankConfirmed(atletaId)   { return this._call('markBankConfirmed',   { atletaId }); },
+    unmarkBankConfirmed(atletaId) { return this._call('unmarkBankConfirmed', { atletaId }); },
     banco_delete(movId)         { return this._call('banco_delete',     { movId }); },
     banco_reprocessFile(fileId) { return this._call('banco_reprocessFile', { fileId }); },
     banco_list()                { return this._call('banco_list'); },
