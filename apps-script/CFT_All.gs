@@ -1921,6 +1921,62 @@ const Backfill = {
     return { count, errors };
   },
 
+  // Detecta atletas com id_inscricao "estragado" (Date, vazio, ou não-UUID)
+  // e re-atribui um UUID válido (sincroniza Forms ↔ Atletas).
+  repairBrokenIds() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const formSheet = ss.getSheetByName('Respostas do Formulário 1');
+    const atletas = ss.getSheetByName('Atletas');
+    if (!formSheet || !atletas) throw new Error('Abas em falta');
+    const idCol = this._idCol(formSheet);
+    if (idCol === -1) throw new Error('id_inscricao header em falta no Forms');
+
+    const atLast = atletas.getLastRow();
+    if (atLast < 2) return { fixed: 0 };
+    const atData = atletas.getRange(2, 1, atLast - 1, ATL_NCOLS).getValues();
+    const formLast = formSheet.getLastRow();
+    const formLastCol = formSheet.getLastColumn();
+    const formData = formSheet.getRange(2, 1, formLast - 1, formLastCol).getValues();
+
+    // Build map: (atleta name + Carimbo) → { formRow, currentId }
+    const formMap = {};
+    formData.forEach((fr, i) => {
+      const nome = String(fr[6] || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const ts = fr[0];
+      const tsTime = (ts instanceof Date) ? ts.getTime() : String(ts);
+      formMap[nome + '|' + tsTime] = { row: i + 2, currentId: fr[idCol - 1] };
+    });
+
+    const isValidUuid = id => typeof id === 'string' && /^[a-f0-9-]{20,}$/i.test(id);
+    let fixed = 0;
+    const errors = [];
+    atData.forEach((ar, i) => {
+      const atRow = i + 2;
+      const atId = ar[ATL_COLS.id_inscricao - 1];
+      if (isValidUuid(atId)) return;  // OK
+      const nome = String(ar[ATL_COLS.atleta - 1] || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const ts = ar[ATL_COLS.timestamp_inscricao - 1];
+      const tsTime = (ts instanceof Date) ? ts.getTime() : String(ts);
+      const key = nome + '|' + tsTime;
+      const match = formMap[key];
+      if (!match) {
+        errors.push(nome + ' (sem match em Forms)');
+        return;
+      }
+      let newId = match.currentId;
+      if (!isValidUuid(newId)) {
+        newId = Utilities.getUuid();
+        formSheet.getRange(match.row, idCol).setValue(newId);
+      }
+      atletas.getRange(atRow, 1).setValue(newId);
+      Logger.log('Fixed ' + nome + ': ' + newId);
+      fixed++;
+    });
+    Logger.log('repairBrokenIds: ' + fixed + ' atletas reparados' + (errors.length ? ', ' + errors.length + ' sem match' : ''));
+    if (errors.length) errors.forEach(e => Logger.log('  ✗ ' + e));
+    return { fixed, errors };
+  },
+
   // Re-extrai os URLs dos comprovativos da aba Forms para a aba Atletas,
   // apanhando os hyperlinks "escondidos" (texto visível ≠ URL real).
   // Idempotente — pode correr quantas vezes quiseres.
@@ -2134,6 +2190,7 @@ function assignNumeros()       { return Backfill.assignNumeros(); }
 function renameComprovativos() { return Backfill.renameComprovativos(); }
 function resyncAllFromForms()  { return Backfill.resyncAllFromForms(); }
 function remapAtletasIds()     { return Backfill.remapAtletasIds(); }
+function repairBrokenIds()     { return Backfill.repairBrokenIds(); }
 function installTrigger()      { return Triggers.install(); }
 function readAllComprovativos(){ return Comprovativo.readAllPending('tiagojgcc@gmail.com'); }
 function improveForms()        { return FormImprovement.run(); }
