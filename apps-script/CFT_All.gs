@@ -1532,7 +1532,10 @@ function onFormSubmitTrigger_(e) {
     return;
   }
   let id = formSheet.getRange(row, idCol).getValue();
-  if (!id) {
+  // Defensivo: se a cell contém Date ou algo não-UUID, gera novo UUID e sobrescreve.
+  // Isto evita que datas / valores corruptos cheguem a Atletas como id.
+  const isValidUuid = typeof id === 'string' && /^[a-f0-9-]{20,}$/i.test(id);
+  if (!isValidUuid) {
     id = Utilities.getUuid();
     formSheet.getRange(row, idCol).setValue(id);
   }
@@ -1731,7 +1734,10 @@ const Backfill = {
     const f = formSheet.getRange(row, 1, 1, lastCol).getValues()[0];
     const idCol = this._idCol(formSheet);
     const id = idCol > 0 ? f[idCol - 1] : null;
-    if (!id) throw new Error('Linha ' + row + ' sem id_inscricao');
+    // Defensivo: id deve ser uma string UUID-like. Não aceita Date ou outros tipos.
+    if (!id || typeof id !== 'string' || !/^[a-f0-9-]{20,}$/i.test(id)) {
+      throw new Error('Linha ' + row + ' com id_inscricao inválido: ' + (typeof id) + ' = ' + id);
+    }
     // Verificar se já existe em Atletas (idempotência)
     const last = atletas.getLastRow();
     if (last >= 2) {
