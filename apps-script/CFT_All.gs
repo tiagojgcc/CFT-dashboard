@@ -768,9 +768,18 @@ const Comprovativo = {
       return v === 0 && a.comprovativo_url && a.ativo;
     });
     const results = [];
-    pending.forEach(function (a, idx) {
-      // Throttle: 5 segundos entre chamadas → ~12 RPM, abaixo dos 15 do plano grátis.
-      if (idx > 0) Utilities.sleep(5000);
+    const startMs = Date.now();
+    const TIMEOUT_MS = 5 * 60 * 1000;  // 5 min — sai antes do limite duro de 6 min
+    let stopped = false;
+    for (let idx = 0; idx < pending.length; idx++) {
+      const elapsed = Date.now() - startMs;
+      if (elapsed > TIMEOUT_MS) {
+        stopped = true;
+        Logger.log('Saída antes do timeout. Processados: ' + idx + '/' + pending.length + '. Re-corre para continuar.');
+        break;
+      }
+      const a = pending[idx];
+      if (idx > 0) Utilities.sleep(3000);  // 3s pausa = ~20 RPM (limite Gemini lite é 15 RPM com burst)
       try {
         const res = Comprovativo.forAtleta(a.id_inscricao);
         if (res.amount !== null) {
@@ -782,8 +791,10 @@ const Comprovativo = {
       } catch (e) {
         results.push({ atleta: a.atleta, error: e.message, ok: false });
       }
-    });
-    return { processed: results.length, results: results };
+    }
+    const ok = results.filter(r => r.ok).length;
+    Logger.log('readAllPending: ' + ok + '/' + results.length + ' lidos com sucesso. Total pendentes: ' + pending.length + (stopped ? ' (parado por tempo, re-correr)' : ''));
+    return { processed: results.length, total: pending.length, results: results, stopped: stopped };
   }
 };
 
