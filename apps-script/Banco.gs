@@ -65,7 +65,7 @@ const Banco = {
       }],
       generationConfig: {
         temperature: 0,
-        maxOutputTokens: 32000,
+        maxOutputTokens: 8000,  // ~50 transferências máx — mais é alucinação
         responseMimeType: 'application/json',
         responseSchema: {
           type: 'ARRAY',
@@ -114,7 +114,18 @@ const Banco = {
       throw new Error('JSON inválido (finishReason=' + finishReason + ', tamanho=' + text.length + '): ' + text.slice(0, 300) + '...' + text.slice(-200));
     }
     if (!Array.isArray(arr)) throw new Error('Gemini não devolveu array');
-    return arr;
+    // Deduplicar — Gemini às vezes entra em loop a repetir entradas
+    const seen = new Set();
+    const unique = [];
+    arr.forEach(t => {
+      if (!t) return;
+      const key = String(t.data_operacao || '') + '|' + (Number(t.valor) || 0).toFixed(2) + '|' + String(t.nome_ordenante || '').trim().toLowerCase();
+      if (!seen.has(key)) { seen.add(key); unique.push(t); }
+    });
+    if (unique.length !== arr.length) {
+      Logger.log('Dedup: ' + arr.length + ' → ' + unique.length + ' (removidos ' + (arr.length - unique.length) + ' duplicados)');
+    }
+    return unique;
   },
 
   // Recupera JSON truncado descartando o último item incompleto
@@ -504,4 +515,10 @@ Formato esperado para cada transferência (objeto JSON):
 
 DICA: cada bloco de "AVISOS DE LANÇAMENTO" começa com "N° Contrato a Crédito" — sinal de que é uma entrada. Se o bloco diz "N° Contrato a Débito" é saída, IGNORA.
 
-Devolve UM array JSON com todos os objetos. Sem texto à volta, sem markdown. Se não houver transferências crédito, devolve [].`;
+REGRAS RÍGIDAS:
+- **NÃO repetir transferências** — cada operação aparece UMA vez no JSON.
+- Cada extrato mensal tem tipicamente 5-30 transferências crédito (raramente mais de 50).
+- NÃO preencher o array com dados duplicados ou inventados — se já extraíste todas as visíveis, PARA.
+- Após extrair todas as transferências reais, fecha o array com ] imediatamente.
+
+Devolve UM array JSON com todos os objetos únicos. Sem texto à volta, sem markdown. Se não houver transferências crédito, devolve [].`;
