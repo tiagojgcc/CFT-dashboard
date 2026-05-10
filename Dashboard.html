@@ -805,9 +805,10 @@
     <div class="nav-more">
       <div class="tab nav-more-toggle" onclick="document.getElementById('nav-more-menu').classList.toggle('open')">⋯</div>
       <div class="nav-more-menu" id="nav-more-menu">
-        <div class="more-item" data-panel="banco"      onclick="showTab('banco'); document.getElementById('nav-more-menu').classList.remove('open');">Banco <span class="tab-count" id="tc-banco">0</span></div>
-        <div class="more-item" data-panel="historico"  onclick="showTab('historico'); document.getElementById('nav-more-menu').classList.remove('open');">Histórico</div>
-        <div class="more-item" data-panel="eliminados" onclick="showTab('eliminados'); document.getElementById('nav-more-menu').classList.remove('open');">Eliminados <span class="tab-count" id="tc-eliminados">0</span></div>
+        <div class="more-item" data-panel="banco"        onclick="showTab('banco'); document.getElementById('nav-more-menu').classList.remove('open');">Banco <span class="tab-count" id="tc-banco">0</span></div>
+        <div class="more-item" data-panel="entregaveis"  onclick="showTab('entregaveis'); document.getElementById('nav-more-menu').classList.remove('open');">Entregáveis</div>
+        <div class="more-item" data-panel="historico"    onclick="showTab('historico'); document.getElementById('nav-more-menu').classList.remove('open');">Histórico</div>
+        <div class="more-item" data-panel="eliminados"   onclick="showTab('eliminados'); document.getElementById('nav-more-menu').classList.remove('open');">Eliminados <span class="tab-count" id="tc-eliminados">0</span></div>
       </div>
     </div>
   </div>
@@ -935,6 +936,27 @@
       <div class="panel-sub" id="hist-sub">— eventos</div>
     </div>
     <div id="hist-content"></div>
+  </div>
+
+  <!-- ============ ENTREGÁVEIS (PDFs para treinadores) ============ -->
+  <div class="panel" id="panel-entregaveis">
+    <div class="panel-head">
+      <div class="panel-title">Entregáveis</div>
+      <div class="panel-sub">Listas formatadas para imprimir / dar aos treinadores</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
+      <button class="btn-confirm" style="padding:14px;" onclick="openEntregavel(1)">📄 Entregável Sem 1<br><small style="font-weight:normal;opacity:0.85;">12—18 jul</small></button>
+      <button class="btn-confirm" style="padding:14px;" onclick="openEntregavel(2)">📄 Entregável Sem 2<br><small style="font-weight:normal;opacity:0.85;">19—25 jul</small></button>
+      <button class="btn-confirm" style="padding:14px;" onclick="openEntregavel(3)">📄 Entregável Sem 3<br><small style="font-weight:normal;opacity:0.85;">26 jul—1 ago</small></button>
+    </div>
+    <div class="card" style="padding:18px;">
+      <div class="card-title" style="margin-bottom:10px;">Camisolas — pedido por tamanho</div>
+      <div id="camisolas-summary"></div>
+      <button class="btn-secondary" style="margin-top:12px;" onclick="openCamisolas()">📄 Listagem completa para imprimir</button>
+    </div>
+    <div style="font-size:12px;color:var(--mid-gray);margin-top:14px;">
+      Cada botão abre uma página formatada num novo separador. <b>Para guardar como PDF:</b> Ctrl+P → "Guardar como PDF".
+    </div>
   </div>
 
   <!-- ============ BANCO (confirmação manual de entradas em conta) ============ -->
@@ -1134,6 +1156,7 @@ function showTab(id){
   if (id === 'eliminados') renderEliminados();
   if (id === 'trabalho') { renderTrabalho(); }
   if (id === 'banco') { renderBanco(); }
+  if (id === 'entregaveis') { renderEntregaveis(); }
 }
 // Fecha o menu "⋯" se clicar fora
 document.addEventListener('click', e => {
@@ -2114,6 +2137,175 @@ async function adUnconfirm(movId, atletaId){
     if (r) renderAtletaDetail(r, movs);
     refreshNow();
   } catch (e) { toast('Erro: ' + e.message, true); }
+}
+
+// ============ ENTREGÁVEIS (PDFs para treinadores + camisolas) ============
+function calcIdade(dataNasc){
+  if (!dataNasc) return '—';
+  const d = new Date(dataNasc);
+  if (isNaN(d.getTime())) return '—';
+  const ref = new Date('2026-07-12');  // data de início do campo
+  let idade = ref.getFullYear() - d.getFullYear();
+  const m = ref.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && ref.getDate() < d.getDate())) idade--;
+  return String(idade);
+}
+
+function shortNameForRoster(fullName){
+  const parts = String(fullName || '').trim().split(/\s+/);
+  if (parts.length <= 1) return parts[0] || '';
+  return parts[0] + ' ' + parts[parts.length - 1];
+}
+
+function renderEntregaveis(){
+  // Render summary das camisolas
+  const byTam = {};
+  data.forEach(r => {
+    const t = String(r._raw && r._raw.tshirt || '').trim().toUpperCase().replace(/^TAMANHO\s*/, '');
+    if (t) byTam[t] = (byTam[t] || 0) + 1;
+  });
+  const order = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  const sortedKeys = Object.keys(byTam).sort((a, b) => {
+    const ia = order.indexOf(a), ib = order.indexOf(b);
+    if (ia >= 0 && ib >= 0) return ia - ib;
+    if (ia >= 0) return -1;
+    if (ib >= 0) return 1;
+    return a.localeCompare(b);
+  });
+  const total = sortedKeys.reduce((s, k) => s + byTam[k], 0);
+  const host = document.getElementById('camisolas-summary');
+  if (!host) return;
+  host.innerHTML = `
+    <div style="display:flex;gap:14px;flex-wrap:wrap;">
+      ${sortedKeys.map(k => `
+        <div style="background:var(--beige-mid);padding:8px 14px;border-radius:6px;min-width:60px;text-align:center;">
+          <div style="font-family:var(--font-display);font-size:24px;color:var(--charcoal);">${byTam[k]}</div>
+          <div style="font-family:var(--font-condensed);font-size:11px;letter-spacing:0.1em;color:var(--mid-gray);">${escHtml(k)}</div>
+        </div>
+      `).join('')}
+      <div style="margin-left:auto;align-self:center;font-size:13px;color:var(--mid-gray);">
+        Total: <b>${total}</b> camisolas
+      </div>
+    </div>
+  `;
+}
+
+function openEntregavel(semana){
+  const SEMANAS_DATAS = { 1:'12—18 julho', 2:'19—25 julho', 3:'26 julho—1 agosto' };
+  const atletas = (data || []).filter(r => parseSems(r.semana).includes(semana));
+  atletas.sort((a, b) => (a.num || 9999) - (b.num || 9999));
+  const rows = atletas.map((r, i) => {
+    const enc = shortNameForRoster(r.encarregado || '');
+    const idade = calcIdade(r._raw && r._raw.data_nascimento);
+    const posicao = (r._raw && r._raw.posicao) || '—';
+    const melhorar = (r._raw && r._raw.melhorar) || '—';
+    const emergencia = (r._raw && r._raw.contacto_emerg) || r.telefone || '—';
+    return `<tr>
+      <td class="num">${i + 1}</td>
+      <td><b>${escHtml(r.nome)}</b></td>
+      <td class="num">${idade}</td>
+      <td>${escHtml(r.clube || '')}</td>
+      <td>${escHtml(posicao)}</td>
+      <td class="melhorar">${escHtml(melhorar)}</td>
+      <td>${escHtml(enc)}</td>
+      <td class="num">${escHtml(emergencia)}</td>
+    </tr>`;
+  }).join('');
+  const html = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
+<title>CFT 2026 — Semana ${semana} — Entregável treinadores</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 14px; }
+  header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #1a1a1a; padding-bottom: 10px; margin-bottom: 14px; }
+  header .left h1 { margin: 0; font-size: 30px; letter-spacing: 0.04em; text-transform: uppercase; }
+  header .left .sub { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7a3a; margin-top: 4px; }
+  header .right { text-align: right; font-size: 12px; color: #555; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; }
+  th { background: #1a1a1a; color: #fff; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+  td.num, th.num { text-align: center; }
+  tr:nth-child(even) td { background: #f7f3eb; }
+  .melhorar { font-style: italic; color: #555; max-width: 280px; }
+  footer { margin-top: 16px; font-size: 10px; color: #888; text-align: right; }
+  @media print { .no-print { display: none; } body { padding: 0; } }
+</style></head><body>
+<div class="no-print" style="background:#1a1a1a;color:#fff;padding:10px 14px;border-radius:6px;margin-bottom:14px;">
+  📄 Para guardar como PDF: <b>Ctrl+P</b> → escolhe "Guardar como PDF" → guardar.
+</div>
+<header>
+  <div class="left">
+    <h1>CFT — Semana ${semana}</h1>
+    <div class="sub">${SEMANAS_DATAS[semana]} · 4ª edição · 2026</div>
+  </div>
+  <div class="right">
+    <div><b>${atletas.length}</b> atletas</div>
+    <div>Gerado: ${new Date().toLocaleDateString('pt-PT')}</div>
+  </div>
+</header>
+<table>
+  <thead><tr>
+    <th class="num">Nº</th>
+    <th>Atleta</th>
+    <th class="num">Idade</th>
+    <th>Clube</th>
+    <th>Posição</th>
+    <th>O que pretende melhorar</th>
+    <th>Encarregado</th>
+    <th class="num">Emergência</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+<footer>CFT 2026 · Campo de Formação Técnica · APDFE</footer>
+</body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) { toast('Bloqueador de popups impede abrir. Permite popups para este site.', true); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+}
+
+function openCamisolas(){
+  const ordered = (data || []).slice().sort((a, b) => (a.num || 9999) - (b.num || 9999));
+  const rows = ordered.map(r => {
+    const tam = (r._raw && r._raw.tshirt) || '';
+    const num = (r._raw && r._raw.tshirt_num) || '';
+    const nm  = (r._raw && r._raw.tshirt_nome) || '';
+    return `<tr>
+      <td class="num">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</td>
+      <td>${escHtml(r.nome)}</td>
+      <td>${escHtml(r.clube || '')}</td>
+      <td><b>${escHtml(tam)}</b></td>
+      <td class="num">${escHtml(num)}</td>
+      <td>${escHtml(nm)}</td>
+    </tr>`;
+  }).join('');
+  const html = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
+<title>CFT 2026 — Camisolas</title>
+<style>
+  @page { size: A4 portrait; margin: 14mm; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 14px; }
+  header { border-bottom: 3px solid #1a1a1a; padding-bottom: 10px; margin-bottom: 14px; }
+  h1 { margin: 0; font-size: 28px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .sub { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7a3a; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid #ddd; text-align: left; }
+  th { background: #1a1a1a; color: #fff; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+  td.num, th.num { text-align: center; }
+  tr:nth-child(even) td { background: #f7f3eb; }
+  @media print { .no-print { display: none; } body { padding: 0; } }
+</style></head><body>
+<div class="no-print" style="background:#1a1a1a;color:#fff;padding:10px 14px;border-radius:6px;margin-bottom:14px;">
+  📄 Para guardar como PDF: <b>Ctrl+P</b> → "Guardar como PDF".
+</div>
+<header><h1>CFT — Camisolas</h1><div class="sub">Encomenda · 4ª edição · 2026</div></header>
+<table>
+  <thead><tr>
+    <th class="num">Nº</th><th>Atleta</th><th>Clube</th><th>Tamanho</th><th class="num">Número</th><th>Nome na camisola</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+</body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) { toast('Bloqueador de popups impede abrir. Permite popups para este site.', true); return; }
+  w.document.open(); w.document.write(html); w.document.close();
 }
 
 // ============ BANCO (confirmação manual em conta — Opção A) ============
