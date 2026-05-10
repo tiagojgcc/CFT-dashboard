@@ -1231,7 +1231,9 @@ function renderAlertStrip(){
 // ============ KPI ROW ============
 function renderKPI(){
   const cc = clubeCounts();
-  const total = data.length;
+  const counts = (Api && Api._cache && Api._cache.counts) || {};
+  const atletasU = counts.atletas_unicos || data.length;
+  const inscricoes = counts.inscricoes || data.reduce((s, r) => s + parseSems(r.semana).length, 0);
   const internos = data.filter(r => r.tipo === 'Interno').length;
   const comDesc = data.filter(r => calcTotal(r, cc).desc).length;
   const semIban = data.filter(r => r.iban === false).length;
@@ -1245,12 +1247,12 @@ function renderKPI(){
   document.getElementById('kpi-row').innerHTML = `
     <div class="kpi kpi--hero">
       <div>
-        <div class="kpi-label">Total de inscritos</div>
-        <div class="kpi-num">${total}<span class="small"> /${VAGAS_TOTAL}</span></div>
+        <div class="kpi-label">Inscrições · Atletas</div>
+        <div class="kpi-num">${inscricoes}<span class="small"> /${VAGAS_TOTAL}</span></div>
       </div>
       <div>
-        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:${Math.round(total/VAGAS_TOTAL*100)}%"></div></div>
-        <div class="kpi-sub">${internos} internos · ${total - internos} externos · ${comDesc} c/ desconto</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:${Math.round(inscricoes/VAGAS_TOTAL*100)}%"></div></div>
+        <div class="kpi-sub">${atletasU} atletas únicos · ${internos} internos · ${data.length - internos} externos · ${comDesc} c/ desconto</div>
       </div>
     </div>
     <div class="kpi">
