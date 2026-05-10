@@ -881,7 +881,7 @@ const Banco = {
       }],
       generationConfig: {
         temperature: 0,
-        maxOutputTokens: 16000,
+        maxOutputTokens: 32000,
         responseMimeType: 'application/json',
         responseSchema: {
           type: 'ARRAY',
@@ -898,7 +898,9 @@ const Banco = {
             },
             required: ['data_operacao','valor','nome_ordenante']
           }
-        }
+        },
+        // Desativa "thinking" para libertar todos os tokens para o output (Gemini 2.5 lite tem thinking on por defeito)
+        thinkingConfig: { thinkingBudget: 0 }
       }
     };
     const resp = UrlFetchApp.fetch(this.API_URL + '?key=' + encodeURIComponent(apiKey), {
@@ -910,14 +912,51 @@ const Banco = {
     const code = resp.getResponseCode();
     if (code !== 200) throw new Error('Gemini ' + code + ': ' + resp.getContentText().slice(0, 300));
     const json = JSON.parse(resp.getContentText());
-    const text = json.candidates && json.candidates[0] && json.candidates[0].content
-                 && json.candidates[0].content.parts && json.candidates[0].content.parts[0]
-                 && json.candidates[0].content.parts[0].text;
-    if (!text) throw new Error('Gemini devolveu resposta vazia');
+    const cand = json.candidates && json.candidates[0];
+    const finishReason = cand && cand.finishReason;
+    const text = cand && cand.content && cand.content.parts && cand.content.parts[0] && cand.content.parts[0].text;
+    if (!text) throw new Error('Gemini resposta vazia (finishReason=' + finishReason + ')');
     let arr;
-    try { arr = JSON.parse(text); } catch (e) { throw new Error('JSON inválido do Gemini: ' + text.slice(0, 200)); }
+    try {
+      arr = JSON.parse(text);
+    } catch (e) {
+      // Tenta recuperar JSON truncado: completa array com ']' se faltar
+      Logger.log('JSON inválido, tentando recuperar... finishReason=' + finishReason + ', tamanho=' + text.length);
+      const recovered = this._tryRecoverTruncatedJson(text);
+      if (recovered) {
+        Logger.log('Recuperados ' + recovered.length + ' itens do JSON truncado');
+        return recovered;
+      }
+      throw new Error('JSON inválido (finishReason=' + finishReason + ', tamanho=' + text.length + '): ' + text.slice(0, 300) + '...' + text.slice(-200));
+    }
     if (!Array.isArray(arr)) throw new Error('Gemini não devolveu array');
     return arr;
+  },
+
+  // Recupera JSON truncado descartando o último item incompleto
+  _tryRecoverTruncatedJson(text) {
+    try {
+      // Encontra o último '}' completo seguido de '},' ou '}'
+      const lastClose = text.lastIndexOf('}');
+      if (lastClose < 0) return null;
+      // Tenta cortar no último } e fechar o array
+      const candidate = text.slice(0, lastClose + 1) + ']';
+      const arr = JSON.parse(candidate);
+      if (Array.isArray(arr)) return arr;
+    } catch (e) {}
+    // Estratégia 2: tenta um } a menos
+    try {
+      const closes = [];
+      for (let i = 0; i < text.length; i++) if (text[i] === '}') closes.push(i);
+      // Trim ate ao penúltimo }
+      if (closes.length >= 2) {
+        const idx = closes[closes.length - 2];
+        const candidate = text.slice(0, idx + 1) + ']';
+        const arr = JSON.parse(candidate);
+        if (Array.isArray(arr)) return arr;
+      }
+    } catch (e) {}
+    return null;
   },
 
   // Lista negra: padrões que NUNCA devem ser tratados como crédito de inscrição
