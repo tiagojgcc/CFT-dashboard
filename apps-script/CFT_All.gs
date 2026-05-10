@@ -1,7 +1,7 @@
 /**
  * Router. Substituir SHEET_ID pela cópia de teste primeiro.
  */
-const SHEET_ID = '1yLPtKZk-vjs-0lLBLzjw3VyOl9xo7Tz54vdK26dfPbc';
+const SHEET_ID = '1LXOqqTt2Ct7xNtRvv_Nu38z5V3pza0NtacgxBM3_WSY';  // Sheet real ligado ao Forms (em geral@camposft.com)
 
 function doGet(e)  { return handle_(e, 'GET'); }
 function doPost(e) { return handle_(e, 'POST'); }
