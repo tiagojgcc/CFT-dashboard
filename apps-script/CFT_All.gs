@@ -1779,6 +1779,52 @@ const Backfill = {
     atletas.appendRow(atletaRow);
   },
 
+  // Remapeia os id_inscricao em Atletas para baterem com os do Forms.
+  // Útil quando os IDs ficaram dessincronizados (ex: Forms ganhou colunas, IDs migraram).
+  // Faz match por nome do atleta + timestamp de inscrição.
+  remapAtletasIds() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const formSheet = ss.getSheetByName('Respostas do Formulário 1');
+    const atletas = ss.getSheetByName('Atletas');
+    if (!formSheet || !atletas) throw new Error('Abas em falta');
+    const idCol = this._idCol(formSheet);
+    if (idCol === -1) throw new Error('id_inscricao em falta no Forms');
+    const formLast = formSheet.getLastRow();
+    if (formLast < 2) return { updated: 0 };
+    const formLastCol = formSheet.getLastColumn();
+    const formData = formSheet.getRange(2, 1, formLast - 1, formLastCol).getValues();
+    // Map (nome+timestamp) -> formId
+    const map = {};
+    formData.forEach(row => {
+      const fid = row[idCol - 1];
+      if (!fid) return;
+      const nome = String(row[6] || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const ts = row[0];
+      const tsKey = (ts instanceof Date) ? ts.getTime() : String(ts);
+      const key = nome + '|' + tsKey;
+      map[key] = fid;
+    });
+    // Para cada atleta, encontrar e atualizar
+    const atLast = atletas.getLastRow();
+    if (atLast < 2) return { updated: 0 };
+    const atRows = atletas.getRange(2, 1, atLast - 1, ATL_NCOLS).getValues();
+    let updated = 0, notFound = 0;
+    atRows.forEach((r, i) => {
+      const oldId = r[ATL_COLS.id_inscricao - 1];
+      const nome = String(r[ATL_COLS.atleta - 1] || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const ts = r[ATL_COLS.timestamp_inscricao - 1];
+      const tsKey = (ts instanceof Date) ? ts.getTime() : String(ts);
+      const key = nome + '|' + tsKey;
+      const newId = map[key];
+      if (!newId) { notFound++; return; }
+      if (newId === oldId) return;  // já bate, ignora
+      atletas.getRange(i + 2, ATL_COLS.id_inscricao).setValue(newId);
+      updated++;
+    });
+    Logger.log('remapAtletasIds: ' + updated + ' atualizados, ' + notFound + ' sem match');
+    return { updated, notFound };
+  },
+
   // Re-sincroniza um atleta a partir de "Respostas do Formulário 1" (sobrescreve
   // os campos vindos do Forms, mas PRESERVA campos operacionais — valor_pago,
   // semanas_atuais, valor_confirmado, notas, num_inscricao, bank_confirmed_*, etc.)
@@ -2076,6 +2122,7 @@ function fixComprovativoUrls() { return Backfill.fixComprovativoUrls(); }
 function assignNumeros()       { return Backfill.assignNumeros(); }
 function renameComprovativos() { return Backfill.renameComprovativos(); }
 function resyncAllFromForms()  { return Backfill.resyncAllFromForms(); }
+function remapAtletasIds()     { return Backfill.remapAtletasIds(); }
 function installTrigger()      { return Triggers.install(); }
 function readAllComprovativos(){ return Comprovativo.readAllPending('tiagojgcc@gmail.com'); }
 function improveForms()        { return FormImprovement.run(); }
