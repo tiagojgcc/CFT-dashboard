@@ -272,8 +272,8 @@
 
   .table-wrap { border: 1px solid var(--sand); border-radius: var(--radius-md); background: var(--white); overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  /* thead sticky a 56px (altura aproximada do toolbar sticky em cima). z-index inferior ao do toolbar */
-  thead { background: var(--charcoal); color: var(--off-white); position: sticky; top: 56px; z-index: 10; }
+  /* thead sticky logo abaixo do toolbar. --toolbar-h é actualizado em JS via ResizeObserver */
+  thead { background: var(--charcoal); color: var(--off-white); position: sticky; top: var(--toolbar-h, 56px); z-index: 10; }
   thead th { box-shadow: inset 0 -1px 0 0 var(--charcoal); }
   th {
     font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700;
@@ -3407,7 +3407,25 @@ function renderAll(){
   renderEliminados();
   updateAlertsCount();
   formatLastUpdate();
+  updateToolbarHeight();
 }
+
+// Mede a altura do toolbar da Lista e expõe como CSS var --toolbar-h.
+// O thead sticky usa esta var para se posicionar abaixo do toolbar sem o sobrepor.
+function updateToolbarHeight(){
+  const tb = document.querySelector('#panel-list .list-toolbar');
+  if (!tb) return;
+  const h = Math.ceil(tb.getBoundingClientRect().height);
+  if (h > 0) document.documentElement.style.setProperty('--toolbar-h', h + 'px');
+}
+window.addEventListener('resize', updateToolbarHeight);
+// ResizeObserver apanha mudanças de altura quando os filtros fazem wrap
+(function setupToolbarObserver(){
+  const tb = document.querySelector('#panel-list .list-toolbar');
+  if (tb && 'ResizeObserver' in window) {
+    new ResizeObserver(updateToolbarHeight).observe(tb);
+  }
+})();
 
 // Auth → first load + auto-refresh a cada 5min
 Auth.onChange((token, email) => {
