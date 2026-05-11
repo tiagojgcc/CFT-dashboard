@@ -42,6 +42,57 @@ const Backfill = {
   _idCol(formSheet) { return this._findFormCol(formSheet, 'id_inscricao'); },
   _migradoCol(formSheet) { return this._findFormCol(formSheet, 'migrado_em'); },
 
+  // Constrói mapa header → índice 0-based, para ler campos do Forms por nome em vez de
+  // posição. Robusto a reordenação/adição de colunas no Forms.
+  // Para "Qual?" (repetido 4×) usamos posição imediatamente a seguir à pergunta-mãe.
+  _buildHeaderMap(formSheet) {
+    const lastCol = formSheet.getLastColumn();
+    const headers = formSheet.getRange(1, 1, 1, lastCol).getValues()[0]
+      .map(h => String(h).trim().replace(/\s+/g, ' '));
+    const findExact = (text) => headers.indexOf(text);
+    const findContains = (substr) => {
+      const needle = substr.toLowerCase();
+      for (let i = 0; i < headers.length; i++) {
+        if (headers[i].toLowerCase().includes(needle)) return i;
+      }
+      return -1;
+    };
+    const m = {
+      timestamp:        findExact('Carimbo de data/hora'),
+      semanas:          findExact('Semana de inscrição'),
+      opcao:            findExact('Opção de inscrição'),
+      atleta:           findExact('Nome completo do atleta'),
+      cc:               findExact('Nº Cartão de Cidadão'),
+      dataNasc:         findExact('Data de nascimento'),
+      nif:              findExact('NIF'),
+      tshirt:           findExact('Tamanho equipamento'),
+      tshirt_num:       findExact('Número colocar equipamento'),
+      tshirt_nome:      findExact('Nome colocar equipamento'),
+      clube:            findExact('Clube onde joga'),
+      posicao:          findExact('Posição onde joga'),
+      melhorar:         findExact('O que pretende melhorar com o campo?'),
+      alergia_alim:     findExact('Tem alguma alergia alimentar?'),
+      medicacao:        findExact('Faz alguma medicação regularmente?'),
+      doenca:           findExact('Tem alguma doença?'),
+      alergia_med:      findExact('Tem alguma alergia medicamentosa?'),
+      encarregado:      findExact('Nome encarregado de educação'),
+      email_ee:         findExact('Email'),
+      telefone:         findExact('Telemóvel'),
+      contacto_emerg:   findExact('Contacto de emergência'),
+      decl_resp:        findContains('Declaro, como encarregado'),
+      decl_imagem:      findContains('captação e divulgação'),
+      decl_saida:       findContains('saída do seu educando'),
+      iban:             findExact('Iban para devolução de dinheiro'),
+      comprovativo:     findContains('Comprovativo pagamento inscrição')
+    };
+    // "Qual?" são sempre imediatamente a seguir à pergunta-mãe
+    m.alergia_alim_qual = m.alergia_alim >= 0 ? m.alergia_alim + 1 : -1;
+    m.medicacao_qual    = m.medicacao    >= 0 ? m.medicacao    + 1 : -1;
+    m.doenca_qual       = m.doenca       >= 0 ? m.doenca       + 1 : -1;
+    m.alergia_med_qual  = m.alergia_med  >= 0 ? m.alergia_med  + 1 : -1;
+    return m;
+  },
+
   setupSheets() {
     const ss = SpreadsheetApp.openById(SHEET_ID);
 
@@ -188,39 +239,44 @@ const Backfill = {
       const existing = atletas.getRange(2, 1, last - 1, 1).getValues().flat();
       if (existing.indexOf(id) !== -1) return;
     }
+    const h = this._buildHeaderMap(formSheet);
+    const v = (key) => (h[key] >= 0 ? f[h[key]] : '');
+    const comprovativoUrl = h.comprovativo >= 0
+      ? this.getCellUrl_(formSheet, row, h.comprovativo + 1)  // +1 = 1-based
+      : '';
     const atletaRow = [
-      id,        // 1  id_inscricao
-      f[0],      // 2  timestamp_inscricao  ← Carimbo
-      f[6],      // 3  atleta
-      f[8],      // 4  data_nascimento
-      f[13],     // 5  clube
-      f[24],     // 6  encarregado
-      f[25],     // 7  email
-      f[26],     // 8  telefone
-      f[5],      // 9  opcao_inscricao  ← "interno"/"externo"
-      f[2],      // 10 semanas_originais
-      f[2],     // 11 semanas_atuais (=originais inicialmente)
-      f[10],     // 12 tshirt
-      f[11],     // 13 tshirt_num
-      f[12],     // 14 tshirt_nome
-      f[16],     // 15 alergia_alim
-      f[17],     // 16 alergia_alim_qual
-      f[18],     // 17 medicacao
-      f[19],     // 18 medicacao_qual
-      f[20],     // 19 doenca
-      f[21],     // 20 doenca_qual
-      f[22],     // 21 alergia_med
-      f[23],     // 22 alergia_med_qual
-      f[7],      // 23 cc
-      f[9],      // 24 nif
-      f[14],     // 25 posicao
-      f[15],     // 26 melhorar
-      f[27],     // 27 contacto_emerg
-      f[28],     // 28 decl_responsabilidade
-      f[29],     // 29 decl_imagem
-      f[30],     // 30 decl_saida
-      f[31],     // 31 iban
-      this.getCellUrl_(formSheet, row, 33),  // 32 comprovativo_url (extrai hyperlink real)
+      id,                       // 1  id_inscricao
+      v('timestamp'),           // 2  timestamp_inscricao
+      v('atleta'),              // 3  atleta
+      v('dataNasc'),            // 4  data_nascimento
+      v('clube'),               // 5  clube
+      v('encarregado'),         // 6  encarregado
+      v('email_ee'),            // 7  email
+      v('telefone'),            // 8  telefone
+      v('opcao'),               // 9  opcao_inscricao
+      v('semanas'),             // 10 semanas_originais
+      v('semanas'),             // 11 semanas_atuais (=originais inicialmente)
+      v('tshirt'),              // 12 tshirt
+      v('tshirt_num'),          // 13 tshirt_num
+      v('tshirt_nome'),         // 14 tshirt_nome
+      v('alergia_alim'),        // 15 alergia_alim
+      v('alergia_alim_qual'),   // 16 alergia_alim_qual
+      v('medicacao'),           // 17 medicacao
+      v('medicacao_qual'),      // 18 medicacao_qual
+      v('doenca'),              // 19 doenca
+      v('doenca_qual'),         // 20 doenca_qual
+      v('alergia_med'),         // 21 alergia_med
+      v('alergia_med_qual'),    // 22 alergia_med_qual
+      v('cc'),                  // 23 cc
+      v('nif'),                 // 24 nif
+      v('posicao'),             // 25 posicao
+      v('melhorar'),            // 26 melhorar
+      v('contacto_emerg'),      // 27 contacto_emerg
+      v('decl_resp'),           // 28 decl_responsabilidade
+      v('decl_imagem'),         // 29 decl_imagem
+      v('decl_saida'),          // 30 decl_saida
+      v('iban'),                // 31 iban
+      comprovativoUrl,          // 32 comprovativo_url
       0,         // 33 valor_pago
       false,     // 34 irmao_desconto
       true,      // 35 ativo
@@ -309,38 +365,43 @@ const Backfill = {
     const atletasRow = atletasIdx + 2;
     const lastCol = formSheet.getLastColumn();
     const f = formSheet.getRange(formRow, 1, 1, lastCol).getValues()[0];
+    const h = this._buildHeaderMap(formSheet);
+    const v = (key) => (h[key] >= 0 ? f[h[key]] : '');
+    const comprovativoUrl = h.comprovativo >= 0
+      ? this.getCellUrl_(formSheet, formRow, h.comprovativo + 1)
+      : '';
     const updates = [
-      [ATL_COLS.timestamp_inscricao,    f[0]],
-      [ATL_COLS.atleta,                 f[6]],
-      [ATL_COLS.data_nascimento,        f[8]],
-      [ATL_COLS.clube,                  f[13]],
-      [ATL_COLS.encarregado,            f[24]],
-      [ATL_COLS.email,                  f[25]],
-      [ATL_COLS.telefone,               f[26]],
-      [ATL_COLS.opcao_inscricao,        f[5]],
-      [ATL_COLS.semanas_originais,      f[2]],
+      [ATL_COLS.timestamp_inscricao,    v('timestamp')],
+      [ATL_COLS.atleta,                 v('atleta')],
+      [ATL_COLS.data_nascimento,        v('dataNasc')],
+      [ATL_COLS.clube,                  v('clube')],
+      [ATL_COLS.encarregado,            v('encarregado')],
+      [ATL_COLS.email,                  v('email_ee')],
+      [ATL_COLS.telefone,               v('telefone')],
+      [ATL_COLS.opcao_inscricao,        v('opcao')],
+      [ATL_COLS.semanas_originais,      v('semanas')],
       // semanas_atuais (col 11): NÃO sobrescrever — admin pode ter alterado
-      [ATL_COLS.tshirt,                 f[10]],
-      [ATL_COLS.tshirt_num,             f[11]],
-      [ATL_COLS.tshirt_nome,            f[12]],
-      [ATL_COLS.alergia_alim,           f[16]],
-      [ATL_COLS.alergia_alim_qual,      f[17]],
-      [ATL_COLS.medicacao,              f[18]],
-      [ATL_COLS.medicacao_qual,         f[19]],
-      [ATL_COLS.doenca,                 f[20]],
-      [ATL_COLS.doenca_qual,            f[21]],
-      [ATL_COLS.alergia_med,            f[22]],
-      [ATL_COLS.alergia_med_qual,       f[23]],
-      [ATL_COLS.cc,                     f[7]],
-      [ATL_COLS.nif,                    f[9]],
-      [ATL_COLS.posicao,                f[14]],
-      [ATL_COLS.melhorar,               f[15]],
-      [ATL_COLS.contacto_emerg,         f[27]],
-      [ATL_COLS.decl_responsabilidade,  f[28]],
-      [ATL_COLS.decl_imagem,            f[29]],
-      [ATL_COLS.decl_saida,             f[30]],
-      [ATL_COLS.iban,                   f[31]],
-      [ATL_COLS.comprovativo_url,       this.getCellUrl_(formSheet, formRow, 33)]
+      [ATL_COLS.tshirt,                 v('tshirt')],
+      [ATL_COLS.tshirt_num,             v('tshirt_num')],
+      [ATL_COLS.tshirt_nome,            v('tshirt_nome')],
+      [ATL_COLS.alergia_alim,           v('alergia_alim')],
+      [ATL_COLS.alergia_alim_qual,      v('alergia_alim_qual')],
+      [ATL_COLS.medicacao,              v('medicacao')],
+      [ATL_COLS.medicacao_qual,         v('medicacao_qual')],
+      [ATL_COLS.doenca,                 v('doenca')],
+      [ATL_COLS.doenca_qual,            v('doenca_qual')],
+      [ATL_COLS.alergia_med,            v('alergia_med')],
+      [ATL_COLS.alergia_med_qual,       v('alergia_med_qual')],
+      [ATL_COLS.cc,                     v('cc')],
+      [ATL_COLS.nif,                    v('nif')],
+      [ATL_COLS.posicao,                v('posicao')],
+      [ATL_COLS.melhorar,               v('melhorar')],
+      [ATL_COLS.contacto_emerg,         v('contacto_emerg')],
+      [ATL_COLS.decl_responsabilidade,  v('decl_resp')],
+      [ATL_COLS.decl_imagem,            v('decl_imagem')],
+      [ATL_COLS.decl_saida,             v('decl_saida')],
+      [ATL_COLS.iban,                   v('iban')],
+      [ATL_COLS.comprovativo_url,       comprovativoUrl]
     ];
     updates.forEach(([col, value]) => {
       atletas.getRange(atletasRow, col).setValue(value);
