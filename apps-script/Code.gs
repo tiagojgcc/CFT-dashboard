@@ -20,6 +20,7 @@ function handle_(e, method) {
     switch (action) {
       case 'getAll':           result = Inscricoes.getAll(); break;
       case 'updateSemanas':    result = Inscricoes.updateSemanas(params.id, params.novas, params.motivo, user); break;
+      case 'setOpcaoInscricao': result = Inscricoes.setOpcaoInscricao(params.id, params.opcao, params.motivo, user); break;
       case 'softDelete':       result = Inscricoes.softDelete(params.id, params.motivo, user); break;
       case 'reactivate':       result = Inscricoes.reactivate(params.id, params.motivo, user); break;
       case 'updatePagamento':  result = Inscricoes.updatePagamento(params.id, params.valor, user, params.confirm === true); break;

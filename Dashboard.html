@@ -1014,6 +1014,25 @@
   </div>
 </div>
 
+<!-- ================ MODAL: ALTERAR OPÇÃO INSCRIÇÃO ================ -->
+<div class="modal-overlay" id="opcao-overlay">
+  <div class="modal">
+    <div class="modal-title">Alterar tipo de inscrição</div>
+    <div class="modal-sub" id="opcao-sub">—</div>
+    <div class="field-label">Novo tipo</div>
+    <div id="opcao-radios" style="display:flex;gap:14px;margin:6px 0 14px;font-size:13px;">
+      <label><input type="radio" name="opcao-tipo" value="Interno"> Interno</label>
+      <label><input type="radio" name="opcao-tipo" value="Externo"> Externo</label>
+    </div>
+    <div class="field-label">Motivo da alteração (obrigatório, ≥10 caracteres)</div>
+    <textarea id="opcao-motivo" placeholder="Ex: encarregado pediu para mudar para externo · ou correção de erro de inscrição." oninput="checkOpcaoBtn()"></textarea>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeOpcao()">Cancelar</button>
+      <button class="btn-confirm" id="opcao-confirm-btn" onclick="confirmOpcao()" disabled>Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ================ MODAL: HISTÓRICO DO DINHEIRO ================ -->
 <div class="modal-overlay" id="atleta-detail-overlay">
   <div class="modal large" style="max-width:760px;">
@@ -1629,7 +1648,7 @@ function renderTable(){
       </td>
       <td class="clube">${escHtml(r.clube)}</td>
       <td>${semBadge(r.semana)}</td>
-      <td>${r.tipo === 'Interno' ? '<span class="badge b-int">int</span>' : '<span class="badge b-ext">ext</span>'}</td>
+      <td><span class="badge ${r.tipo === 'Interno' ? 'b-int' : 'b-ext'}" style="cursor:pointer;" title="Carregar para alterar (Interno ↔ Externo)" onclick="openOpcao('${r.id}')">${r.tipo === 'Interno' ? 'int' : 'ext'}</span></td>
       <td>${descCell}</td>
       <td class="devido col-num">${devidoCell}</td>
       <td class="pago col-num">${valPagoCell}${compLink}${ocrBtn}</td>
@@ -2093,6 +2112,41 @@ async function confirmSem(){
     await Api.updateSemanas(pendingSem.id, novas, motivo);
     toast('Semanas atualizadas');
     closeSem();
+    await refreshNow();
+  } catch (e) { toast('Erro: ' + e.message, true); btn.disabled = false; }
+}
+
+// ============ MODAL: ALTERAR OPÇÃO INSCRIÇÃO (Interno/Externo) ============
+let pendingOpcao = null;
+function openOpcao(id){
+  const r = (dataAll || []).find(a => a.id === id);
+  if (!r) return;
+  pendingOpcao = { id, nome: r.nome, atual: r.tipo };
+  document.getElementById('opcao-sub').textContent = r.nome + ' · atual: ' + (r.tipo || '—');
+  document.querySelectorAll('#opcao-radios input').forEach(c => { c.checked = (c.value === r.tipo); });
+  document.getElementById('opcao-motivo').value = '';
+  document.getElementById('opcao-confirm-btn').disabled = true;
+  document.getElementById('opcao-overlay').classList.add('open');
+}
+function closeOpcao(){ document.getElementById('opcao-overlay').classList.remove('open'); pendingOpcao = null; }
+function checkOpcaoBtn(){
+  const v = document.getElementById('opcao-motivo').value.trim();
+  const sel = document.querySelector('#opcao-radios input:checked');
+  const changed = sel && pendingOpcao && sel.value !== pendingOpcao.atual;
+  document.getElementById('opcao-confirm-btn').disabled = !changed || v.length < 10;
+}
+document.querySelectorAll('#opcao-radios input').forEach(c => c.addEventListener('change', checkOpcaoBtn));
+async function confirmOpcao(){
+  if (!pendingOpcao) return;
+  const sel = document.querySelector('#opcao-radios input:checked');
+  if (!sel) return;
+  const opcao = sel.value;
+  const motivo = document.getElementById('opcao-motivo').value.trim();
+  const btn = document.getElementById('opcao-confirm-btn'); btn.disabled = true;
+  try {
+    await Api.setOpcaoInscricao(pendingOpcao.id, opcao, motivo);
+    toast('Tipo atualizado para ' + opcao);
+    closeOpcao();
     await refreshNow();
   } catch (e) { toast('Erro: ' + e.message, true); btn.disabled = false; }
 }

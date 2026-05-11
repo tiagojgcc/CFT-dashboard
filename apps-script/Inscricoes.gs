@@ -161,6 +161,24 @@ const Inscricoes = {
     });
   },
 
+  setOpcaoInscricao(id, novaOpcao, motivo, user) {
+    if (!motivo || String(motivo).trim().length < 10) throw new Error('Motivo obrigatório (≥10 caracteres)');
+    const norm = String(novaOpcao || '').trim().toLowerCase();
+    if (norm !== 'interno' && norm !== 'externo') throw new Error('opcao_inscricao deve ser "Interno" ou "Externo"');
+    const valor = norm.charAt(0).toUpperCase() + norm.slice(1);  // "Interno" / "Externo"
+    return this._withLock(() => {
+      const sh = this.sheet();
+      const r = this._findRow(id);
+      const antes = sh.getRange(r, ATL_COLS.opcao_inscricao).getValue();
+      if (String(antes).trim() === valor) return { id, opcao_inscricao: valor, changed: false };
+      sh.getRange(r, ATL_COLS.opcao_inscricao).setValue(valor);
+      this._stampUser(sh, r, user);
+      const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
+      Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'alteracao_opcao', antes: String(antes), depois: valor, motivo });
+      return { id, opcao_inscricao: valor, changed: true };
+    });
+  },
+
   softDelete(id, motivo, user) {
     if (!motivo || String(motivo).trim().length < 10) throw new Error('Motivo obrigatório (≥10 caracteres)');
     return this._withLock(() => {

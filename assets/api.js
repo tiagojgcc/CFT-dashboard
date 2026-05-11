@@ -137,6 +137,7 @@
     },
 
     updateSemanas(id, novas, motivo) { return this._call('updateSemanas', { id, novas, motivo }); },
+    setOpcaoInscricao(id, opcao, motivo) { return this._call('setOpcaoInscricao', { id, opcao, motivo }); },
     softDelete(id, motivo)            { return this._call('softDelete',     { id, motivo }); },
     reactivate(id, motivo)            { return this._call('reactivate',     { id, motivo }); },
     updatePagamento(id, valor, confirm) { return this._call('updatePagamento',{ id, valor, confirm: !!confirm }); },
