@@ -1127,8 +1127,9 @@ function valorErradoTooltip(r){
     opcoes.push(info.before ? '(inscrito antes 31 mar — pronto OU prestações aceites)' : '(inscrito após 31 mar — só pronto aceite)');
     if (info.desc) opcoes.push('(com desconto)');
   }
-  const falta = p.falta;
-  return `Pagou ${v}€. Esperado:\n• ${opcoes.join('\n• ')}\nFalta: ${falta}€`;
+  const falta = Number(p.falta) || 0;
+  const linhaFalta = falta > 0 ? `\nFalta: ${falta}€` : '';
+  return `Pagou ${v}€. Esperado:\n• ${opcoes.join('\n• ')}${linhaFalta}`;
 }
 function formatLastUpdate(){
   const ts = (Api && Api.lastUpdate) ? Api.lastUpdate : new Date();
@@ -1564,7 +1565,14 @@ function renderTable(){
       ileg:     '<span class="badge b-ileg">ilegível</span>',
       pendente: '<span class="badge b-pendente">sem pag.</span>',
       problema: `<span class="badge b-pendente" title="${escAttr(erradoTip)}">valor errado</span>`,
-      devolver: `<span class="badge b-devolver" title="Sobrepagou ${(r.pricing&&r.pricing.sobra)||0}€. Devolver ao encarregado.">a devolver</span>`
+      devolver: (() => {
+        const sobra = (r.pricing&&r.pricing.sobra)||0;
+        const isExt = r.tipo === 'Externo';
+        const tip = isExt
+          ? `Sobrepagou ${sobra}€ como Externo. Confirma se o atleta é mesmo Externo ou se queria ser Interno — pode tornar o pagamento certo.`
+          : `Sobrepagou ${sobra}€. Devolver ao encarregado.`;
+        return `<span class="badge b-devolver" title="${escAttr(tip)}">a devolver</span>`;
+      })()
     })[st];
     const flags = (r.iban === false ? '<span class="row-flag iban" title="Sem IBAN">i</span>' : '') +
                   ((r.med || r.doenca || r.alergia) ? '<span class="row-flag med" title="Alerta médico">+</span>' : '') +
@@ -1770,15 +1778,31 @@ function suggestTemplate(){
   return 'generico';
 }
 
-function openCompose(){
+async function openCompose(){
+  // O fluxo legacy de compose plain-text foi substituído por drafts branded.
+  // Cria 1 rascunho CFT por atleta seleccionado, com o template auto-detectado
+  // pelo estado de pagamento.
   if (selected.size === 0) return;
-  activeTemplate = suggestTemplate();
-  applyTemplate(activeTemplate);
-  renderRecipients();
-  renderTemplatePills();
-  const sub = `${selected.size} destinatário${selected.size === 1 ? '' : 's'}`;
-  document.getElementById('compose-sub').textContent = sub;
-  document.getElementById('compose-overlay').classList.add('open');
+  const ids = [...selected];
+  toast(`A criar ${ids.length} rascunho${ids.length === 1 ? '' : 's'} branded…`);
+  let okCount = 0, firstUrl = null, errors = [];
+  for (const id of ids) {
+    const r = data.find(x => x.id === id);
+    if (!r || !r.email_enc) { errors.push((r && r.nome) || id); continue; }
+    try {
+      const res = await Api.createEmailDraft(id, null);
+      okCount++;
+      if (!firstUrl) firstUrl = res.url;
+    } catch (e) {
+      errors.push((r.nome || id) + ': ' + e.message);
+    }
+  }
+  if (okCount > 0) {
+    toast(`${okCount} rascunho${okCount === 1 ? '' : 's'} criado${okCount === 1 ? '' : 's'} em geral@camposft.com${errors.length ? ' · ' + errors.length + ' falha(s)' : ''}`);
+    if (firstUrl) window.open(firstUrl, '_blank');
+  } else {
+    toast('Falha ao criar rascunhos: ' + errors.slice(0,3).join(' | '), true);
+  }
 }
 function closeCompose(){ document.getElementById('compose-overlay').classList.remove('open'); }
 document.getElementById('compose-overlay').addEventListener('click', e => { if (e.target.id === 'compose-overlay') closeCompose(); });

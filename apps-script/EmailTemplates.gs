@@ -72,30 +72,37 @@ const EmailTemplates = {
   },
 
   _header() {
+    // Header em bege para que o logo (preto) seja visível. Gmail remove `filter` CSS,
+    // por isso evitamos brightness/invert e usamos directamente fundo claro.
     const C = this.C;
-    return `<div style="background:${C.nearBlack};padding:20px 40px;display:flex;align-items:center;justify-content:space-between;">
-      <img src="${this.LOGO_URL}" alt="CFT" style="height:38px;filter:brightness(0) invert(1);" />
-      <div style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;color:${C.sand};text-transform:uppercase;">${this.EDITION}</div>
+    return `<div style="background:${C.beige};padding:24px 40px;border-bottom:1.5px solid ${C.charcoal};">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="vertical-align:middle;"><img src="${this.LOGO_URL}" alt="CFT" style="height:44px;display:block;" /></td>
+        <td style="vertical-align:middle;text-align:right;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;color:${C.charcoal};text-transform:uppercase;">${this.EDITION}</td>
+      </tr></table>
     </div>`;
   },
 
   _signature() {
+    // Assinatura: logo escuro sobre fundo bege (sem filter), nome grande e contactos.
+    // Compatível com Gmail (table-based layout, sem flex).
     const C = this.C;
-    return `<div style="padding:0 40px 32px 40px;">
-      <div style="border-top:1.5px solid ${C.charcoal};padding-top:20px;margin-top:40px;display:flex;gap:20px;align-items:flex-start;">
-        <div style="width:64px;height:64px;background:${C.nearBlack};flex-shrink:0;padding:8px;display:flex;align-items:center;justify-content:center;">
-          <img src="${this.LOGO_URL}" alt="CFT" style="width:100%;height:100%;object-fit:contain;filter:brightness(0) invert(1);" />
-        </div>
-        <div style="flex:1;">
-          <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:30px;line-height:1;color:${C.nearBlack};letter-spacing:0.005em;">EQUIPA CFT</div>
-          <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:14px;color:${C.midGray};margin-top:2px;margin-bottom:10px;">Campo de Formação Técnica · Ponte da Barca</div>
-          <div style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:12px;color:${C.charcoal};">
-            <span style="margin-right:18px;"><b style="color:${C.greenDark};">e</b>&nbsp; geral@camposft.com</span>
-            <span style="margin-right:18px;"><b style="color:${C.greenDark};">w</b>&nbsp; camposft.com</span>
-            <span><b style="color:${C.greenDark};">ig</b>&nbsp; @camposft</span>
-          </div>
-          <div style="margin-top:12px;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${C.sandDark};">4ª Edição · Julho 2026</div>
-        </div>
+    return `<div style="padding:24px 40px 32px 40px;">
+      <div style="border-top:1.5px solid ${C.charcoal};padding-top:24px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td width="92" style="vertical-align:top;padding-right:20px;">
+            <img src="${this.LOGO_URL}" alt="CFT" style="width:92px;height:auto;display:block;" />
+          </td>
+          <td style="vertical-align:top;">
+            <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:30px;line-height:1;color:${C.nearBlack};letter-spacing:0.005em;">EQUIPA CFT</div>
+            <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:14px;color:${C.midGray};margin-top:2px;margin-bottom:12px;">Campos de Formação Técnica</div>
+            <div style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:12px;color:${C.charcoal};line-height:1.8;">
+              <span style="margin-right:24px;"><b style="color:${C.greenDark};">e</b>&nbsp;geral@camposft.com</span>
+              <span style="margin-right:24px;"><b style="color:${C.greenDark};">w</b>&nbsp;camposft.com</span>
+              <span><b style="color:${C.greenDark};">ig</b>&nbsp;@camposft</span>
+            </div>
+          </td>
+        </tr></table>
       </div>
     </div>`;
   },
@@ -167,21 +174,22 @@ const EmailTemplates = {
     const body = `
       <div style="padding:48px 40px 24px 40px;">
         ${this._over('Acerto de pagamento', C.orange)}
-        ${this._display('Detetámos uma\ndiferença.')}
+        ${this._display('Quase\ntudo certo.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
         <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ${this._esc(data.ee_nome).toUpperCase()},</div>
-        ${this._para(`Estamos a fazer o acerto das inscrições e detetámos uma diferença no pagamento do/a <b>${this._esc(data.atleta)}</b>. Queríamos confirmar consigo antes de seguir.`)}
+        ${this._para(`Antes de mais, obrigado pela inscrição do/a <b>${this._esc(data.atleta)}</b> no CFT 2026.`)}
+        ${this._para(`Estamos a fechar os acertos das inscrições e, ao confrontar os valores, parece-nos haver uma pequena diferença em relação ao previsto. Pode ser engano nosso, por isso queríamos confirmar consigo antes de seguir.`)}
       </div>
       ${this._infoBox([
         ['Atleta', this._esc(data.atleta)],
         ['Valor da inscrição', `${data.valor_esperado}€`],
         ['Valor recebido', `${data.valor_pago}€`],
-        ['Em falta', `<b style="color:${C.orange};">${data.falta}€</b>`]
+        ['Diferença', `<b style="color:${C.orange};">${data.falta}€</b>`]
       ], 'Detalhes')}
       <div style="padding:24px 40px 8px 40px;">
-        ${this._para(`Pode regularizar por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome do/a atleta na descrição.`)}
-        ${this._para(`Se achar que há algum engano nestes valores, responda a este email que verificamos do nosso lado.`)}
+        ${this._para(`Se realmente faltar regularizar este valor, pode fazê-lo por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome do/a atleta na descrição.`)}
+        ${this._para(`Caso considere que há algum engano, responda a este email — verificamos do nosso lado e voltamos a falar.`)}
       </div>
       <div style="padding:8px 40px 16px 40px;">
         <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Obrigado,</div>
@@ -192,23 +200,25 @@ const EmailTemplates = {
   // 2. Sem pagamento
   semPagamento(data) {
     const C = this.C;
-    const subject = `CFT · Pagamento da inscrição — ${data.atleta}`;
+    const subject = `CFT · Inscrição do/a ${data.atleta}`;
     const body = `
       <div style="padding:48px 40px 24px 40px;">
-        ${this._over('Inscrição por finalizar', C.orange)}
+        ${this._over('Inscrição reservada', C.orange)}
         ${this._display('Falta um\núltimo passo.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
         <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ${this._esc(data.ee_nome).toUpperCase()},</div>
-        ${this._para(`Estamos a finalizar as inscrições e ainda não recebemos o pagamento do/a <b>${this._esc(data.atleta)}</b>. Pode ter-nos escapado a nós — por isso, antes de qualquer coisa, queríamos confirmar consigo.`)}
+        ${this._para(`Obrigado pela inscrição do/a <b>${this._esc(data.atleta)}</b> no CFT 2026. Está praticamente tudo a postos para a participação dele/a.`)}
+        ${this._para(`Estamos a finalizar os registos de pagamento e, à data de hoje, ainda não nos chegou nenhum comprovativo. Pode ter-nos escapado, por isso queríamos confirmar consigo antes de fechar.`)}
       </div>
       ${this._infoBox([
         ['Atleta', this._esc(data.atleta)],
         ['Valor da inscrição', `<b>${data.valor_esperado}€</b>`],
-        ['Estado', `<span style="color:${C.orange};">Por liquidar</span>`]
+        ['Prazo', `<span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_limite)}</span>`]
       ], 'Inscrição')}
       <div style="padding:24px 40px 8px 40px;">
-        ${this._para(`Se já efetuou o pagamento, responda com o comprovativo (ou data e valor) que acertamos os registos. Caso contrário, pode pagar por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome do/a atleta na descrição.`)}
+        ${this._para(`Se já efectuou a transferência, basta responder a este email com o comprovativo (ou data e valor) que acertamos do nosso lado.`)}
+        ${this._para(`Caso ainda esteja em falta, pode regularizar por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome do/a atleta na descrição.`)}
         ${this._para(`Qualquer dúvida, é só responder a este email.`)}
       </div>
       <div style="padding:8px 40px 16px 40px;">
@@ -220,25 +230,26 @@ const EmailTemplates = {
   // 3. Pagamento parcial
   pagamentoParcial(data) {
     const C = this.C;
-    const subject = `CFT · 2ª prestação — ${data.atleta}`;
+    const subject = `CFT · Inscrição do/a ${data.atleta}`;
     const body = `
       <div style="padding:48px 40px 24px 40px;">
         ${this._over('1ª prestação recebida', C.greenDark)}
-        ${this._display('Falta a\n2ª prestação.')}
+        ${this._display('Está quase\ntudo pronto.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
         <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ${this._esc(data.ee_nome).toUpperCase()},</div>
-        ${this._para(`A 1ª prestação da inscrição do/a <b>${this._esc(data.atleta)}</b> está acertada — obrigado. Este email é só para lembrar que a 2ª prestação tem como prazo <span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_limite)}</span>.`)}
+        ${this._para(`Obrigado pela 1ª prestação da inscrição do/a <b>${this._esc(data.atleta)}</b> — já está registada do nosso lado. Está praticamente tudo pronto para a participação dele/a no CFT 2026.`)}
+        ${this._para(`Este email é só para relembrar que a 2ª prestação tem como prazo <span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_limite)}</span>.`)}
       </div>
       ${this._infoBox([
         ['Atleta', this._esc(data.atleta)],
         ['1ª prestação', `${data.valor_pago}€ <span style="color:${C.greenDark};">✓</span>`],
-        ['2ª prestação', `<b style="color:${C.orange};">${data.falta}€</b>`],
+        ['2ª prestação', `<b>${data.falta}€</b>`],
         ['Prazo', `<span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_limite)}</span>`]
       ], 'Pagamento em prestações')}
       <div style="padding:24px 40px 8px 40px;">
         ${this._para(`Pode liquidar por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome do/a atleta na descrição.`)}
-        ${this._para(`Se houver qualquer dificuldade com o prazo, fale connosco — encontramos solução.`)}
+        ${this._para(`Se entretanto já tiver liquidado, ignore este email. E se houver alguma dificuldade com o prazo, fale connosco — encontramos solução.`)}
       </div>
       <div style="padding:8px 40px 16px 40px;">
         <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Obrigado,</div>
@@ -257,7 +268,8 @@ const EmailTemplates = {
       </div>
       <div style="padding:0 40px 24px 40px;">
         <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ${this._esc(data.ee_nome).toUpperCase()},</div>
-        ${this._para(`Ao fazer o acerto das inscrições, vimos que o pagamento do/a <b>${this._esc(data.atleta)}</b> foi acima do valor previsto. Temos um valor a devolver-lhe.`)}
+        ${this._para(`Antes de mais, obrigado pela inscrição do/a <b>${this._esc(data.atleta)}</b> no CFT 2026.`)}
+        ${this._para(`Ao fechar os registos, vimos que o valor recebido ficou acima do valor previsto para esta inscrição. Há, portanto, uma diferença a devolver.`)}
       </div>
       ${this._infoBox([
         ['Atleta', this._esc(data.atleta)],

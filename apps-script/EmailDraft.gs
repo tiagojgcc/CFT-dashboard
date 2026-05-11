@@ -48,7 +48,7 @@ const EmailDraft = {
       falta:           falta  ? (falta  + ' €') : '0 €',
       excedente:       excedente ? (excedente + ' €') : '0 €',
       iban_cft:        EmailTemplates.IBAN_CFT,
-      data_limite:     (Config.get('email_data_limite')   || '31 de maio'),
+      data_limite:     (Config.get('email_data_limite')   || '21 de junho'),
       local:           (Config.get('email_local')         || 'Pavilhão Municipal de Sobral de Monte Agraço'),
       horario:         (Config.get('email_horario')       || '09h00 às 17h30'),
       material:        (Config.get('email_material')      || 'equipamento desportivo, ténis de corte interior, garrafa de água e uma muda de roupa'),
