@@ -89,6 +89,7 @@ const Inscricoes = {
         total_vagas_ocupadas: totalInscricoes
       },
       banco_files: this._getBancoFiles(),
+      tarefas: Tarefas.list(),
       lastUpdate: new Date().toISOString()
     };
   },

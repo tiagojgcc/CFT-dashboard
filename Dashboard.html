@@ -539,6 +539,8 @@
   }
   .trab-sel-info { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; color: var(--mid-gray); letter-spacing: 0.1em; text-transform: uppercase; }
   .trab-sel-info.has { color: var(--green-dark); }
+  .trab-section-label { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; color: var(--mid-gray); letter-spacing: 0.16em; text-transform: uppercase; margin: 14px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--sand); }
+  .trab-section-label:first-child { margin-top: 4px; }
   .trab-item {
     background: var(--white); border: 1px solid var(--sand); border-radius: 6px;
     margin-bottom: 10px; overflow: hidden; transition: border-color 200ms;
@@ -874,6 +876,7 @@
     <div class="trabalho-toolbar">
       <span class="trab-sel-info" id="trab-sel-info">0 selecionados</span>
       <button class="btn-secondary" id="trab-select-all" onclick="trabSelectAll()">Selecionar todos</button>
+      <button class="btn-confirm" onclick="openNewTask()" title="Criar tarefa manual (sem ligação a inscrição)">+ Nova tarefa</button>
       <button class="btn-confirm"   id="trab-bulk-email"   disabled onclick="trabBulkBranded()" title="Cria 1 rascunho CFT branded por atleta seleccionado, com o template apropriado">✉ Criar rascunhos branded (1 por atleta)</button>
       <button class="btn-cancel"    id="trab-bulk-resolve" disabled onclick="trabBulkResolve()">✓ Marcar resolvidos</button>
     </div>
@@ -1014,6 +1017,22 @@
   </div>
 </div>
 
+<!-- ================ MODAL: NOVA TAREFA MANUAL ================ -->
+<div class="modal-overlay" id="task-overlay">
+  <div class="modal">
+    <div class="modal-title">Nova tarefa</div>
+    <div class="modal-sub">Tarefa avulsa que aparece na tab Trabalho até ser resolvida.</div>
+    <div class="field-label">Título (obrigatório)</div>
+    <input type="text" id="task-titulo" placeholder="Ex: Contactar fornecedor das camisolas" oninput="checkTaskBtn()" style="width:100%;padding:8px;font-size:13px;margin-bottom:10px;border:1px solid var(--sand);background:var(--beige-light);" />
+    <div class="field-label">Descrição (opcional)</div>
+    <textarea id="task-descricao" placeholder="Detalhes, prazo, contactos…" style="min-height:80px;"></textarea>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeNewTask()">Cancelar</button>
+      <button class="btn-confirm" id="task-confirm-btn" onclick="confirmNewTask()" disabled>Criar tarefa</button>
+    </div>
+  </div>
+</div>
+
 <!-- ================ MODAL: ALTERAR OPÇÃO INSCRIÇÃO ================ -->
 <div class="modal-overlay" id="opcao-overlay">
   <div class="modal">
@@ -1119,6 +1138,7 @@ let data = [];              // só ativos — usados pelos renders existentes
 let historicoBackend = [];
 let emailsBackend = [];
 let configBackend = {};
+let tarefasBackend = [];
 let pendingSem = null;
 let pendingDel = null;      // { id, action: 'delete'|'reactivate', nome }
 
@@ -2873,6 +2893,54 @@ function buildTrabalhoItems(){
   return items;
 }
 
+// ============ TAREFAS MANUAIS ============
+function openNewTask(){
+  document.getElementById('task-titulo').value = '';
+  document.getElementById('task-descricao').value = '';
+  document.getElementById('task-confirm-btn').disabled = true;
+  document.getElementById('task-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('task-titulo').focus(), 50);
+}
+function closeNewTask(){ document.getElementById('task-overlay').classList.remove('open'); }
+function checkTaskBtn(){
+  const v = document.getElementById('task-titulo').value.trim();
+  document.getElementById('task-confirm-btn').disabled = v.length < 3;
+}
+async function confirmNewTask(){
+  const titulo = document.getElementById('task-titulo').value.trim();
+  const descricao = document.getElementById('task-descricao').value.trim();
+  if (titulo.length < 3) return;
+  const btn = document.getElementById('task-confirm-btn'); btn.disabled = true;
+  try {
+    await Api.tarefa_create(titulo, descricao, '', '');
+    toast('Tarefa criada');
+    closeNewTask();
+    await refreshNow();
+  } catch (e) { toast('Erro: ' + e.message, true); btn.disabled = false; }
+}
+async function taskResolve(id){
+  try {
+    await Api.tarefa_resolve(id);
+    toast('Tarefa resolvida');
+    await refreshNow();
+  } catch (e) { toast('Erro: ' + e.message, true); }
+}
+async function taskReopen(id){
+  try {
+    await Api.tarefa_reopen(id);
+    toast('Tarefa reaberta');
+    await refreshNow();
+  } catch (e) { toast('Erro: ' + e.message, true); }
+}
+async function taskDelete(id){
+  if (!confirm('Apagar esta tarefa? Não há retorno.')) return;
+  try {
+    await Api.tarefa_delete(id);
+    toast('Tarefa apagada');
+    await refreshNow();
+  } catch (e) { toast('Erro: ' + e.message, true); }
+}
+
 function renderTrabalho(){
   const allItems = buildTrabalhoItems();
   const resolvedMap = buildResolvedMap();
@@ -2911,14 +2979,41 @@ function renderTrabalho(){
     : `${activeItems.filter(it => !it.resolvedAt).length} por resolver · ${activeItems.filter(it => it.resolvedAt).length} resolvidos hoje`;
   const host = document.getElementById('trabalho-items');
   if (!host) return;
-  if (items.length === 0) {
+  // Tarefas manuais — separadas dos itens gerados automaticamente
+  const tarefas = (tarefasBackend || []);
+  const tarefasPendentes = tarefas.filter(t => t.estado === 'pendente');
+  const tarefasResolvidas = tarefas.filter(t => t.estado === 'resolvida');
+  const tarefasParaVista = (trabView === 'resolved') ? tarefasResolvidas : tarefasPendentes;
+  const tarefasHtml = tarefasParaVista.length === 0 ? '' : `
+    <div class="trab-section-label">📌 Tarefas manuais (${tarefasParaVista.length})</div>
+    ${tarefasParaVista.map(t => {
+      const isResolved = t.estado === 'resolvida';
+      const desc = t.descricao ? ` · ${escHtml(t.descricao)}` : '';
+      return `<div class="trab-item ${isResolved ? 'resolved' : ''}" data-task-id="${t.id}">
+        <div class="trab-item-head">
+          <span class="trab-tipo trab-tipo--manual" style="background:#1c1c18;color:#f4ede0;">tarefa</span>
+          <span class="trab-atleta">${escHtml(t.titulo)}</span>
+          <span class="trab-detail">${escHtml(t.atleta_nome || '')}${desc}</span>
+          <span class="trab-spacer"></span>
+          <span class="trab-actions">
+            ${isResolved
+              ? `<button class="trab-btn" onclick="taskReopen('${t.id}')" title="Reabrir tarefa">↺ Reabrir</button>`
+              : `<button class="trab-btn ok" onclick="taskResolve('${t.id}')" title="Marcar como resolvida">✓ Resolver</button>`}
+            <button class="trab-btn" onclick="taskDelete('${t.id}')" title="Apagar tarefa" style="opacity:0.6;">🗑</button>
+          </span>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+  if (items.length === 0 && tarefasParaVista.length === 0) {
     host.innerHTML = trabView === 'resolved'
       ? '<div class="empty-trab"><div class="h">Sem resolvidos arquivados</div><div class="s" style="font-size:12px;">Os problemas resolvidos há mais de 24h aparecem aqui.</div></div>'
-      : '<div class="empty-trab"><div class="h">Nada a resolver agora 🎉</div><div class="s" style="font-size:12px;">Quando houver pagamentos por confirmar ou outros problemas, aparecem aqui.</div></div>';
+      : '<div class="empty-trab"><div class="h">Nada a resolver agora 🎉</div><div class="s" style="font-size:12px;">Quando houver pagamentos por confirmar ou tarefas manuais, aparecem aqui.</div></div>';
     trabUpdateToolbar();
     return;
   }
-  host.innerHTML = items.map(it => {
+  const autoLabel = (tarefasParaVista.length > 0 && items.length > 0) ? '<div class="trab-section-label">⚙ Detetados automaticamente (' + items.length + ')</div>' : '';
+  host.innerHTML = tarefasHtml + autoLabel + items.map(it => {
     const r = it.atleta;
     const isSel = trabSelected.has(it.id);
     const wa = waLinkForCustom(r, trabMessages[it.id] || it.body);
@@ -3218,6 +3313,7 @@ async function refreshNow(){
     historicoBackend = all.historico;
     emailsBackend = all.emails;
     configBackend = all.config;
+    tarefasBackend = all.tarefas || [];
     renderAll();
   } catch (e) {
     toast('Erro a atualizar: ' + e.message, true);

@@ -62,6 +62,7 @@
         clube_counts: data.clube_counts || {},
         counts: data.counts || { inscricoes_ativas: 0, atletas_unicos: 0, vagas_por_semana: {}, total_vagas_ocupadas: 0 },
         banco_files: data.banco_files || [],
+        tarefas: data.tarefas || [],
         lastUpdate: this.lastUpdate
       };
     },
@@ -138,6 +139,10 @@
 
     updateSemanas(id, novas, motivo) { return this._call('updateSemanas', { id, novas, motivo }); },
     setOpcaoInscricao(id, opcao, motivo) { return this._call('setOpcaoInscricao', { id, opcao, motivo }); },
+    tarefa_create(titulo, descricao, atletaId, atletaNome) { return this._call('tarefa_create', { titulo, descricao, atletaId, atletaNome }); },
+    tarefa_resolve(id) { return this._call('tarefa_resolve', { id }); },
+    tarefa_reopen(id)  { return this._call('tarefa_reopen',  { id }); },
+    tarefa_delete(id)  { return this._call('tarefa_delete',  { id }); },
     softDelete(id, motivo)            { return this._call('softDelete',     { id, motivo }); },
     reactivate(id, motivo)            { return this._call('reactivate',     { id, motivo }); },
     updatePagamento(id, valor, confirm) { return this._call('updatePagamento',{ id, valor, confirm: !!confirm }); },
