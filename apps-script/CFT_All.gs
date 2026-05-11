@@ -140,7 +140,9 @@ const Config = {
 const Pricing = {
   parseSems(s) {
     if (s === null || s === undefined) return [];
-    return String(s).split(/[,;+\s]+/)
+    // Inclui '.' para apanhar valores que o Sheets converteu para decimal em locale PT
+    // (ex: "1,2" gravado pelo Apps Script pode ser interpretado como o número 1.2)
+    return String(s).split(/[.,;+\s]+/)
       .map(x => parseInt(x, 10))
       .filter(n => !isNaN(n) && n >= 1 && n <= 3);
   },
@@ -387,7 +389,11 @@ const Inscricoes = {
       const r = this._findRow(id);
       const antes = sh.getRange(r, ATL_COLS.semanas_atuais).getValue();
       const novasStr = Array.isArray(novas) ? novas.join(',') : String(novas);
-      sh.getRange(r, ATL_COLS.semanas_atuais).setValue(novasStr);
+      // Em PT-PT, Sheets interpreta "1,2" como número decimal 1.2. Força formato texto
+      // ANTES de escrever para que fique "1,2" como string e não 1.2 como número.
+      const cell = sh.getRange(r, ATL_COLS.semanas_atuais);
+      cell.setNumberFormat('@');
+      cell.setValue(novasStr);
       this._stampUser(sh, r, user);
       const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
       Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'alteracao_semanas', antes: String(antes), depois: novasStr, motivo });
@@ -2217,6 +2223,36 @@ const Backfill = {
     return { renamed: renamed, errors: errors };
   },
 
+  // Repara semanas_atuais que foram interpretadas como decimal (ex: 1.2 em vez de "1,2").
+  // Converte de volta para string formatada e força formato de célula = texto.
+  fixSemanasAtuais() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sh = ss.getSheetByName('Atletas');
+    const last = sh.getLastRow();
+    if (last < 2) { Logger.log('Atletas vazia'); return; }
+    const range = sh.getRange(2, ATL_COLS.semanas_atuais, last - 1, 1);
+    const vals = range.getValues();
+    let fixed = 0;
+    for (let i = 0; i < vals.length; i++) {
+      const raw = vals[i][0];
+      if (typeof raw === 'number') {
+        // 1.2 → "1,2" · 1.23 → "1,2,3" · 1 → "1"
+        const digits = String(raw).split('.').map(s => s.trim()).filter(Boolean);
+        const sems = digits.flatMap(d => d.split('')).map(d => parseInt(d, 10)).filter(n => n >= 1 && n <= 3);
+        const dedup = [...new Set(sems)].sort();
+        const novo = dedup.join(',');
+        if (novo && novo !== String(raw)) {
+          const cell = sh.getRange(i + 2, ATL_COLS.semanas_atuais);
+          cell.setNumberFormat('@');
+          cell.setValue(novo);
+          fixed++;
+        }
+      }
+    }
+    Logger.log('fixSemanasAtuais: ' + fixed + ' linhas reparadas.');
+    return { fixed: fixed };
+  },
+
   // Atribui número e renomeia comprovativo para 1 atleta (chamado pelo trigger).
   assignNumeroAndRename_(atletaId) {
     const ss = SpreadsheetApp.openById(SHEET_ID);
@@ -2877,6 +2913,7 @@ function renameComprovativos() { return Backfill.renameComprovativos(); }
 function resyncAllFromForms()  { return Backfill.resyncAllFromForms(); }
 function remapAtletasIds()     { return Backfill.remapAtletasIds(); }
 function repairBrokenIds()     { return Backfill.repairBrokenIds(); }
+function fixSemanasAtuais()    { return Backfill.fixSemanasAtuais(); }
 function installTrigger()      { return Triggers.install(); }
 function readAllComprovativos(){ return Comprovativo.readAllPending('geral@camposft.com'); }
 function improveForms()        { return FormImprovement.run(); }

@@ -1104,7 +1104,7 @@ let pendingSem = null;
 let pendingDel = null;      // { id, action: 'delete'|'reactivate', nome }
 
 // ============ HELPERS ============
-function parseSems(s){return [...new Set(String(s||'').split(/[,;+\s]+/).map(x=>parseInt(x.trim())).filter(n=>!isNaN(n)&&n>=1&&n<=3))].sort();}
+function parseSems(s){return [...new Set(String(s||'').split(/[.,;+\s]+/).map(x=>parseInt(x.trim())).filter(n=>!isNaN(n)&&n>=1&&n<=3))].sort();}
 function clubeCounts(){const c={};data.forEach(r=>{c[r.clube]=(c[r.clube]||0)+1;});return c;}
 // calcTotal e paymentStatus passam a usar r.pricing vindo do backend (Pricing.gs)
 function calcTotal(r){

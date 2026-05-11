@@ -657,6 +657,36 @@ const Backfill = {
     return { renamed: renamed, errors: errors };
   },
 
+  // Repara semanas_atuais que foram interpretadas como decimal (ex: 1.2 em vez de "1,2").
+  // Converte de volta para string formatada e força formato de célula = texto.
+  fixSemanasAtuais() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sh = ss.getSheetByName('Atletas');
+    const last = sh.getLastRow();
+    if (last < 2) { Logger.log('Atletas vazia'); return; }
+    const range = sh.getRange(2, ATL_COLS.semanas_atuais, last - 1, 1);
+    const vals = range.getValues();
+    let fixed = 0;
+    for (let i = 0; i < vals.length; i++) {
+      const raw = vals[i][0];
+      if (typeof raw === 'number') {
+        // 1.2 → "1,2" · 1.23 → "1,2,3" · 1 → "1"
+        const digits = String(raw).split('.').map(s => s.trim()).filter(Boolean);
+        const sems = digits.flatMap(d => d.split('')).map(d => parseInt(d, 10)).filter(n => n >= 1 && n <= 3);
+        const dedup = [...new Set(sems)].sort();
+        const novo = dedup.join(',');
+        if (novo && novo !== String(raw)) {
+          const cell = sh.getRange(i + 2, ATL_COLS.semanas_atuais);
+          cell.setNumberFormat('@');
+          cell.setValue(novo);
+          fixed++;
+        }
+      }
+    }
+    Logger.log('fixSemanasAtuais: ' + fixed + ' linhas reparadas.');
+    return { fixed: fixed };
+  },
+
   // Atribui número e renomeia comprovativo para 1 atleta (chamado pelo trigger).
   assignNumeroAndRename_(atletaId) {
     const ss = SpreadsheetApp.openById(SHEET_ID);

@@ -149,7 +149,11 @@ const Inscricoes = {
       const r = this._findRow(id);
       const antes = sh.getRange(r, ATL_COLS.semanas_atuais).getValue();
       const novasStr = Array.isArray(novas) ? novas.join(',') : String(novas);
-      sh.getRange(r, ATL_COLS.semanas_atuais).setValue(novasStr);
+      // Em PT-PT, Sheets interpreta "1,2" como número decimal 1.2. Força formato texto
+      // ANTES de escrever para que fique "1,2" como string e não 1.2 como número.
+      const cell = sh.getRange(r, ATL_COLS.semanas_atuais);
+      cell.setNumberFormat('@');
+      cell.setValue(novasStr);
       this._stampUser(sh, r, user);
       const nome = sh.getRange(r, ATL_COLS.atleta).getValue();
       Historico.append({ utilizador: user, id_atleta: id, atleta: nome, tipo: 'alteracao_semanas', antes: String(antes), depois: novasStr, motivo });

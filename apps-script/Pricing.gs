@@ -16,7 +16,9 @@
 const Pricing = {
   parseSems(s) {
     if (s === null || s === undefined) return [];
-    return String(s).split(/[,;+\s]+/)
+    // Inclui '.' para apanhar valores que o Sheets converteu para decimal em locale PT
+    // (ex: "1,2" gravado pelo Apps Script pode ser interpretado como o número 1.2)
+    return String(s).split(/[.,;+\s]+/)
       .map(x => parseInt(x, 10))
       .filter(n => !isNaN(n) && n >= 1 && n <= 3);
   },
