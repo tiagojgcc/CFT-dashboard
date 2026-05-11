@@ -874,8 +874,7 @@
     <div class="trabalho-toolbar">
       <span class="trab-sel-info" id="trab-sel-info">0 selecionados</span>
       <button class="btn-secondary" id="trab-select-all" onclick="trabSelectAll()">Selecionar todos</button>
-      <button class="btn-confirm"   id="trab-bulk-email"   disabled onclick="trabBulkEmail()">✉ Email aos selecionados (BCC)</button>
-      <button class="btn-confirm"   id="trab-bulk-branded" disabled onclick="trabBulkBranded()" title="Cria rascunho CFT branded com BCC dos selecionados">✉ Rascunho CFT branded</button>
+      <button class="btn-confirm"   id="trab-bulk-email"   disabled onclick="trabBulkBranded()" title="Cria 1 rascunho CFT branded por atleta seleccionado, com o template apropriado">✉ Criar rascunhos branded (1 por atleta)</button>
       <button class="btn-cancel"    id="trab-bulk-resolve" disabled onclick="trabBulkResolve()">✓ Marcar resolvidos</button>
     </div>
     <div id="trabalho-items"></div>
@@ -1842,7 +1841,7 @@ function copyCompose(btn){
 async function createDraftForAtleta(atletaId, template){
   toast('A criar rascunho no Gmail…');
   try {
-    const res = await API.createEmailDraft(atletaId, template || null);
+    const res = await Api.createEmailDraft(atletaId, template || null);
     const a = data.find(x => x.id === atletaId);
     if (a) { try { await refreshNow(); } catch(_){} }
     toast('Rascunho criado · template: ' + (res.template || '—'));
@@ -1857,7 +1856,7 @@ async function createBulkDraft(atletaIds, template){
   if (!tpl) return;
   toast('A criar rascunho bulk (' + atletaIds.length + ' destinatários)…');
   try {
-    const res = await API.createBulkEmailDraft(atletaIds, tpl);
+    const res = await Api.createBulkEmailDraft(atletaIds, tpl);
     toast('Rascunho bulk criado · ' + res.count + ' BCC');
     window.open(res.url, '_blank');
   } catch (e) {
@@ -2772,43 +2771,51 @@ function trabUpdateToolbar(){
   }
   const bulkE = document.getElementById('trab-bulk-email');
   const bulkR = document.getElementById('trab-bulk-resolve');
-  const bulkB = document.getElementById('trab-bulk-branded');
   if (bulkE) bulkE.disabled = trabSelected.size === 0;
   if (bulkR) bulkR.disabled = trabSelected.size === 0;
-  if (bulkB) bulkB.disabled = trabSelected.size === 0;
 }
+// Mapeia categoria da tab Trabalho → template branded
+const TRAB_TEMPLATE_MAP = {
+  problema:  'valorErrado',
+  sempag:    'semPagamento',
+  parcial:   'pagamentoParcial',
+  devolver:  'aDevolver'
+};
+
 async function trabBulkBranded(){
+  // Cria 1 draft branded por atleta selecionado, com o template apropriado à categoria.
   const items = buildTrabalhoItems().filter(it => trabSelected.has(it.id));
   if (items.length === 0) return;
-  const atletaIds = [...new Set(items.map(it => it.atleta.id).filter(Boolean))];
-  if (atletaIds.length === 0) { toast('Nenhum atleta válido', true); return; }
-  await createBulkDraft(atletaIds);
-}
-async function trabBulkEmail(){
-  const items = buildTrabalhoItems().filter(it => trabSelected.has(it.id));
-  if (items.length === 0) return;
-  const recipients = items.map(it => it.atleta.email_enc).filter(Boolean);
-  if (recipients.length === 0) { toast('Selecionados sem email', true); return; }
-  const subject = items.length === 1 ? trabSubject(items[0]) : '[CFT 2026] Aviso aos encarregados';
-  // Quando enviado em bulk, body = mensagem do PRIMEIRO item editado, ou template genérico
-  const body = items.length === 1
-    ? (trabMessages[items[0].id] || items[0].body)
-    : `Boa tarde,\n\nMensagem aos encarregados de educação. Editar conforme necessário.\n\nObrigado,\nEquipa CFT`;
-  // Regista em Emails / Histórico
-  try {
-    await Api.logEmail({
-      template: 'trabalho_bulk',
-      assunto: subject,
-      corpo: body,
-      destinatarios: recipients,
-      ids_atletas: items.map(it => it.atleta.id)
-    });
-    toast(`Email registado · ${recipients.length} destinatário${recipients.length === 1 ? '' : 's'} em BCC`);
-  } catch (e) {
-    toast('Falha a registar email: ' + e.message, true);
+  const validItems = items.filter(it => it.atleta && it.atleta.email_enc);
+  if (validItems.length === 0) { toast('Selecionados sem email', true); return; }
+  if (validItems.length < items.length) {
+    toast(`${items.length - validItems.length} sem email · vou criar ${validItems.length} drafts`);
+  } else {
+    toast(`A criar ${validItems.length} draft${validItems.length === 1 ? '' : 's'} branded…`);
   }
-  const url = gmailComposeUrl(null, subject, body, recipients.join(','));
-  window.open(url, '_blank');
+  let okCount = 0, firstUrl = null, errors = [];
+  for (const it of validItems) {
+    const tpl = TRAB_TEMPLATE_MAP[it.tipoClass] || null;
+    try {
+      const res = await Api.createEmailDraft(it.atleta.id, tpl);
+      okCount++;
+      if (!firstUrl) firstUrl = res.url;
+    } catch (e) {
+      errors.push(it.atleta.nome + ': ' + e.message);
+    }
+  }
+  if (okCount > 0) {
+    toast(`${okCount} rascunho${okCount === 1 ? '' : 's'} criado${okCount === 1 ? '' : 's'} em geral@camposft.com${errors.length ? ' · ' + errors.length + ' falha(s)' : ''}`);
+    if (firstUrl) window.open(firstUrl, '_blank');
+  } else {
+    toast('Falha ao criar rascunhos: ' + errors.slice(0,3).join(' | '), true);
+  }
+  try { await refreshNow(); } catch(_){}
+}
+
+// Mantido como atalho legacy (não mostrado por defeito; usar caso o branded não chegue)
+async function trabBulkEmail(){
+  return trabBulkBranded();
 }
 function fmtRelativeShort(ts){
   if (!ts) return '';
