@@ -148,6 +148,8 @@
     addNota(id, nota)                 { return this._call('addNota',        { id, nota }); },
     logEmail(p)                       { return this._call('logEmail', p); },
     markEmailSent(id)                 { return this._call('markEmailSent',  { id }); },
+    createEmailDraft(atletaId, template, overrides)     { return this._call('createEmailDraft',     { atletaId, template, overrides }); },
+    createBulkEmailDraft(atletaIds, template, overrides){ return this._call('createBulkEmailDraft', { atletaIds, template, overrides }); },
     readComprovativo(id)              { return this._call('readComprovativo', { id }); },
     readAllPending()                  { return this._call('readAllPending'); },
     markTrabalhoResolved(itemId, atletaId, atletaNome) { return this._call('markTrabalhoResolved', { itemId, atletaId, atletaNome }); },

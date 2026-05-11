@@ -52,6 +52,8 @@ function handle_(e, method) {
       case 'banco_confirm':    result = Banco.confirmMatch(params.movId, params.atletaId, user); break;
       case 'banco_unconfirm':  result = Banco.unconfirmMatch(params.movId, user); break;
       case 'banco_reassign':   result = Banco.reassignMatch(params.movId, params.atletaId, user); break;
+      case 'createEmailDraft':     result = EmailDraft.createForAtleta(params.atletaId, params.template, user, params.overrides); break;
+      case 'createBulkEmailDraft': result = EmailDraft.createBulk(params.atletaIds, params.template, user, params.overrides); break;
       default: throw new Error('Unknown action: ' + action);
     }
     return json_({ ok: true, user: user, data: result });

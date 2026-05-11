@@ -755,7 +755,7 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
   window.CFT_CONFIG = {
-    API_URL:   'https://script.google.com/macros/s/AKfycby8MTnY5BJMPVplu9_KS46SPhphnxiPKgeyWBxEc2BTdtrKXA8Q7UqlOJVwLNBFJcfC6A/exec',
+    API_URL:   'https://script.google.com/macros/s/AKfycbx3yw0iNCS-oUt5HM0hSg5zw_nEBYz787Uz49YyfiWBgfI801KGXTFCKz8i12-EqPu40w/exec',
     CLIENT_ID: '1018166238665-d7minklmk7bf9rr7ho70m8m285balb8v.apps.googleusercontent.com'
   };
 </script>
@@ -875,6 +875,7 @@
       <span class="trab-sel-info" id="trab-sel-info">0 selecionados</span>
       <button class="btn-secondary" id="trab-select-all" onclick="trabSelectAll()">Selecionar todos</button>
       <button class="btn-confirm"   id="trab-bulk-email"   disabled onclick="trabBulkEmail()">✉ Email aos selecionados (BCC)</button>
+      <button class="btn-confirm"   id="trab-bulk-branded" disabled onclick="trabBulkBranded()" title="Cria rascunho CFT branded com BCC dos selecionados">✉ Rascunho CFT branded</button>
       <button class="btn-cancel"    id="trab-bulk-resolve" disabled onclick="trabBulkResolve()">✓ Marcar resolvidos</button>
     </div>
     <div id="trabalho-items"></div>
@@ -1598,7 +1599,7 @@ function renderTable(){
     const mailUrl = mailLinkFor(r);
     const contactBtns = `<span class="contact-btns">
       ${waUrl   ? `<a class="contact-btn wa" href="${escAttr(waUrl)}"   target="_blank" rel="noopener" title="WhatsApp para ${escAttr(r.encarregado||'encarregado')} (${escAttr(r.telefone||'')})">💬</a>` : ''}
-      ${mailUrl ? `<a class="contact-btn em" href="${escAttr(mailUrl)}" target="_blank" rel="noopener" title="Email para ${escAttr(r.email_enc||'')}">✉</a>` : ''}
+      ${r.email_enc ? `<a class="contact-btn em" href="javascript:void(0)" onclick="createDraftForAtleta('${r.id}')" title="Criar rascunho CFT branded para ${escAttr(r.email_enc||'')} (auto-deteta template)">✉</a>` : ''}
     </span>`;
     const acts = `<span class="row-actions">
       <span class="row-act" title="Alterar semanas" onclick="openSem('${r.id}')">✎</span>
@@ -1835,6 +1836,33 @@ function copyCompose(btn){
   const orig = btn.textContent;
   btn.textContent = 'Copiado ✓';
   setTimeout(() => { btn.textContent = orig; }, 1500);
+}
+
+// ============ EMAIL DRAFTS (branded CFT) ============
+async function createDraftForAtleta(atletaId, template){
+  toast('A criar rascunho no Gmail…');
+  try {
+    const res = await API.createEmailDraft(atletaId, template || null);
+    const a = data.find(x => x.id === atletaId);
+    if (a) { try { await refreshNow(); } catch(_){} }
+    toast('Rascunho criado · template: ' + (res.template || '—'));
+    window.open(res.url, '_blank');
+  } catch (e) {
+    toast('Falha a criar rascunho: ' + e.message, true);
+  }
+}
+async function createBulkDraft(atletaIds, template){
+  if (!atletaIds || atletaIds.length === 0) { toast('Nenhum atleta selecionado', true); return; }
+  const tpl = template || prompt('Template (avisoPrazo | infoPraticas | confirmacao):', 'avisoPrazo');
+  if (!tpl) return;
+  toast('A criar rascunho bulk (' + atletaIds.length + ' destinatários)…');
+  try {
+    const res = await API.createBulkEmailDraft(atletaIds, tpl);
+    toast('Rascunho bulk criado · ' + res.count + ' BCC');
+    window.open(res.url, '_blank');
+  } catch (e) {
+    toast('Falha bulk: ' + e.message, true);
+  }
 }
 
 // ============ TASKS ============
@@ -2744,8 +2772,17 @@ function trabUpdateToolbar(){
   }
   const bulkE = document.getElementById('trab-bulk-email');
   const bulkR = document.getElementById('trab-bulk-resolve');
+  const bulkB = document.getElementById('trab-bulk-branded');
   if (bulkE) bulkE.disabled = trabSelected.size === 0;
   if (bulkR) bulkR.disabled = trabSelected.size === 0;
+  if (bulkB) bulkB.disabled = trabSelected.size === 0;
+}
+async function trabBulkBranded(){
+  const items = buildTrabalhoItems().filter(it => trabSelected.has(it.id));
+  if (items.length === 0) return;
+  const atletaIds = [...new Set(items.map(it => it.atleta.id).filter(Boolean))];
+  if (atletaIds.length === 0) { toast('Nenhum atleta válido', true); return; }
+  await createBulkDraft(atletaIds);
 }
 async function trabBulkEmail(){
   const items = buildTrabalhoItems().filter(it => trabSelected.has(it.id));
