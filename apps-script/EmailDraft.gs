@@ -73,9 +73,10 @@ const EmailDraft = {
       htmlBody: html,
       name: 'CFT — Inscrições'
     });
-    const msg = draft.getMessage();
-    const messageId = msg.getId();
-    const url = 'https://mail.google.com/mail/u/0/#drafts?compose=' + draft.getId();
+    // Não chamamos draft.getMessage() para evitar exigir scope gmail.readonly.
+    // O messageId real só fica disponível depois do envio; para o log basta o draftId.
+    const draftId = draft.getId();
+    const url = 'https://mail.google.com/mail/u/0/#drafts?compose=' + draftId;
 
     // Log em Emails + Historico
     try {
@@ -86,7 +87,7 @@ const EmailDraft = {
         assunto:   subject,
         tipo:      tpl,
         estado:    'rascunho',
-        message_id: messageId
+        message_id: 'draft:' + draftId
       }, user);
     } catch (e) { Logger.log('Emails.log falhou: ' + e.message); }
     try {
@@ -101,7 +102,7 @@ const EmailDraft = {
       });
     } catch (e) { Logger.log('Historico.append falhou: ' + e.message); }
 
-    return { draftId: draft.getId(), messageId: messageId, url: url, template: tpl, to: to, subject: subject };
+    return { draftId: draftId, url: url, template: tpl, to: to, subject: subject };
   },
 
   /**
