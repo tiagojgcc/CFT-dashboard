@@ -234,6 +234,8 @@
     display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
     background: var(--white); border: 1px solid var(--sand); border-radius: var(--radius-md);
     padding: 10px 12px;
+    position: sticky; top: 0; z-index: 20;
+    box-shadow: 0 2px 6px rgba(28,28,24,0.04);
   }
   .list-toolbar input, .list-toolbar select {
     font-family: var(--font-body); font-size: 12.5px; padding: 6px 10px;
@@ -268,9 +270,11 @@
   }
   .quick-template:hover { border-color: var(--charcoal); background: var(--beige-light); }
 
-  .table-wrap { border: 1px solid var(--sand); border-radius: var(--radius-md); overflow: hidden; background: var(--white); }
+  .table-wrap { border: 1px solid var(--sand); border-radius: var(--radius-md); background: var(--white); overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  thead { background: var(--charcoal); color: var(--off-white); position: sticky; top: 0; }
+  /* thead sticky a 56px (altura aproximada do toolbar sticky em cima). z-index inferior ao do toolbar */
+  thead { background: var(--charcoal); color: var(--off-white); position: sticky; top: 56px; z-index: 10; }
+  thead th { box-shadow: inset 0 -1px 0 0 var(--charcoal); }
   th {
     font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700;
     letter-spacing: 0.14em; text-transform: uppercase; text-align: left;
@@ -687,6 +691,9 @@
   /* Atleta cell: nome em cima, icons em baixo */
   td.atleta { white-space: normal; vertical-align: top; padding-top: 8px; padding-bottom: 8px; }
   .atleta-name { font-weight: 500; white-space: normal; word-break: break-word; line-height: 1.3; }
+  .atleta-encarregado { font-size: 11px; color: var(--mid-gray); margin-top: 2px; font-family: var(--font-body); line-height: 1.3; }
+  .atleta-iban { font-family: ui-monospace,Menlo,monospace; cursor: pointer; color: var(--green-dark); text-decoration: underline dotted; }
+  .atleta-iban:hover { color: var(--charcoal); }
   .atleta-icons { margin-top: 5px; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
   .atleta-icons .row-flag, .atleta-icons .contact-btn, .atleta-icons .row-act { vertical-align: middle; }
   .row-actions { white-space: nowrap; }
@@ -752,6 +759,46 @@
     .grid-2 { grid-template-columns: 1fr; }
     .kpi-row { grid-template-columns: 1fr 1fr; }
     .ab-stats { display: none; }
+  }
+
+  /* ============ MOBILE (tablet+phone) ============ */
+  @media (max-width: 820px) {
+    .container { padding: 10px 10px 40px; }
+    .nav-inner, .appbar { padding: 0 12px; }
+    .kpi-row { grid-template-columns: 1fr; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .appbar { flex-direction: column; align-items: flex-start; padding: 12px; gap: 8px; }
+    .ab-stats { display: none; }
+    .ab-meta { font-size: 11px; }
+    /* Navegação: scroll horizontal */
+    .nav-tabs { overflow-x: auto; flex-wrap: nowrap; }
+    .nav-tab { white-space: nowrap; flex-shrink: 0; }
+    /* Lista — toolbar empilhada */
+    .list-toolbar { padding: 8px; gap: 6px; }
+    .list-toolbar input, .list-toolbar select { font-size: 12px; height: 34px; flex: 1 1 100%; min-width: 0; }
+    .list-toolbar input.search { flex: 1 1 100%; min-width: 0; }
+    .list-actionbar { margin-left: 0; padding-left: 0; border-left: none; flex-wrap: wrap; }
+    /* Table — torna scroll horizontal, esconde colunas menos críticas */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { min-width: 720px; }
+    thead { top: 0; }  /* no telemóvel o toolbar empilha + sticky pode ficar desalinhado, simplifica */
+    th, td { padding: 5px 4px; font-size: 11.5px; }
+    .col-check, .atleta-icons { display: none; }
+    /* Trabalho */
+    .trab-item-head { flex-wrap: wrap; gap: 6px; }
+    .trab-atleta, .trab-detail { font-size: 12.5px; }
+    .trab-actions { width: 100%; justify-content: flex-start; }
+    /* Modal — quase fullscreen */
+    .modal { width: 100% !important; max-width: 100% !important; margin: 0; border-radius: 0; max-height: 100vh; padding: 16px; }
+    /* Entregáveis */
+    [id^="panel-entregaveis"] [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+  }
+  @media (max-width: 480px) {
+    .ab-edicao, .ab-title { font-size: 18px; }
+    .kpi-num { font-size: 32px; }
+    table { font-size: 11px; }
+    /* Esconde colunas mais detalhadas no celular */
+    .col-extra-hidden-mobile { display: none; }
   }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -891,12 +938,13 @@
     </div>
 
     <div class="list-toolbar">
-      <input type="text" class="search" id="search" placeholder="Procurar por nome ou clube...">
+      <input type="text" class="search" id="search" placeholder="Procurar por nome, clube, encarregado, IBAN...">
       <select id="filt-sem"><option value="">todas as semanas</option><option value="1">Semana 1</option><option value="2">Semana 2</option><option value="3">Semana 3</option></select>
       <select id="filt-clube"><option value="">todos os clubes</option></select>
       <select id="filt-tipo"><option value="">interno/externo</option><option value="Interno">Interno</option><option value="Externo">Externo</option></select>
       <select id="filt-pag"><option value="">estado pagamento</option><option value="pago">pago</option><option value="parcial">parcial</option><option value="pendente">sem pagamento</option><option value="problema">valor problemático</option></select>
       <button class="quick-template" onclick="quickFilter('problema')">⚠ só problemáticos</button>
+      <button class="quick-template" onclick="quickFilter('parcial')" title="Atletas que pagaram 1ª prestação e falta a 2ª — útil para identificar transferências">💸 2ª transferência</button>
       <button class="quick-template" onclick="quickFilter('clear')">limpar</button>
 
       <div class="list-actionbar">
@@ -1574,7 +1622,20 @@ function getFilteredRows(){
   const fTipo = document.getElementById('filt-tipo').value;
   const fPag = document.getElementById('filt-pag').value;
   return data.filter(r => {
-    if (search && !r.nome.toLowerCase().includes(search) && !r.clube.toLowerCase().includes(search)) return false;
+    if (search) {
+      const raw = r._raw || {};
+      const ibanNorm = String(raw.iban || '').replace(/\s+/g, '').toLowerCase();
+      const searchNorm = search.replace(/\s+/g, '');
+      const haystack = [
+        r.nome,
+        r.clube,
+        r.encarregado || raw.encarregado || '',
+        raw.email,
+        r.telefone || raw.telefone || ''
+      ].map(s => String(s || '').toLowerCase()).join(' || ');
+      const hit = haystack.includes(search) || (ibanNorm && ibanNorm.includes(searchNorm));
+      if (!hit) return false;
+    }
     if (fSem && !parseSems(r.semana).includes(parseInt(fSem))) return false;
     if (fClube && r.clube !== fClube) return false;
     if (fTipo && r.tipo !== fTipo) return false;
@@ -1664,6 +1725,7 @@ function renderTable(){
       <td class="num-cell">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</td>
       <td class="atleta">
         <div class="atleta-name" onclick="openAtletaDetail('${r.id}')" title="Ver histórico do dinheiro">${escHtml(r.nome)}${flags}</div>
+        <div class="atleta-encarregado" title="Encarregado · útil para identificar transferências bancárias">${escHtml(r.encarregado || '')}${(r._raw && r._raw.iban) ? ` · <span class="atleta-iban" title="IBAN do encarregado (cópia ao clicar)" onclick="event.stopPropagation(); copyIban('${escAttr(r._raw.iban)}', this)">${escHtml(String(r._raw.iban).replace(/\s+/g,'').slice(-4).padStart(4,'•'))}</span>` : ''}</div>
         <div class="atleta-icons">${contactBtns}${acts}</div>
       </td>
       <td class="clube">${escHtml(r.clube)}</td>
@@ -1686,6 +1748,14 @@ function renderTable(){
 }
 
 function escHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function copyIban(iban, el){
+  if (!iban) return;
+  navigator.clipboard.writeText(String(iban).replace(/\s+/g,'')).then(() => {
+    const orig = el.textContent;
+    el.textContent = '✓ copiado';
+    setTimeout(() => { el.textContent = orig; }, 1200);
+  }).catch(() => toast('Não foi possível copiar', true));
+}
 function escAttr(s){ return escHtml(s).replace(/`/g,'&#96;'); }
 
 // Normaliza telefone PT para formato wa.me (351XXXXXXXXX, sem espaços)
@@ -1777,6 +1847,8 @@ function quickFilter(kind){
     document.getElementById('filt-pag').value = '';
   } else if (kind === 'problema') {
     document.getElementById('filt-pag').value = 'problema';
+  } else if (kind === 'parcial') {
+    document.getElementById('filt-pag').value = 'parcial';
   }
   renderTable();
 }
