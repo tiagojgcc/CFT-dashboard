@@ -270,9 +270,13 @@
   }
   .quick-template:hover { border-color: var(--charcoal); background: var(--beige-light); }
 
-  .table-wrap { border: 1px solid var(--sand); border-radius: var(--radius-md); background: var(--white); overflow-x: auto; }
+  /* table-wrap fica em flow normal (sem overflow que crie scroll context).
+     O scroll horizontal acontece em .table-scroll, que envolve a tabela. */
+  .table-wrap { border: 1px solid var(--sand); border-radius: var(--radius-md); background: var(--white); }
+  .table-scroll { /* desktop: sem scroll. Em mobile, overflow-x:auto via media-query */ }
   table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  /* thead sticky logo abaixo do toolbar. --toolbar-h é actualizado em JS via ResizeObserver */
+  /* thead sticky logo abaixo da toolbar. --toolbar-h é actualizado em JS via ResizeObserver.
+     Como table-wrap não tem overflow, o sticky funciona no contexto do scroll da página. */
   thead { background: var(--charcoal); color: var(--off-white); position: sticky; top: var(--toolbar-h, 56px); z-index: 10; }
   thead th { box-shadow: inset 0 -1px 0 0 var(--charcoal); }
   th {
@@ -778,8 +782,8 @@
     .list-toolbar input, .list-toolbar select { font-size: 12px; height: 34px; flex: 1 1 100%; min-width: 0; }
     .list-toolbar input.search { flex: 1 1 100%; min-width: 0; }
     .list-actionbar { margin-left: 0; padding-left: 0; border-left: none; flex-wrap: wrap; }
-    /* Table — torna scroll horizontal, esconde colunas menos críticas */
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* Table — scroll horizontal interno (não cria scroll context para o sticky vertical) */
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { min-width: 720px; }
     thead { top: 0; }  /* no telemóvel o toolbar empilha + sticky pode ficar desalinhado, simplifica */
     th, td { padding: 5px 4px; font-size: 11.5px; }
@@ -954,7 +958,7 @@
       </div>
     </div>
 
-    <div class="table-wrap">
+    <div class="table-wrap"><div class="table-scroll">
       <table>
         <thead><tr>
           <th class="col-check"><span class="row-check" id="check-all" onclick="toggleAll()"></span></th>
@@ -972,7 +976,7 @@
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
-    </div>
+    </div></div>
     <div class="footer-meta">
       <span id="tcount">—</span>
       <span><span class="row-flag iban" style="background:var(--sand-dark)">i</span> falta IBAN &nbsp; <span class="row-flag med">+</span> nota médica</span>
@@ -3410,15 +3414,19 @@ function renderAll(){
   updateToolbarHeight();
 }
 
-// Mede a altura do toolbar da Lista e expõe como CSS var --toolbar-h.
-// O thead sticky usa esta var para se posicionar abaixo do toolbar sem o sobrepor.
+// Mede a altura efectiva da toolbar (inclui margin-bottom) e expõe como CSS var
+// --toolbar-h. O thead sticky usa esta var para se posicionar logo abaixo da toolbar.
 function updateToolbarHeight(){
   const tb = document.querySelector('#panel-list .list-toolbar');
   if (!tb) return;
-  const h = Math.ceil(tb.getBoundingClientRect().height);
+  const rect = tb.getBoundingClientRect();
+  const cs = getComputedStyle(tb);
+  const mb = parseFloat(cs.marginBottom) || 0;
+  const h = Math.ceil(rect.height + mb);
   if (h > 0) document.documentElement.style.setProperty('--toolbar-h', h + 'px');
 }
 window.addEventListener('resize', updateToolbarHeight);
+window.addEventListener('load', updateToolbarHeight);
 // ResizeObserver apanha mudanças de altura quando os filtros fazem wrap
 (function setupToolbarObserver(){
   const tb = document.querySelector('#panel-list .list-toolbar');
