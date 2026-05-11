@@ -2539,6 +2539,42 @@ const EmailTemplates = {
     return { subject, html: this._wrap(body) };
   },
 
+  // ============ Promocional (clube perto do desconto) ============
+
+  // Avisa que o clube tem N atletas (<8) e que, se chegar a 8, o pagamento
+  // fica mais barato e devolvemos a diferença. Usar antes do prazo final
+  // para incentivar inscrições adicionais do mesmo clube.
+  descontoClube(data) {
+    const C = this.C;
+    const subject = `CFT · ${data.clube} — desconto de clube ao virar da esquina`;
+    const faltam = data.clube_faltam || '?';
+    const body = `
+      <div style="padding:48px 40px 24px 40px;">
+        ${this._over('Quase a desbloquear desconto', C.greenDark)}
+        ${this._display('Falta pouco\npara poupar.')}
+      </div>
+      <div style="padding:0 40px 24px 40px;">
+        <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ${this._esc(data.ee_nome).toUpperCase()},</div>
+        ${this._para(`Obrigado pela inscrição do/a <b>${this._esc(data.atleta)}</b> no CFT 2026 pelo <b>${this._esc(data.clube)}</b>.`)}
+        ${this._para(`Como sabe, oferecemos um desconto a todos os atletas inscritos por clubes com 8 ou mais participantes. À data de hoje, o <b>${this._esc(data.clube)}</b> tem <b>${this._esc(data.clube_atletas)}</b> atleta${data.clube_atletas === '1' ? '' : 's'} inscrito${data.clube_atletas === '1' ? '' : 's'} — falta${faltam === '1' ? '' : 'm'} apenas <b style="color:${C.greenDark};">${this._esc(String(faltam))}</b> para destravar o desconto.`)}
+      </div>
+      ${this._infoBox([
+        ['Clube', this._esc(data.clube)],
+        ['Inscritos até à data', `<b>${this._esc(data.clube_atletas)}</b> de 8`],
+        ['Valor que pagou', `${this._esc(data.valor_atual)}`],
+        ['Valor com desconto', `<b style="color:${C.greenDark};">${this._esc(data.valor_com_desconto)}</b>`],
+        ['Diferença a devolver', `<b style="color:${C.greenDark};">${this._esc(data.diferenca)}</b>`]
+      ], 'Como ficaria')}
+      <div style="padding:24px 40px 8px 40px;">
+        ${this._para(`Se ainda conhece <b>${this._esc(String(faltam))}</b> atleta${faltam === '1' ? '' : 's'} do clube que pondere${faltam === '1' ? '' : 'm'} inscrever-se, este é o momento — basta partilharem o link de inscrição. Assim que o clube atingir os 8, devolvemos automaticamente a diferença a todos os atletas afectados.`)}
+        ${this._para(`Qualquer dúvida ou se precisar do link do formulário, é só responder a este email.`)}
+      </div>
+      <div style="padding:8px 40px 16px 40px;">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Obrigado,</div>
+      </div>`;
+    return { subject, html: this._wrap(body) };
+  },
+
   // ============ Bulk templates ============
 
   // 5. Aviso de prazo
@@ -2652,27 +2688,59 @@ const EmailDraft = {
     }
   },
 
-  /** Lê 1 atleta da aba (já com pricing aplicado, usando getAll). */
-  _getAtleta(atletaId) {
+  /** Lê 1 atleta com contexto (clube count, clube_counts totais). */
+  _getAtletaWithContext(atletaId) {
     const all = Inscricoes.getAll();
     const a = (all.atletas || []).find(x => x.id_inscricao === atletaId);
     if (!a) throw new Error('Atleta não encontrado: ' + atletaId);
-    return a;
+    const clubeCounts = all.clube_counts || {};
+    return { atleta: a, clubeCount: clubeCounts[a.clube] || 0, clubeCounts: clubeCounts };
   },
 
-  /** Constrói o objeto de dados (placeholders) a partir do atleta. */
-  _buildData(atleta, overrides) {
+  /** Versão legacy — só atleta. */
+  _getAtleta(atletaId) {
+    return this._getAtletaWithContext(atletaId).atleta;
+  },
+
+  /** Calcula o valor de inscrição com desconto (clube ≥8), só para internos sem desconto já aplicado. */
+  _calcValorComDesconto(atleta) {
+    const p = atleta.pricing || {};
+    const info = p.info || {};
+    if (info.tipo !== 'interno' || info.desc) return null;
+    const nSem = info.nSem || 0;
+    if (nSem === 0) return null;
+    // Preço pronto com desconto: before cutoff = 295/sem · after = 330/sem
+    const prontoComDescTotal = (info.before ? 295 : 330) * nSem;
+    // Preço prestações com desconto: before = 330/sem · after = n/a (depois cutoff só pronto)
+    const prestComDescTotal = info.before ? (330 * nSem) : null;
+    return { pronto: prontoComDescTotal, prest: prestComDescTotal };
+  },
+
+  /** Constrói o objeto de dados (placeholders) a partir do atleta + contexto. */
+  _buildData(atleta, overrides, ctx) {
     const p = atleta.pricing || {};
     const devido = Number(p.devido || 0);
     const pago   = Number(atleta.valor_pago || 0);
     const falta  = Math.max(0, devido - pago);
     const excedente = Math.max(0, pago - devido);
+    // Contexto do clube (para o template descontoClube)
+    const clubeCount = ctx && ctx.clubeCount ? Number(ctx.clubeCount) : 0;
+    const clubeFaltam = Math.max(0, 8 - clubeCount);
+    const comDesc = this._calcValorComDesconto(atleta);
+    const valorComDesc = comDesc ? comDesc.pronto : devido;
+    const diferenca = Math.max(0, devido - valorComDesc);
     const data = {
       atleta:          atleta.atleta || '',
       ee_nome:         EmailTemplates.shortName(atleta.encarregado || ''),
       ee_email:        atleta.email || '',
+      clube:           atleta.clube || '',
+      clube_atletas:   String(clubeCount),
+      clube_faltam:    String(clubeFaltam),
       valor_esperado:  devido ? (devido + ' €') : '—',
       valor_pago:      pago   ? (pago   + ' €') : '0 €',
+      valor_atual:     devido + ' €',
+      valor_com_desconto: valorComDesc + ' €',
+      diferenca:       diferenca + ' €',
       falta:           falta  ? (falta  + ' €') : '0 €',
       excedente:       excedente ? (excedente + ' €') : '0 €',
       iban_cft:        EmailTemplates.IBAN_CFT,
@@ -2690,9 +2758,10 @@ const EmailDraft = {
   /** Cria draft para 1 atleta. */
   createForAtleta(atletaId, templateName, user, overrides) {
     if (!atletaId) throw new Error('atletaId em falta');
-    const atleta = this._getAtleta(atletaId);
+    const ctx = this._getAtletaWithContext(atletaId);
+    const atleta = ctx.atleta;
     const tpl = templateName || this.pickTemplate(atleta);
-    const data = this._buildData(atleta, overrides);
+    const data = this._buildData(atleta, overrides, ctx);
     const { subject, html } = EmailTemplates.render(tpl, data);
     const to = (atleta.email || '').trim();
     if (!to) throw new Error('Atleta sem email: ' + atleta.atleta);

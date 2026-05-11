@@ -899,6 +899,7 @@
       <div class="list-actionbar">
         <span class="sel-info" id="sel-info">0 selecionados</span>
         <button class="compose-btn" id="compose-btn" disabled onclick="openCompose()">Enviar email</button>
+        <button class="quick-template" id="promo-desconto-btn" onclick="promoverDescontoClube()" title="Envia rascunho branded a atletas internos cujo clube tem 1-7 atletas (potencial desconto se chegarem a 8). Pode incluir já-pagos.">📢 Promover desconto de clube</button>
       </div>
     </div>
 
@@ -1885,6 +1886,52 @@ async function createBulkDraft(atletaIds, template){
     window.open(res.url, '_blank');
   } catch (e) {
     toast('Falha bulk: ' + e.message, true);
+  }
+}
+
+// ============ Promo desconto de clube ============
+// Devolve atletas elegíveis: interno + clube com 1-7 atletas + sem desconto já aplicado
+function elegiveisDescontoClube(){
+  const cc = (Api && Api._cache && Api._cache.clube_counts) || {};
+  return (data || []).filter(r => {
+    if (!r.ativo) return false;
+    if (r.tipo !== 'Interno') return false;
+    const n = cc[r.clube] || 0;
+    if (n < 1 || n >= 8) return false;
+    // Excluir quem já tem desconto (irmão, ≥2 semanas, outro motivo)
+    const info = (r.pricing && r.pricing.info) || {};
+    if (info.desc) return false;
+    return true;
+  });
+}
+
+async function promoverDescontoClube(){
+  const list = elegiveisDescontoClube();
+  if (list.length === 0) { toast('Não há atletas elegíveis (todos os clubes já têm 8+ ou já com desconto)', true); return; }
+  // Agrupa por clube para o admin ver o quadro antes
+  const porClube = {};
+  list.forEach(r => { (porClube[r.clube] = porClube[r.clube] || []).push(r); });
+  const resumo = Object.keys(porClube).sort()
+    .map(c => `${c}: ${porClube[c].length} atleta${porClube[c].length === 1 ? '' : 's'}`)
+    .join('\n');
+  if (!confirm(`Vai criar ${list.length} rascunho${list.length === 1 ? '' : 's'} branded "Promover desconto":\n\n${resumo}\n\nContinuar?`)) return;
+  toast(`A criar ${list.length} rascunho${list.length === 1 ? '' : 's'}…`);
+  let okCount = 0, firstUrl = null, errors = [];
+  for (const r of list) {
+    if (!r.email_enc) { errors.push(r.nome); continue; }
+    try {
+      const res = await Api.createEmailDraft(r.id, 'descontoClube');
+      okCount++;
+      if (!firstUrl) firstUrl = res.url;
+    } catch (e) {
+      errors.push(r.nome + ': ' + e.message);
+    }
+  }
+  if (okCount > 0) {
+    toast(`${okCount} rascunho${okCount === 1 ? '' : 's'} criado${okCount === 1 ? '' : 's'} em geral@camposft.com${errors.length ? ' · ' + errors.length + ' falha(s)' : ''}`);
+    if (firstUrl) window.open(firstUrl, '_blank');
+  } else {
+    toast('Falha ao criar rascunhos: ' + errors.slice(0,3).join(' | '), true);
   }
 }
 

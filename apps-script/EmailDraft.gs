@@ -24,27 +24,59 @@ const EmailDraft = {
     }
   },
 
-  /** Lê 1 atleta da aba (já com pricing aplicado, usando getAll). */
-  _getAtleta(atletaId) {
+  /** Lê 1 atleta com contexto (clube count, clube_counts totais). */
+  _getAtletaWithContext(atletaId) {
     const all = Inscricoes.getAll();
     const a = (all.atletas || []).find(x => x.id_inscricao === atletaId);
     if (!a) throw new Error('Atleta não encontrado: ' + atletaId);
-    return a;
+    const clubeCounts = all.clube_counts || {};
+    return { atleta: a, clubeCount: clubeCounts[a.clube] || 0, clubeCounts: clubeCounts };
   },
 
-  /** Constrói o objeto de dados (placeholders) a partir do atleta. */
-  _buildData(atleta, overrides) {
+  /** Versão legacy — só atleta. */
+  _getAtleta(atletaId) {
+    return this._getAtletaWithContext(atletaId).atleta;
+  },
+
+  /** Calcula o valor de inscrição com desconto (clube ≥8), só para internos sem desconto já aplicado. */
+  _calcValorComDesconto(atleta) {
+    const p = atleta.pricing || {};
+    const info = p.info || {};
+    if (info.tipo !== 'interno' || info.desc) return null;
+    const nSem = info.nSem || 0;
+    if (nSem === 0) return null;
+    // Preço pronto com desconto: before cutoff = 295/sem · after = 330/sem
+    const prontoComDescTotal = (info.before ? 295 : 330) * nSem;
+    // Preço prestações com desconto: before = 330/sem · after = n/a (depois cutoff só pronto)
+    const prestComDescTotal = info.before ? (330 * nSem) : null;
+    return { pronto: prontoComDescTotal, prest: prestComDescTotal };
+  },
+
+  /** Constrói o objeto de dados (placeholders) a partir do atleta + contexto. */
+  _buildData(atleta, overrides, ctx) {
     const p = atleta.pricing || {};
     const devido = Number(p.devido || 0);
     const pago   = Number(atleta.valor_pago || 0);
     const falta  = Math.max(0, devido - pago);
     const excedente = Math.max(0, pago - devido);
+    // Contexto do clube (para o template descontoClube)
+    const clubeCount = ctx && ctx.clubeCount ? Number(ctx.clubeCount) : 0;
+    const clubeFaltam = Math.max(0, 8 - clubeCount);
+    const comDesc = this._calcValorComDesconto(atleta);
+    const valorComDesc = comDesc ? comDesc.pronto : devido;
+    const diferenca = Math.max(0, devido - valorComDesc);
     const data = {
       atleta:          atleta.atleta || '',
       ee_nome:         EmailTemplates.shortName(atleta.encarregado || ''),
       ee_email:        atleta.email || '',
+      clube:           atleta.clube || '',
+      clube_atletas:   String(clubeCount),
+      clube_faltam:    String(clubeFaltam),
       valor_esperado:  devido ? (devido + ' €') : '—',
       valor_pago:      pago   ? (pago   + ' €') : '0 €',
+      valor_atual:     devido + ' €',
+      valor_com_desconto: valorComDesc + ' €',
+      diferenca:       diferenca + ' €',
       falta:           falta  ? (falta  + ' €') : '0 €',
       excedente:       excedente ? (excedente + ' €') : '0 €',
       iban_cft:        EmailTemplates.IBAN_CFT,
@@ -62,9 +94,10 @@ const EmailDraft = {
   /** Cria draft para 1 atleta. */
   createForAtleta(atletaId, templateName, user, overrides) {
     if (!atletaId) throw new Error('atletaId em falta');
-    const atleta = this._getAtleta(atletaId);
+    const ctx = this._getAtletaWithContext(atletaId);
+    const atleta = ctx.atleta;
     const tpl = templateName || this.pickTemplate(atleta);
-    const data = this._buildData(atleta, overrides);
+    const data = this._buildData(atleta, overrides, ctx);
     const { subject, html } = EmailTemplates.render(tpl, data);
     const to = (atleta.email || '').trim();
     if (!to) throw new Error('Atleta sem email: ' + atleta.atleta);
