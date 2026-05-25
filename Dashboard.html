@@ -695,6 +695,23 @@
   /* Atleta cell: nome em cima, icons em baixo */
   td.atleta { white-space: normal; vertical-align: top; padding-top: 8px; padding-bottom: 8px; }
   .atleta-name { font-weight: 500; white-space: normal; word-break: break-word; line-height: 1.3; }
+  .trab-chevron { display: inline-block; cursor: pointer; margin-left: 6px; padding: 0 5px; border-radius: 3px; background: var(--orange-accent); color: white; font-size: 11px; font-weight: 700; user-select: none; }
+  .trab-chevron:hover { background: var(--charcoal); }
+  .trab-chevron.resolved { background: var(--sage); color: white; opacity: 0.85; }
+  .trab-chevron.devolver { background: var(--green-dark); }
+  tr.row-expand > td { background: var(--beige-light); padding: 14px 18px; border-bottom: 2px solid var(--sand); }
+  .trab-inline { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .trab-inline-l { flex: 1; min-width: 240px; }
+  .trab-inline-tipo { font-family: var(--font-condensed); font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--orange-accent); }
+  .trab-inline-tipo.devolver { color: var(--green-dark); }
+  .trab-inline-detail { font-family: var(--font-body); font-size: 13px; color: var(--charcoal); margin-top: 6px; line-height: 1.5; }
+  .trab-inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .trab-act { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 7px 12px; border-radius: 3px; border: 1.5px solid var(--charcoal); background: var(--white); color: var(--charcoal); cursor: pointer; }
+  .trab-act:hover { background: var(--charcoal); color: var(--off-white); }
+  .trab-act.primary { background: var(--charcoal); color: var(--off-white); }
+  .trab-act.primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
+  .trab-act.muted { color: var(--mid-gray); border-color: var(--sand); }
+  .trab-resolved-tag { font-size: 11px; color: var(--green-dark); margin-left: 8px; }
   .atleta-encarregado { font-size: 11px; color: var(--mid-gray); margin-top: 2px; font-family: var(--font-body); line-height: 1.3; }
   .atleta-iban { font-family: ui-monospace,Menlo,monospace; cursor: pointer; color: var(--green-dark); text-decoration: underline dotted; }
   .atleta-iban:hover { color: var(--charcoal); }
@@ -853,8 +870,7 @@
 <nav class="nav">
   <div class="nav-inner">
     <div class="tab active" data-panel="overview">Visão geral</div>
-    <div class="tab" data-panel="trabalho">Trabalho <span class="tab-count warn" id="tc-trabalho">0</span></div>
-    <div class="tab" data-panel="list">Lista <span class="tab-count" id="tc-list">0</span></div>
+    <div class="tab" data-panel="list">Lista <span class="tab-count warn" id="tc-list">0</span></div>
     <div class="nav-more">
       <div class="tab nav-more-toggle" onclick="document.getElementById('nav-more-menu').classList.toggle('open')">⋯</div>
       <div class="nav-more-menu" id="nav-more-menu">
@@ -907,25 +923,9 @@
     </div>
   </div>
 
-  <!-- ============ TRABALHO (vista única, ações inline) ============ -->
-  <div class="panel" id="panel-trabalho">
-    <div class="panel-head">
-      <div class="panel-title">Trabalho</div>
-      <div class="trab-view-tabs">
-        <span class="trab-view-tab active" data-view="active"   onclick="setTrabView('active')">Por resolver <span class="trab-view-count" id="trab-count-active">0</span></span>
-        <span class="trab-view-tab"        data-view="resolved" onclick="setTrabView('resolved')">Resolvidos <span class="trab-view-count" id="trab-count-resolved">0</span></span>
-      </div>
-      <div class="panel-sub" id="trabalho-summary">—</div>
-    </div>
-    <div class="trabalho-toolbar">
-      <span class="trab-sel-info" id="trab-sel-info">0 selecionados</span>
-      <button class="btn-secondary" id="trab-select-all" onclick="trabSelectAll()">Selecionar todos</button>
-      <button class="btn-confirm" onclick="openNewTask()" title="Criar tarefa manual (sem ligação a inscrição)">+ Nova tarefa</button>
-      <button class="btn-confirm"   id="trab-bulk-email"   disabled onclick="trabBulkBranded()" title="Cria 1 rascunho CFT branded por atleta seleccionado, com o template apropriado">✉ Criar rascunhos branded (1 por atleta)</button>
-      <button class="btn-cancel"    id="trab-bulk-resolve" disabled onclick="trabBulkResolve()">✓ Marcar resolvidos</button>
-    </div>
-    <div id="trabalho-items"></div>
-  </div>
+  <!-- Trabalho — antigo separador removido. Items de trabalho passaram a aparecer
+       inline dentro da tab Lista, em painel expansível por atleta (chevron na coluna ATLETA). -->
+  <div id="tc-trabalho" style="display:none;">0</div>
 
   <!-- ============ LIST ============ -->
   <div class="panel" id="panel-list">
@@ -1335,7 +1335,7 @@ function renderAlertStrip(){
     <div class="alert-strip">
       <div class="alert-strip-l">⚠ Atenção</div>
       <div class="alert-strip-msg"><b>${total}</b> inscritos com pagamento problemático ou em falta. ${errado.length > 0 ? errado.length + ' valores incorretos · ' : ''}${semPag.length > 0 ? semPag.length + ' sem comprovativo' : ''}.</div>
-      <button class="alert-strip-btn" onclick="showTab('trabalho')">Ver trabalho →</button>
+      <button class="alert-strip-btn" onclick="showTab('list'); quickFilter('problema');">Ver na Lista →</button>
     </div>
   `;
 }
@@ -1620,6 +1620,11 @@ function renderTable(){
     th.classList.toggle('sorted-asc',  f === sortField && sortDir === 'asc');
     th.classList.toggle('sorted-desc', f === sortField && sortDir === 'desc');
   });
+  // Indexa items de trabalho (problemas) por id de atleta — usado para mostrar
+  // chevron + expansão inline na linha do atleta.
+  const trabIndex = {};
+  buildTrabalhoItems().forEach(it => { trabIndex[it.atleta.id] = it; });
+  const resolvedMap = buildResolvedMap();
   document.getElementById('tbody').innerHTML = rows.map(r => {
     const {st, total, falta} = paymentStatus(r);
     const erradoTip = (st === 'problema') ? valorErradoTooltip(r) : '';
@@ -1676,11 +1681,18 @@ function renderTable(){
       <span class="row-act" title="Alterar semanas" onclick="openSem('${r.id}')">✎</span>
       <span class="row-act danger" title="Eliminar atleta" onclick="openDel('${r.id}','delete')">×</span>
     </span>`;
-    return `<tr class="${isSel ? 'selected' : ''}" data-id="${r.id}">
+    const trabItem = trabIndex[r.id];
+    const isResolved = trabItem ? !!resolvedMap[trabItem.id] : false;
+    const isExpanded = trabItem && expandedAtletas.has(r.id);
+    const chevronCls = isResolved ? 'trab-chevron resolved' : (trabItem && trabItem.tipoClass === 'devolver' ? 'trab-chevron devolver' : 'trab-chevron');
+    const chevron = trabItem
+      ? `<span class="${chevronCls}" onclick="event.stopPropagation(); toggleAtletaExpand('${r.id}')" title="${escAttr(trabItem.tipoLabel)}${isResolved ? ' · resolvido' : ''} (clica para ${isExpanded ? 'fechar' : 'abrir'})">${isExpanded ? '▾' : '▸'} ${isResolved ? '✓' : '!'}</span>`
+      : '';
+    const dataRow = `<tr class="${isSel ? 'selected' : ''}${isExpanded ? ' parent-expanded' : ''}" data-id="${r.id}">
       <td class="col-check"><span class="row-check ${isSel ? 'checked' : ''}" onclick="toggleRow('${r.id}')">${isSel ? '✓' : ''}</span></td>
       <td class="num-cell">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</td>
       <td class="atleta">
-        <div class="atleta-name" onclick="openAtletaDetail('${r.id}')" title="Ver histórico do dinheiro">${escHtml(r.nome)}${flags}</div>
+        <div class="atleta-name" onclick="openAtletaDetail('${r.id}')" title="Ver histórico do dinheiro">${escHtml(r.nome)}${flags}${chevron}</div>
         <div class="atleta-encarregado" title="Encarregado · útil para identificar transferências bancárias">${escHtml(r.encarregado || '')}${(r._raw && r._raw.iban) ? ` · <span class="atleta-iban" title="IBAN do encarregado (cópia ao clicar)" onclick="event.stopPropagation(); copyIban('${escAttr(r._raw.iban)}', this)">${escHtml(String(r._raw.iban).replace(/\s+/g,'').slice(-4).padStart(4,'•'))}</span>` : ''}</div>
         <div class="atleta-icons">${contactBtns}${acts}</div>
       </td>
@@ -1694,6 +1706,8 @@ function renderTable(){
       <td>${stB}</td>
       <td style="text-align:center;">${confCell}</td>
     </tr>`;
+    const expandRow = isExpanded ? renderTrabExpandRow(r, trabItem, isResolved) : '';
+    return dataRow + expandRow;
   }).join('');
   const counts = (Api && Api._cache && Api._cache.counts) || {};
   const atletasU = counts.atletas_unicos || data.length;
@@ -1704,6 +1718,72 @@ function renderTable(){
 }
 
 function escHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ============ EXPANSÃO INLINE: TRABALHO POR ATLETA ============
+// O antigo separador Trabalho desapareceu. Cada atleta com problema mostra
+// um chevron na linha da Lista; clicar abre um painel inline com diagnostico
+// + ações (criar rascunho branded, WhatsApp, marcar resolvido).
+let expandedAtletas = new Set();
+function toggleAtletaExpand(id){
+  if (expandedAtletas.has(id)) expandedAtletas.delete(id);
+  else expandedAtletas.add(id);
+  renderTable();
+}
+function renderTrabExpandRow(r, item, isResolved){
+  const waUrl = waLinkFor(r);
+  const tipoCls = item.tipoClass === 'devolver' ? 'devolver' : '';
+  const resolvedTag = isResolved ? `<span class="trab-resolved-tag">✓ marcado resolvido</span>` : '';
+  const actionResolve = isResolved
+    ? `<button class="trab-act muted" onclick="reopenAtletaTrab('${item.id}','${r.id}')" title="Reabrir item">↺ Reabrir</button>`
+    : `<button class="trab-act" onclick="resolveAtletaTrab('${item.id}','${r.id}')" title="Marcar como resolvido">✓ Marcar resolvido</button>`;
+  const emailBtn = r.email_enc
+    ? `<button class="trab-act primary" onclick="createDraftForAtleta('${r.id}')" title="Cria rascunho branded com template auto-detectado">✉ Rascunho branded</button>`
+    : '';
+  const waBtn = waUrl
+    ? `<a class="trab-act" href="${escAttr(waUrl)}" target="_blank" rel="noopener" title="WhatsApp para ${escAttr(r.encarregado||'')}">💬 WhatsApp</a>`
+    : '';
+  return `<tr class="row-expand" data-parent="${r.id}"><td colspan="12">
+    <div class="trab-inline">
+      <div class="trab-inline-l">
+        <div class="trab-inline-tipo ${tipoCls}">${escHtml(item.tipoLabel)}${resolvedTag}</div>
+        <div class="trab-inline-detail">${escHtml(item.detail)}</div>
+      </div>
+      <div class="trab-inline-actions">
+        ${emailBtn}
+        ${waBtn}
+        ${actionResolve}
+      </div>
+    </div>
+  </td></tr>`;
+}
+async function resolveAtletaTrab(itemId, atletaId){
+  const items = buildTrabalhoItems();
+  const it = items.find(x => x.id === itemId);
+  if (!it) return;
+  trabResolvedLocal.add(itemId);
+  trabUnresolvedLocal.delete(itemId);
+  renderTable();
+  toast('Resolvido');
+  try {
+    await Api.markTrabalhoResolved(itemId, it.atleta.id, it.atleta.nome);
+  } catch (e) {
+    toast('Erro a guardar: ' + e.message, true);
+  }
+}
+async function reopenAtletaTrab(itemId, atletaId){
+  const items = buildTrabalhoItems();
+  const it = items.find(x => x.id === itemId);
+  if (!it) return;
+  trabUnresolvedLocal.add(itemId);
+  trabResolvedLocal.delete(itemId);
+  renderTable();
+  toast('Reaberto');
+  try {
+    await Api.unmarkTrabalhoResolved(itemId, it.atleta.id, it.atleta.nome);
+  } catch (e) {
+    toast('Erro a guardar: ' + e.message, true);
+  }
+}
 function copyIban(iban, el){
   if (!iban) return;
   navigator.clipboard.writeText(String(iban).replace(/\s+/g,'')).then(() => {
@@ -2977,6 +3057,17 @@ async function taskDelete(id){
 }
 
 function renderTrabalho(){
+  // O separador Trabalho foi removido; items aparecem inline na Lista.
+  // Mantém-se só o cálculo de count para badges (se ainda existirem).
+  const allItems = buildTrabalhoItems();
+  const resolvedMap = buildResolvedMap();
+  const unresolvedCount = allItems.filter(it => !resolvedMap[it.id]).length;
+  const badge = document.getElementById('tc-trabalho');
+  if (badge) badge.textContent = unresolvedCount;
+  // Update list count too (já vinha de antes)
+  return;
+}
+function _legacyRenderTrabalhoBody(){
   const allItems = buildTrabalhoItems();
   const resolvedMap = buildResolvedMap();
   const cutoff = Date.now() - 24 * 3600 * 1000; // 24h ago
