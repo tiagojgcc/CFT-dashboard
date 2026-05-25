@@ -885,23 +885,6 @@
 
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Estado financeiro</div>
-          <div class="card-meta">prazo final · 21 jun</div>
-        </div>
-        <div id="fin-summary"></div>
-      </div>
-    </div>
-
-    <div class="grid-2" style="margin-bottom:16px;">
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title">Distribuição por clube</div>
-          <div class="card-meta" id="clube-meta">— clubes</div>
-        </div>
-        <div class="clubes" id="clubes"></div>
-      </div>
-      <div class="card">
-        <div class="card-head">
           <div class="card-title">Estado dos pagamentos</div>
           <div class="card-meta" id="pag-donut-meta">—</div>
         </div>
@@ -910,6 +893,16 @@
           <div class="donut-center" id="donut-center"></div>
         </div>
         <div class="donut-legend" id="donut-legend"></div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-head">
+          <div class="card-title">Distribuição por clube</div>
+          <div class="card-meta" id="clube-meta">— clubes</div>
+        </div>
+        <div class="clubes" id="clubes"></div>
       </div>
     </div>
   </div>
@@ -943,7 +936,7 @@
 
     <div class="list-toolbar">
       <input type="text" class="search" id="search" placeholder="Procurar por nome, clube, encarregado, IBAN...">
-      <select id="filt-sem"><option value="">todas as semanas</option><option value="1">Semana 1</option><option value="2">Semana 2</option><option value="3">Semana 3</option></select>
+      <select id="filt-sem"><option value="">todas as semanas</option><option value="1">Semana 1</option><option value="2">Semana 2</option></select>
       <select id="filt-clube"><option value="">todos os clubes</option></select>
       <select id="filt-tipo"><option value="">interno/externo</option><option value="Interno">Interno</option><option value="Externo">Externo</option></select>
       <select id="filt-pag"><option value="">estado pagamento</option><option value="pago">pago</option><option value="parcial">parcial</option><option value="pendente">sem pagamento</option><option value="problema">valor problemático</option></select>
@@ -1001,19 +994,13 @@
       <div class="panel-sub">Listas formatadas para imprimir / dar aos treinadores</div>
     </div>
     <div style="margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--mid-gray);">Equipa técnica (completo)</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
       <button class="btn-confirm" style="padding:14px;" onclick="openEntregavel(1)">📄 Entregável Sem 1<br><small style="font-weight:normal;opacity:0.85;">12—18 jul</small></button>
       <button class="btn-confirm" style="padding:14px;" onclick="openEntregavel(2)">📄 Entregável Sem 2<br><small style="font-weight:normal;opacity:0.85;">19—25 jul</small></button>
-      <button class="btn-confirm" style="padding:14px;" onclick="openEntregavel(3)">📄 Entregável Sem 3<br><small style="font-weight:normal;opacity:0.85;">26 jul—1 ago</small></button>
     </div>
-    <div style="margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--mid-gray);">Sérgio (treinador principal) · só atletas + clubes</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:10px;">
-      <button class="btn-secondary" style="padding:14px;" onclick="openListaSergio(1)">📋 Lista Sérgio · Sem 1<br><small style="font-weight:normal;opacity:0.85;">12—18 jul</small></button>
-      <button class="btn-secondary" style="padding:14px;" onclick="openListaSergio(2)">📋 Lista Sérgio · Sem 2<br><small style="font-weight:normal;opacity:0.85;">19—25 jul</small></button>
-      <button class="btn-secondary" style="padding:14px;" onclick="openListaSergio(3)">📋 Lista Sérgio · Sem 3<br><small style="font-weight:normal;opacity:0.85;">26 jul—1 ago</small></button>
-    </div>
+    <div style="margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--mid-gray);">Sérgio (treinador principal)</div>
     <div style="margin-bottom:16px;">
-      <button class="btn-confirm" style="padding:14px;width:100%;" onclick="openListaSergioCompleta()">📋 Lista Sérgio · Completa (3 semanas num só PDF)<br><small style="font-weight:normal;opacity:0.85;">12 jul — 1 ago · atletas agrupados por clube em cada semana</small></button>
+      <button class="btn-confirm" style="padding:14px;width:100%;" onclick="openListaSergio()">📋 Lista Sérgio · atletas por clube<br><small style="font-weight:normal;opacity:0.85;">todos os atletas inscritos · agrupados por clube</small></button>
     </div>
     <div class="card" style="padding:18px;">
       <div class="card-title" style="margin-bottom:10px;">Camisolas — pedido por tamanho</div>
@@ -1061,7 +1048,6 @@
     <div id="sem-checks" style="display:flex;gap:14px;margin:6px 0 14px;font-size:13px;">
       <label><input type="checkbox" value="1"> Semana 1</label>
       <label><input type="checkbox" value="2"> Semana 2</label>
-      <label><input type="checkbox" value="3"> Semana 3</label>
     </div>
     <div class="field-label">Motivo da alteração (obrigatório, ≥10 caracteres)</div>
     <textarea id="sem-motivo" placeholder="Ex: encarregado pediu para trocar semana 2 por semana 3 por motivos familiares." oninput="checkSemBtn()"></textarea>
@@ -1407,11 +1393,11 @@ function renderKPI(){
 
 // ============ WEEKS ============
 function renderWeeks(){
-  const weekCounts = {1:0, 2:0, 3:0};
+  const weekCounts = {1:0, 2:0};
   data.forEach(r => parseSems(r.semana).forEach(s => { if (weekCounts[s] !== undefined) weekCounts[s]++; }));
-  const wc = {1:'var(--green-dark)', 2:'var(--orange-accent)', 3:'var(--sand-dark)'};
-  const dates = {1:'12—18 jul', 2:'19—25 jul', 3:'26 jul—1 ago'};
-  document.getElementById('weeks').innerHTML = [1,2,3].map(n => {
+  const wc = {1:'var(--green-dark)', 2:'var(--orange-accent)'};
+  const dates = {1:'12—18 jul', 2:'19—25 jul'};
+  document.getElementById('weeks').innerHTML = [1,2].map(n => {
     const pct = Math.round(weekCounts[n] / VAGAS_SEM * 100);
     const livres = VAGAS_SEM - weekCounts[n];
     return `
@@ -1429,47 +1415,10 @@ function renderWeeks(){
   }).join('');
 }
 
-// ============ FINANCEIRO ============
-function renderFinanceiro(){
-  const cc = clubeCounts();
-  let totalDevido = 0, totalPago = 0, totalFalta = 0;
-  const buckets = { pago:0, parcial:0, problem:0, sem:0 };
-  data.forEach(r => {
-    const {total} = calcTotal(r, cc);
-    totalDevido += total;
-    if (r.val_pago !== null) { totalPago += r.val_pago; totalFalta += Math.max(0, total - r.val_pago); }
-    if (r.val_pago === null || r.val_pago === 0) buckets.sem++;
-    else if (r.val_pago < 120) buckets.problem++;
-    else if (r.val_pago >= total) buckets.pago++;
-    else buckets.parcial++;
-  });
-  document.getElementById('fin-summary').innerHTML = [
-    {l:'Pagamento completo', v:buckets.pago, c:'var(--green-bright)'},
-    {l:'Entrada paga · falta resto', v:buckets.parcial, c:'var(--orange-accent)'},
-    {l:'Valor problemático (<120€)', v:buckets.problem, c:'#c0392b'},
-    {l:'Sem pagamento / ilegível', v:buckets.sem, c:'var(--charcoal)'},
-  ].map(r => `
-    <div class="fin-row">
-      <div class="fin-row-l"><div class="fin-dot" style="background:${r.c}"></div><div class="fin-name">${r.l}</div></div>
-      <div class="fin-val">${r.v}</div>
-    </div>
-  `).join('') + `
-    <div class="fin-totals">
-      <div class="fin-total-row">
-        <div class="fin-total-lbl">Recebido</div>
-        <div class="fin-total-val green">${fmt(totalPago)}</div>
-      </div>
-      <div class="fin-total-row">
-        <div class="fin-total-lbl">Em falta</div>
-        <div class="fin-total-val red">${fmt(totalFalta)}</div>
-      </div>
-      <div class="fin-total-row">
-        <div class="fin-total-lbl">Total devido</div>
-        <div class="fin-total-val" style="color:var(--charcoal); font-size:20px;">${fmt(totalDevido)}</div>
-      </div>
-    </div>
-  `;
-}
+// ============ FINANCEIRO (deprecated) ============
+// O card 'Estado financeiro' foi removido da Visão Geral em favor do donut
+// 'Estado dos pagamentos'. Função no-op para não partir chamadas antigas.
+function renderFinanceiro(){ /* substituído pelo donut */ }
 
 // ============ CLUBES ============
 function renderClubes(){
@@ -2520,10 +2469,10 @@ function openEntregavel(semana){
   w.document.open(); w.document.write(html); w.document.close();
 }
 
-// Lista simplificada para o Sérgio (treinador principal): só atleta + clube por semana
-function openListaSergio(semana){
-  const SEMANAS_DATAS = { 1:'12—18 julho', 2:'19—25 julho', 3:'26 julho—1 agosto' };
-  const atletas = (data || []).filter(r => parseSems(r.semana).includes(semana));
+// Lista para o Sérgio (treinador principal): todos os atletas agrupados por clube,
+// sem distinguir semana (apenas indica que semanas cada atleta faz).
+function openListaSergio(){
+  const atletas = (data || []).slice();
   // Ordena por clube depois por nome (mais útil para o treinador)
   atletas.sort((a, b) => {
     const c = String(a.clube || '').localeCompare(String(b.clube || ''), 'pt');
@@ -2536,10 +2485,15 @@ function openListaSergio(semana){
   const clubesOrdenados = Object.keys(porClube).sort((a,b) => a.localeCompare(b, 'pt'));
   const blocosClube = clubesOrdenados.map(clube => {
     const lista = porClube[clube];
-    const itens = lista.map((r, i) => `<tr>
-      <td class="num">${i + 1}</td>
-      <td><b>${escHtml(r.nome)}</b></td>
-    </tr>`).join('');
+    const itens = lista.map((r, i) => {
+      const sems = parseSems(r.semana);
+      const semsLabel = sems.length ? sems.map(n => 'S' + n).join('+') : '—';
+      return `<tr>
+        <td class="num">${i + 1}</td>
+        <td><b>${escHtml(r.nome)}</b></td>
+        <td class="sems">${semsLabel}</td>
+      </tr>`;
+    }).join('');
     return `<div class="clube-bloco">
       <div class="clube-cabec">
         <span class="clube-nome">${escHtml(clube)}</span>
@@ -2549,7 +2503,7 @@ function openListaSergio(semana){
     </div>`;
   }).join('');
   const html = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
-<title>CFT 2026 — Semana ${semana} — Lista Sérgio</title>
+<title>CFT 2026 — Lista Sérgio</title>
 <style>
   @page { size: A4 portrait; margin: 14mm; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 14px; }
@@ -2565,6 +2519,7 @@ function openListaSergio(semana){
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   td { padding: 3px 4px; border-bottom: 1px dashed #ddd; }
   td.num { width: 22px; text-align: right; color: #888; font-size: 10px; }
+  td.sems { width: 40px; text-align: right; color: #6b7a3a; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; }
   footer { margin-top: 22px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 10px; color: #888; text-align: right; }
   @media print { .no-print { display: none; } body { padding: 0; } }
 </style></head><body>
@@ -2573,15 +2528,15 @@ function openListaSergio(semana){
 </div>
 <header>
   <div class="left">
-    <h1>Lista Sérgio · Sem ${semana}</h1>
-    <div class="sub">${SEMANAS_DATAS[semana]} · 4ª edição · 2026</div>
+    <h1>Lista Sérgio · Atletas por clube</h1>
+    <div class="sub">4ª edição · 2026 · semanas indicadas em S1/S2 ao lado de cada atleta</div>
   </div>
   <div class="right">
     <div><b>${atletas.length}</b> atletas · ${clubesOrdenados.length} clube${clubesOrdenados.length === 1 ? '' : 's'}</div>
     <div>Gerado: ${new Date().toLocaleDateString('pt-PT')}</div>
   </div>
 </header>
-<div class="clubes-grid">${blocosClube || '<div style="color:#888;font-style:italic;">Sem atletas para esta semana.</div>'}</div>
+<div class="clubes-grid">${blocosClube || '<div style="color:#888;font-style:italic;">Sem atletas.</div>'}</div>
 <footer>CFT 2026 · Campo de Formação Técnica · APDFE</footer>
 </body></html>`;
   const w = window.open('', '_blank');
@@ -2589,94 +2544,6 @@ function openListaSergio(semana){
   w.document.open(); w.document.write(html); w.document.close();
 }
 
-// Lista Sérgio completa: 3 semanas num só PDF, cada semana com atletas agrupados por clube.
-function openListaSergioCompleta(){
-  const SEMANAS_DATAS = { 1:'12—18 julho', 2:'19—25 julho', 3:'26 julho—1 agosto' };
-  function blocoSemana(semana){
-    const atletas = (data || []).filter(r => parseSems(r.semana).includes(semana));
-    atletas.sort((a, b) => {
-      const c = String(a.clube || '').localeCompare(String(b.clube || ''), 'pt');
-      if (c !== 0) return c;
-      return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt');
-    });
-    const porClube = {};
-    atletas.forEach(r => { (porClube[r.clube || '—'] = porClube[r.clube || '—'] || []).push(r); });
-    const clubesOrdenados = Object.keys(porClube).sort((a,b) => a.localeCompare(b, 'pt'));
-    const blocos = clubesOrdenados.map(clube => {
-      const lista = porClube[clube];
-      const itens = lista.map((r, i) => `<tr>
-        <td class="num">${i + 1}</td>
-        <td><b>${escHtml(r.nome)}</b></td>
-      </tr>`).join('');
-      return `<div class="clube-bloco">
-        <div class="clube-cabec">
-          <span class="clube-nome">${escHtml(clube)}</span>
-          <span class="clube-conta">${lista.length} atleta${lista.length === 1 ? '' : 's'}</span>
-        </div>
-        <table><tbody>${itens}</tbody></table>
-      </div>`;
-    }).join('');
-    return `<section class="semana-section">
-      <header class="semana-header">
-        <div class="left">
-          <h2>Semana ${semana}</h2>
-          <div class="sub">${SEMANAS_DATAS[semana]}</div>
-        </div>
-        <div class="right">
-          <div><b>${atletas.length}</b> atleta${atletas.length === 1 ? '' : 's'}</div>
-          <div>${clubesOrdenados.length} clube${clubesOrdenados.length === 1 ? '' : 's'}</div>
-        </div>
-      </header>
-      <div class="clubes-grid">${blocos || '<div style="color:#888;font-style:italic;">Sem atletas para esta semana.</div>'}</div>
-    </section>`;
-  }
-  const html = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
-<title>CFT 2026 — Lista Sérgio · 3 semanas</title>
-<style>
-  @page { size: A4 portrait; margin: 14mm; }
-  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 14px; }
-  .doc-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #1a1a1a; padding-bottom: 10px; margin-bottom: 18px; }
-  .doc-header h1 { margin: 0; font-size: 26px; letter-spacing: 0.04em; text-transform: uppercase; }
-  .doc-header .sub { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7a3a; margin-top: 4px; }
-  .doc-header .right { text-align: right; font-size: 11px; color: #555; }
-  .semana-section { page-break-before: always; }
-  .semana-section:first-of-type { page-break-before: auto; }
-  .semana-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #1a1a1a; padding-bottom: 8px; margin-bottom: 14px; }
-  .semana-header h2 { margin: 0; font-size: 20px; letter-spacing: 0.04em; text-transform: uppercase; }
-  .semana-header .sub { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7a3a; margin-top: 2px; }
-  .semana-header .right { text-align: right; font-size: 10px; color: #555; line-height: 1.5; }
-  .clubes-grid { column-count: 2; column-gap: 22px; }
-  .clube-bloco { break-inside: avoid; margin-bottom: 16px; padding: 8px 0 0 0; border-top: 2px solid #1a1a1a; }
-  .clube-cabec { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-  .clube-nome { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .clube-conta { font-size: 10px; color: #888; letter-spacing: 0.1em; text-transform: uppercase; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  td { padding: 3px 4px; border-bottom: 1px dashed #ddd; }
-  td.num { width: 22px; text-align: right; color: #888; font-size: 10px; }
-  footer { margin-top: 22px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 10px; color: #888; text-align: right; }
-  @media print { .no-print { display: none; } body { padding: 0; } }
-</style></head><body>
-<div class="no-print" style="background:#1a1a1a;color:#fff;padding:10px 14px;border-radius:6px;margin-bottom:14px;">
-  📄 Para guardar como PDF: <b>Ctrl+P</b> → escolhe "Guardar como PDF" → guardar.
-</div>
-<div class="doc-header">
-  <div class="left">
-    <h1>Lista Sérgio · Completa</h1>
-    <div class="sub">3 semanas · 4ª edição · 2026</div>
-  </div>
-  <div class="right">
-    <div>Gerado: ${new Date().toLocaleDateString('pt-PT')}</div>
-  </div>
-</div>
-${blocoSemana(1)}
-${blocoSemana(2)}
-${blocoSemana(3)}
-<footer>CFT 2026 · Campo de Formação Técnica · APDFE</footer>
-</body></html>`;
-  const w = window.open('', '_blank');
-  if (!w) { toast('Bloqueador de popups impede abrir. Permite popups para este site.', true); return; }
-  w.document.open(); w.document.write(html); w.document.close();
-}
 
 function openCamisolas(){
   const ordered = (data || []).slice().sort((a, b) => (a.num || 9999) - (b.num || 9999));

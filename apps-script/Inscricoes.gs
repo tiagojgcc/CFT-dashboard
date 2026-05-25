@@ -70,11 +70,11 @@ const Inscricoes = {
     const ativos = atletas.filter(a => a.ativo);
     const uniqueKey = a => (String(a.atleta || '').trim().toLowerCase().replace(/\s+/g, ' ')) + '|' + (String(a.encarregado || a.email || '').trim().toLowerCase());
     const uniqueAtletas = new Set(ativos.map(uniqueKey)).size;
-    const vagasPorSemana = { 1: 0, 2: 0, 3: 0 };
+    const vagasPorSemana = { 1: 0, 2: 0 };
     ativos.forEach(a => {
       Pricing.parseSems(a.semanas_atuais).forEach(s => { if (vagasPorSemana[s] !== undefined) vagasPorSemana[s]++; });
     });
-    const totalInscricoes = vagasPorSemana[1] + vagasPorSemana[2] + vagasPorSemana[3];
+    const totalInscricoes = vagasPorSemana[1] + vagasPorSemana[2];
     return {
       atletas,
       historico: Historico.list().slice(0, 200),  // últimos 200 eventos (mais novos primeiro)

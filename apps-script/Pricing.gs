@@ -18,9 +18,10 @@ const Pricing = {
     if (s === null || s === undefined) return [];
     // Inclui '.' para apanhar valores que o Sheets converteu para decimal em locale PT
     // (ex: "1,2" gravado pelo Apps Script pode ser interpretado como o número 1.2)
+    // Edição 2026 só tem 2 semanas (3 foi cancelada) — n>=1 && n<=2.
     return String(s).split(/[.,;+\s]+/)
       .map(x => parseInt(x, 10))
-      .filter(n => !isNaN(n) && n >= 1 && n <= 3);
+      .filter(n => !isNaN(n) && n >= 1 && n <= 2);
   },
 
   isExterno(opcao) {
