@@ -376,6 +376,30 @@
   .task-date.ok { background: var(--green-pale); color: var(--green-dark); }
 
   /* ============ HISTÓRICO ============ */
+  /* Histórico — timeline limpa */
+  .hist-toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; padding: 10px 12px; background: var(--white); border: 1px solid var(--sand); border-radius: var(--radius-md); }
+  .hist-toolbar input.search { flex: 1; min-width: 220px; padding: 6px 10px; font-size: 13px; border: 1px solid var(--sand); border-radius: 4px; }
+  .hist-toolbar select { padding: 6px 10px; font-size: 13px; border: 1px solid var(--sand); border-radius: 4px; background: var(--white); }
+  .hist-event { display: grid; grid-template-columns: 60px 24px 1fr auto; gap: 10px; align-items: start; padding: 10px 14px; border-bottom: 1px solid var(--light-gray); }
+  .hist-event:last-child { border-bottom: none; }
+  .hist-event:hover { background: var(--off-white); }
+  .hist-event-time { font-family: var(--font-condensed); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; color: var(--mid-gray); text-align: right; padding-top: 2px; }
+  .hist-event-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+  .hist-event-icon.pay { background: var(--green-pale); color: var(--green-dark); }
+  .hist-event-icon.email { background: #e6e0f5; color: #5a3da8; }
+  .hist-event-icon.edit { background: var(--beige-mid); color: var(--charcoal); }
+  .hist-event-icon.del  { background: #f5d8d4; color: #8a2c1b; }
+  .hist-event-icon.ok   { background: var(--green-bright); color: white; }
+  .hist-event-icon.warn { background: #fde6d4; color: #c4663a; }
+  .hist-event-body { font-size: 13.5px; color: var(--charcoal); line-height: 1.45; }
+  .hist-event-body .who { font-weight: 700; }
+  .hist-event-body .desc { color: var(--charcoal); }
+  .hist-event-body .why { font-size: 12px; color: var(--mid-gray); font-style: italic; margin-top: 3px; }
+  .hist-event-body .delta { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--charcoal); }
+  .hist-event-body .delta .from { color: var(--mid-gray); text-decoration: line-through; }
+  .hist-event-body .delta .to   { color: var(--green-dark); font-weight: 600; }
+  .hist-event-user { font-family: var(--font-condensed); font-size: 10px; color: var(--mid-gray); letter-spacing: 0.08em; text-transform: uppercase; padding-top: 4px; }
+  /* Legacy classes preserved for fallback */
   .hist-item { padding: 12px 16px; border: 1px solid var(--sand); border-radius: var(--radius-md); margin-bottom: 6px; background: var(--white); }
   .hist-h { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
   .hist-name { font-family: var(--font-condensed); font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -983,6 +1007,20 @@
     <div class="panel-head">
       <div class="panel-title">Histórico</div>
       <div class="panel-sub" id="hist-sub">— eventos</div>
+    </div>
+    <div class="hist-toolbar">
+      <input type="text" class="search" id="hist-search" placeholder="Filtrar por atleta, utilizador ou texto..." oninput="renderHistorico()">
+      <select id="hist-tipo" onchange="renderHistorico()">
+        <option value="">todos os tipos</option>
+        <option value="pagamento">pagamentos</option>
+        <option value="alteracao_semanas">alterações de semanas</option>
+        <option value="alteracao_opcao">alterações de tipo</option>
+        <option value="confirmacao_valor">confirmações valor</option>
+        <option value="email">emails / rascunhos</option>
+        <option value="trabalho">trabalho (resolvido/reaberto)</option>
+        <option value="eliminacao">eliminações / reativações</option>
+      </select>
+      <button class="quick-template" onclick="document.getElementById('hist-search').value=''; document.getElementById('hist-tipo').value=''; renderHistorico();">Limpar</button>
     </div>
     <div id="hist-content"></div>
   </div>
@@ -2136,46 +2174,113 @@ const TIPO_LABELS = {
   email_preparado:'email preparado', email_enviado:'email enviado', nota:'nota',
   confirmacao_valor:'confirmação valor', override_devido:'override devido'
 };
+// Mapa de eventos: define ícone, cor e frase humana por tipo. Acrescentar aqui ao
+// criar novos tipos no backend (Historico.append).
+const HIST_EVENT_META = {
+  pagamento:           { ic: '€', cls: 'pay',  group: 'pagamento',
+    text: r => `Pagamento registado: <span class="delta"><span class="from">${escHtml(r.antes||'0')}€</span> → <span class="to">${escHtml(r.depois||'')}€</span></span>` },
+  alteracao_semanas:   { ic: '📅', cls: 'edit', group: 'alteracao_semanas',
+    text: r => `Semanas alteradas: <span class="delta"><span class="from">${escHtml(r.antes||'')}</span> → <span class="to">${escHtml(r.depois||'')}</span></span>` },
+  alteracao_opcao:     { ic: '⇄', cls: 'edit', group: 'alteracao_opcao',
+    text: r => `Tipo de inscrição: <span class="delta"><span class="from">${escHtml(r.antes||'')}</span> → <span class="to">${escHtml(r.depois||'')}</span></span>` },
+  ajuste_desconto:     { ic: '%', cls: 'edit', group: 'desconto',
+    text: r => `Desconto irmão: <b>${escHtml(r.depois||'')}</b>` },
+  override_devido:     { ic: '€', cls: 'edit', group: 'desconto',
+    text: r => `Valor devido manual: <span class="delta"><span class="from">${escHtml(r.antes||'')}</span> → <span class="to">${escHtml(r.depois||'')}</span></span>` },
+  confirmacao_valor:   { ic: '✓', cls: 'ok',   group: 'confirmacao_valor',
+    text: r => r.depois === 'confirmado' ? 'Valor pago <b>confirmado</b>' : 'Valor pago <b>desconfirmado</b>' },
+  bank_confirmacao:    { ic: '✓', cls: 'ok',   group: 'confirmacao_valor',
+    text: r => r.depois === 'confirmado' ? 'Entrada em conta <b>confirmada</b>' : 'Confirmação bancária removida' },
+  soft_delete:         { ic: '×', cls: 'del',  group: 'eliminacao',
+    text: r => `Atleta <b>eliminado</b>` },
+  reativacao:          { ic: '↺', cls: 'ok',   group: 'eliminacao',
+    text: r => `Atleta <b>reactivado</b>` },
+  email_preparado:     { ic: '✉', cls: 'email', group: 'email',
+    text: r => `Email preparado` },
+  email_enviado:       { ic: '✉', cls: 'email', group: 'email',
+    text: r => `Email enviado` },
+  email_rascunho:      { ic: '✉', cls: 'email', group: 'email',
+    text: r => `Rascunho criado · template <b>${escHtml(r.depois||'')}</b>` },
+  email_rascunho_bulk: { ic: '✉', cls: 'email', group: 'email',
+    text: r => `Rascunho bulk criado · template <b>${escHtml(r.depois||'')}</b>` },
+  trabalho_resolvido:  { ic: '✓', cls: 'ok',   group: 'trabalho',
+    text: r => `Item de trabalho marcado <b>resolvido</b>` },
+  trabalho_reaberto:   { ic: '↺', cls: 'warn', group: 'trabalho',
+    text: r => `Item de trabalho <b>reaberto</b>` },
+  nota:                { ic: '📝', cls: 'edit', group: 'nota',
+    text: r => `Nota adicionada` },
+  comprovativo_lido:   { ic: '🔍', cls: 'pay', group: 'pagamento',
+    text: r => `OCR do comprovativo: <b>${escHtml(r.depois||'')}€</b>` }
+};
+function fmtHistEvent(r){
+  const meta = HIST_EVENT_META[r.tipo] || { ic: '•', cls: 'edit', group: 'outro', text: () => escHtml(r.tipo) };
+  return { meta, html: meta.text(r) };
+}
 function renderHistorico(){
   const items = historicoBackend || [];
   document.getElementById('hist-sub').textContent = items.length + ' evento' + (items.length === 1 ? '' : 's');
-  if (items.length === 0) {
+  const searchEl = document.getElementById('hist-search');
+  const tipoEl = document.getElementById('hist-tipo');
+  const q = (searchEl ? searchEl.value : '').toLowerCase().trim();
+  const tipoFilt = tipoEl ? tipoEl.value : '';
+  // Filtra
+  const filtered = items.filter(r => {
+    if (tipoFilt) {
+      const meta = HIST_EVENT_META[r.tipo];
+      const grp = meta ? meta.group : 'outro';
+      if (grp !== tipoFilt) return false;
+    }
+    if (q) {
+      const hay = [r.atleta, r.utilizador, r.motivo, r.antes, r.depois, r.tipo]
+        .map(s => String(s || '').toLowerCase()).join(' || ');
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  if (filtered.length === 0) {
     document.getElementById('hist-content').innerHTML = `<div class="empty-hist">
-      <div class="h">Sem registos</div>
-      <div class="s">Cada alteração no dashboard aparece aqui</div>
+      <div class="h">${items.length === 0 ? 'Sem registos' : 'Nada bate certo'}</div>
+      <div class="s">${items.length === 0 ? 'Cada alteração no dashboard aparece aqui' : 'Ajusta o filtro ou pesquisa para ver mais resultados'}</div>
     </div>`;
     return;
   }
-  // Agrupar por dia (YYYY-MM-DD)
+  // Agrupar por dia
   const byDay = {};
-  items.forEach(r => {
+  filtered.forEach(r => {
     const d = r.timestamp ? new Date(r.timestamp) : new Date();
     const key = d.toISOString().slice(0, 10);
     (byDay[key] = byDay[key] || []).push(r);
   });
   const days = Object.keys(byDay).sort().reverse();
   const todayKey = new Date().toISOString().slice(0, 10);
+  const yesterdayKey = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })();
   document.getElementById('hist-content').innerHTML = days.map(day => {
     const events = byDay[day];
-    const isOpen = day === todayKey ? 'open' : '';
-    const dateLabel = new Date(day + 'T00:00:00').toLocaleDateString('pt-PT', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+    const isOpen = (day === todayKey || day === yesterdayKey) ? 'open' : '';
+    let dateLabel;
+    if (day === todayKey) dateLabel = 'Hoje · ' + new Date(day + 'T00:00:00').toLocaleDateString('pt-PT', { weekday:'long', day:'2-digit', month:'long' });
+    else if (day === yesterdayKey) dateLabel = 'Ontem · ' + new Date(day + 'T00:00:00').toLocaleDateString('pt-PT', { weekday:'long', day:'2-digit', month:'long' });
+    else dateLabel = new Date(day + 'T00:00:00').toLocaleDateString('pt-PT', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
     return `<div class="hist-day ${isOpen}">
       <div class="hist-day-head" onclick="this.parentElement.classList.toggle('open')">
         <div><span class="hist-chevron">▶</span> <span class="hist-day-title">${dateLabel}</span></div>
         <span class="hist-day-count">${events.length}</span>
       </div>
       <div class="hist-day-body">
-        ${events.map(r => `
-          <div class="hist-item">
-            <div class="hist-h">
-              <span class="hist-tipo ht-${r.tipo}">${TIPO_LABELS[r.tipo] || r.tipo}</span>
-              <span class="hist-name">${escHtml(r.atleta || '—')}</span>
-              <span class="hist-cat">${escHtml(r.utilizador || '')}</span>
-              <span class="hist-date">${fmtTs(r.timestamp)}</span>
+        ${events.map(r => {
+          const ev = fmtHistEvent(r);
+          const time = r.timestamp ? new Date(r.timestamp).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : '';
+          return `<div class="hist-event">
+            <div class="hist-event-time">${time}</div>
+            <div class="hist-event-icon ${ev.meta.cls}">${ev.meta.ic}</div>
+            <div class="hist-event-body">
+              ${r.atleta ? `<span class="who">${escHtml(r.atleta)}</span> · ` : ''}
+              <span class="desc">${ev.html}</span>
+              ${r.motivo ? `<div class="why">${escHtml(r.motivo)}</div>` : ''}
             </div>
-            <div class="hist-note">${r.antes ? '<b>antes:</b> '+escHtml(r.antes)+'  ' : ''}${r.depois ? '<b>depois:</b> '+escHtml(r.depois) : ''}${r.motivo ? '<br><i>motivo: '+escHtml(r.motivo)+'</i>' : ''}</div>
-          </div>
-        `).join('')}
+            <div class="hist-event-user">${escHtml(r.utilizador || '')}</div>
+          </div>`;
+        }).join('')}
       </div>
     </div>`;
   }).join('');
