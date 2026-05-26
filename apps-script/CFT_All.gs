@@ -2928,7 +2928,6 @@ const EmailDraft = {
       .trim();
   }
 };
-};
 // ============ TOP-LEVEL ENTRY POINTS ============
 function setupSheets()         { return Backfill.setupSheets(); }
 function backfillRun()         { return Backfill.run(); }
