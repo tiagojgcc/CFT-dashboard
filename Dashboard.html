@@ -140,9 +140,9 @@
   /* ============ WEEK BARS ============ */
   .weeks { display: flex; flex-direction: column; gap: 11px; }
   .week {
-    display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
   }
-  .week-label { display: flex; flex-direction: column; align-items: flex-start; min-width: 130px; }
+  .week-label { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
   .week-name { font-family: var(--font-display); font-size: 22px; line-height: 1; letter-spacing: 0.01em; }
   .week-dates { font-family: var(--font-condensed); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid-gray); margin-top: 3px; }
   .week-bar { height: 22px; background: var(--beige-mid); border-radius: 3px; position: relative; }
@@ -154,7 +154,7 @@
   .week-bar-fill.thin .pct-label {
     right: auto; left: calc(100% + 6px); color: var(--charcoal);
   }
-  .week-num { font-family: var(--font-display); font-size: 20px; line-height: 1; min-width: 100px; text-align: right; }
+  .week-num { font-family: var(--font-display); font-size: 20px; line-height: 1; min-width: 0; text-align: right; white-space: nowrap; }
   .week-num .of { color: var(--sand); font-size: 14px; }
   .week-num .free { display: block; font-family: var(--font-condensed); font-size: 10px; color: var(--mid-gray); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 3px; font-weight: 600; }
 
@@ -535,7 +535,9 @@
   .row-flag.dup { background: #c0392b; color: #fff; font-weight: 700; }
   .num-cell { font-family: var(--font-condensed); color: var(--mid-gray); text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
   /* Donut estado pagamentos */
-  .donut-wrap { position: relative; width: 100%; max-width: 220px; margin: 6px auto 14px; aspect-ratio: 1; }
+  .donut-wrap { position: relative; width: 130px; height: 130px; flex-shrink: 0; }
+  .donut-row { display: flex; gap: 22px; align-items: center; justify-content: center; flex: 1; margin-top: 6px; }
+  .donut-row .donut-legend { flex: none; }
   .donut-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
   .donut-center {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -543,11 +545,11 @@
   }
   .donut-center .big { font-family: var(--font-display); font-size: 30px; line-height: 1; color: var(--charcoal); }
   .donut-center .lbl { font-family: var(--font-condensed); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mid-gray); margin-top: 4px; }
-  .donut-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; padding: 0 4px; }
-  .donut-legend-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--charcoal); }
+  .donut-legend { display: flex; flex-direction: column; gap: 7px; padding: 0; }
+  .donut-legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--charcoal); }
   .donut-legend-row .dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-  .donut-legend-row .lbl { flex: 1; }
-  .donut-legend-row .num { font-family: var(--font-condensed); font-weight: 700; color: var(--mid-gray); }
+  .donut-legend-row .lbl { flex: none; }
+  .donut-legend-row .num { font-family: var(--font-condensed); font-weight: 700; color: var(--charcoal); margin-left: 4px; font-size: 13px; }
   /* Nav "⋯" dropdown menu */
   .nav-more { position: relative; margin-left: auto; }
   .nav-more-toggle { font-size: 18px; padding: 8px 14px !important; }
@@ -747,9 +749,117 @@
   .email-panel-dest { font-size: 12px; color: var(--mid-gray); font-family: var(--font-body); }
   .email-panel-dest b { color: var(--charcoal); font-weight: 600; }
   .email-tpl-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-  .email-tpl-pill { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 11px; border-radius: 999px; border: 1.5px solid var(--sand); background: var(--white); color: var(--charcoal); cursor: pointer; user-select: none; }
+  .email-tpl-pill { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 11px; border-radius: 999px; border: 1.5px solid var(--sand); background: var(--white); color: var(--charcoal); cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 6px; }
   .email-tpl-pill:hover { border-color: var(--charcoal); }
   .email-tpl-pill.active { background: var(--charcoal); color: var(--off-white); border-color: var(--charcoal); }
+  .email-tpl-pill.sent { border-color: var(--green-dark); }
+  .email-tpl-pill.sent:not(.active) { background: #ecf3ec; color: var(--charcoal); }
+  .email-tpl-pill .sent-badge { font-size: 9.5px; font-weight: 600; letter-spacing: 0.04em; padding: 1px 6px; border-radius: 999px; background: var(--green-dark); color: var(--off-white); text-transform: none; }
+  .email-tpl-pill.active .sent-badge { background: var(--green-bright); color: var(--charcoal); }
+  /* Linha "Última comunicação" no topo do painel */
+  .email-last-comm { font-size: 11.5px; color: var(--mid-gray); font-family: var(--font-body); margin: 0 0 10px 0; padding: 6px 10px; background: var(--beige-mid); border-left: 2px solid var(--sand-dark); border-radius: 3px; }
+  .email-last-comm.never { color: var(--orange-accent); border-left-color: var(--orange-accent); }
+  .email-last-comm b { color: var(--charcoal); font-weight: 600; }
+
+  /* ============ OVERVIEW · grid system ============ */
+  .ov-grid { display: grid; gap: 14px; margin-bottom: 14px; }
+  .ov-grid--3        { grid-template-columns: 1fr 1fr 1fr; align-items: stretch; }
+  .ov-grid--clubes   { grid-template-columns: 2fr 1fr; }       /* clubes + logo */
+  .ov-grid > .card { padding: 16px 18px; display: flex; flex-direction: column; }
+  @media (max-width: 1100px) {
+    .ov-grid--3 { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 720px) {
+    .ov-grid--3, .ov-grid--clubes { grid-template-columns: 1fr; }
+  }
+
+  /* ============ TIMELINE ============ */
+  .tl-card { padding: 18px 22px 20px 22px !important; margin-bottom: 14px; }
+  .tl-card .card-head { margin-bottom: 18px; }
+  /* A timeline reserva 60px acima da linha e 60px abaixo para labels alternados. */
+  .timeline { position: relative; padding: 0; height: 170px; margin: 0 70px; }
+  .timeline-line { position: absolute; left: 0; right: 0; top: 82px; height: 6px; background: var(--beige-mid); border-radius: 3px; border: 1px solid var(--sand); box-sizing: border-box; }
+  .timeline-line-done { position: absolute; left: 0; top: 82px; height: 6px; background: linear-gradient(to right, var(--green-dark) 0%, #5fa46d 100%); border-radius: 3px; box-shadow: 0 1px 0 rgba(0,0,0,0.04); }
+  /* Ticks mensais finos sem label (apenas textura visual) */
+  .timeline-tick { position: absolute; top: 89px; width: 1px; height: 5px; background: var(--sand); opacity: 0.7; }
+  .timeline-tick.q { height: 9px; opacity: 1; background: var(--sand-dark); }
+
+  .tl-point { position: absolute; left: 0; }
+  .tl-point-dot { position: absolute; left: 0; top: 77px; transform: translateX(-50%); width: 16px; height: 16px; border-radius: 50%; background: var(--white); border: 3px solid var(--sand); box-sizing: border-box; z-index: 2; }
+  .tl-point.past .tl-point-dot { background: var(--green-dark); border-color: var(--green-dark); }
+  .tl-point.next .tl-point-dot { background: var(--orange-accent); border-color: var(--orange-accent); box-shadow: 0 0 0 5px rgba(212,132,90,0.24); width: 18px; height: 18px; top: 76px; }
+  .tl-point.today .tl-point-dot { background: var(--charcoal); border-color: var(--charcoal); width: 12px; height: 12px; top: 79px; }
+  /* Conteúdo (data + label) acima ou abaixo da linha conforme parity */
+  .tl-point-content { position: absolute; left: 0; transform: translateX(-50%); width: 105px; text-align: center; }
+  .tl-point.above .tl-point-content { top: 8px; }
+  .tl-point.below .tl-point-content { top: 110px; }
+  /* Clamp: marcos junto às bordas não centram o label (evita overflow para fora do card) */
+  .tl-point.edge-left .tl-point-content { transform: translateX(0); text-align: left; }
+  .tl-point.edge-right .tl-point-content { transform: translateX(-100%); text-align: right; }
+  .tl-point-date { font-family: var(--font-condensed); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 4px; white-space: nowrap; }
+  .tl-point-label { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--charcoal); line-height: 1.22; }
+  .tl-point.past .tl-point-label { color: var(--mid-gray); }
+  .tl-point.next .tl-point-label { color: var(--orange-accent); }
+  .tl-point.today .tl-point-date,
+  .tl-point.today .tl-point-label { color: var(--charcoal); }
+  /* "Linha guia" vertical fina ligando o ponto ao label */
+  .tl-point.above .tl-point-content::after,
+  .tl-point.below .tl-point-content::before {
+    content: ''; position: absolute; width: 1px; background: var(--sand); height: 12px;
+  }
+  .tl-point.above .tl-point-content::after { bottom: -14px; left: 50%; }
+  .tl-point.below .tl-point-content::before { top: -14px; left: 50%; }
+  .tl-point.edge-left.above .tl-point-content::after,
+  .tl-point.edge-left.below .tl-point-content::before { left: 0; }
+  .tl-point.edge-right.above .tl-point-content::after,
+  .tl-point.edge-right.below .tl-point-content::before { left: 100%; }
+  .tl-point.next .tl-point-content::after,
+  .tl-point.next .tl-point-content::before { background: var(--orange-accent); }
+
+  .tl-next { margin-top: 22px; padding: 12px 14px; background: var(--beige-mid); border-left: 3px solid var(--orange-accent); border-radius: 3px; font-size: 13px; color: var(--charcoal); font-family: var(--font-body); line-height: 1.5; }
+  .tl-next.done { border-left-color: var(--green-dark); }
+  .tl-next b { font-family: var(--font-condensed); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; font-size: 11.5px; }
+  .tl-next .tl-cta { display: inline-block; margin-left: 8px; padding: 4px 10px; font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: var(--charcoal); color: var(--off-white); border-radius: 3px; cursor: pointer; border: none; }
+  .tl-next .tl-cta:hover { background: var(--green-dark); }
+  @media (max-width: 720px) {
+    .timeline { height: 140px; margin: 0 4px; }
+    .tl-point-content { width: 90px; }
+    .tl-point-label { font-size: 10px; }
+  }
+
+  /* ============ MINI ACÇÕES ============ */
+  .actions-mini .card-head { margin-bottom: 10px; }
+  .actions-mini-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--beige-mid); }
+  .actions-mini-row:last-child { border-bottom: none; }
+  .am-icon { width: 26px; height: 26px; border-radius: 4px; background: var(--beige-mid); color: var(--charcoal); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .am-icon.warn { background: #f8d7d2; color: #8a1a1a; }
+  .am-icon.promo { background: #d6f0d2; color: #2e6b27; }
+  .am-text { flex: 1; min-width: 0; font-size: 12.5px; color: var(--charcoal); font-family: var(--font-body); line-height: 1.4; }
+  .am-text b { font-family: var(--font-condensed); font-weight: 700; letter-spacing: 0.05em; }
+  .am-cta { font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 10px; border: 1.5px solid var(--charcoal); background: var(--white); color: var(--charcoal); border-radius: 3px; cursor: pointer; white-space: nowrap; }
+  .am-cta:hover { background: var(--charcoal); color: var(--off-white); }
+  .am-cta.primary { background: var(--charcoal); color: var(--off-white); }
+  .am-cta.primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
+  .actions-mini-clean { padding: 16px 4px; font-family: var(--font-condensed); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--green-dark); text-align: center; }
+
+  /* ============ Pequenos ajustes weeks / clubes ============ */
+  .weeks-card, .donut-card, .actions-mini { min-height: 200px; }
+  .weeks-card .weeks { flex: 1; display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+  .weeks-foot { margin-top: auto; padding-top: 12px; border-top: 1px dashed var(--sand); font-size: 11.5px; color: var(--mid-gray); font-family: var(--font-body); display: flex; gap: 14px; flex-wrap: wrap; }
+  .weeks-foot b { color: var(--charcoal); font-family: var(--font-condensed); letter-spacing: 0.04em; }
+  .clubes-foot { padding-top: 8px; font-size: 11.5px; color: var(--mid-gray); font-style: italic; }
+  /* ============ LOGO CFT (linha 3 direita) ============ */
+  .cft-mark-card { display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--beige-mid); border: 1px solid var(--sand); padding: 28px 18px; text-align: center; }
+  .cft-mark-logo { width: 70%; max-width: 220px; height: auto; opacity: 0.88; margin-bottom: 14px; }
+  .cft-mark-edition { font-family: var(--font-condensed); font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--charcoal); }
+  .cft-mark-motto { font-family: 'Playfair Display',Georgia,serif; font-style: italic; font-size: 13px; color: var(--mid-gray); margin-top: 4px; }
+
+  @media (max-width: 820px) {
+    .timeline { padding: 38px 4px 18px 4px; overflow-x: auto; }
+    .tl-point { min-width: 80px; }
+    .cft-mark-card { padding: 18px; }
+    .cft-mark-logo { max-width: 140px; }
+  }
   .email-tpl-hint { font-size: 11.5px; color: var(--mid-gray); font-style: italic; margin: 0 0 10px 0; line-height: 1.4; }
   .email-generic-fields { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
   .email-generic-fields input,
@@ -934,38 +1044,68 @@
 
   <!-- ============ OVERVIEW ============ -->
   <div class="panel active" id="panel-overview">
-    <div id="alert-strip-host"></div>
-    <div class="kpi-row" id="kpi-row"></div>
 
-    <div class="grid-2">
-      <div class="card">
+    <!-- Alert strip continua disponível mas só renderizada se houver crítico crítico -->
+    <div id="alert-strip-host"></div>
+
+    <!-- Linha 1: Timeline em toda a largura -->
+    <div class="card tl-card">
+      <div class="card-head">
+        <div class="card-title">Linha do tempo · CFT 2026</div>
+        <div class="card-meta" id="tl-meta">—</div>
+      </div>
+      <div class="timeline" id="timeline"></div>
+      <div class="tl-next" id="tl-next"></div>
+    </div>
+
+    <!-- Linha 2: Semanas + Donut + A tratar (3 cards iguais) -->
+    <div class="ov-grid ov-grid--3">
+      <div class="card weeks-card">
         <div class="card-head">
           <div class="card-title">Inscritos por semana</div>
-          <div class="card-meta">60 vagas · cada semana</div>
+          <div class="card-meta">60 vagas · cada</div>
         </div>
         <div class="weeks" id="weeks"></div>
+        <div class="weeks-foot" id="weeks-foot"></div>
       </div>
 
-      <div class="card">
+      <div class="card donut-card">
         <div class="card-head">
           <div class="card-title">Estado dos pagamentos</div>
           <div class="card-meta" id="pag-donut-meta">—</div>
         </div>
-        <div class="donut-wrap">
-          <svg class="donut-svg" id="donut-svg" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg" aria-label="Estado dos pagamentos"></svg>
-          <div class="donut-center" id="donut-center"></div>
+        <div class="donut-row">
+          <div class="donut-wrap">
+            <svg class="donut-svg" id="donut-svg" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg" aria-label="Estado dos pagamentos"></svg>
+            <div class="donut-center" id="donut-center"></div>
+          </div>
+          <div class="donut-legend" id="donut-legend"></div>
         </div>
-        <div class="donut-legend" id="donut-legend"></div>
+      </div>
+
+      <div class="card actions-mini" id="actions-mini-card">
+        <div class="card-head">
+          <div class="card-title">A tratar</div>
+          <div class="card-meta" id="actions-mini-meta">—</div>
+        </div>
+        <div id="actions-mini-body"></div>
       </div>
     </div>
 
-    <div class="grid-2" style="margin-bottom:16px;">
-      <div class="card" style="grid-column: 1 / -1;">
+    <!-- Linha 3: Clubes encurtado + logo CFT à direita -->
+    <div class="ov-grid ov-grid--clubes">
+      <div class="card clubes-card">
         <div class="card-head">
           <div class="card-title">Distribuição por clube</div>
           <div class="card-meta" id="clube-meta">— clubes</div>
         </div>
         <div class="clubes" id="clubes"></div>
+        <div class="clubes-foot" id="clubes-foot"></div>
+      </div>
+      <div class="card cft-mark-card" aria-hidden="true">
+        <img src="assets/logo_CFT.png" alt="" class="cft-mark-logo">
+        <div class="cft-mark-edition">4ª edição · 2026</div>
+        <div class="cft-mark-motto">Campos de Formação Técnica</div>
       </div>
     </div>
   </div>
@@ -1280,6 +1420,122 @@ function valorErradoTooltip(r){
   const linhaFalta = falta > 0 ? `\nFalta: ${falta}€` : '';
   return `Pagou ${v}€. Esperado:\n• ${opcoes.join('\n• ')}${linhaFalta}`;
 }
+// ============ COMUNICAÇÃO · HELPERS ============
+// Cruza historicoBackend + emailsBackend para extrair eventos de comunicação
+// por atleta. Usado pelo painel inline da Lista e pela secção "Próximas
+// acções" da Visão geral.
+
+// Devolve "há X dias" (0 = hoje, 1 = ontem) ou "agora" se < 1h.
+function daysSince(ts){
+  if (!ts) return null;
+  const d = (ts instanceof Date) ? ts : new Date(ts);
+  if (isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+function humanAgo(ts){
+  const d = daysSince(ts);
+  if (d === null) return '';
+  if (d === 0) return 'hoje';
+  if (d === 1) return 'ontem';
+  if (d < 7) return `há ${d} dias`;
+  if (d < 14) return 'há ~1 semana';
+  if (d < 30) return `há ${Math.floor(d/7)} semanas`;
+  if (d < 60) return 'há ~1 mês';
+  return `há ${Math.floor(d/30)} meses`;
+}
+
+// Labels amigáveis dos templates (para mostrar na timeline).
+const TEMPLATE_LABELS = {
+  boasVindas:       'Boas-vindas',
+  generico:         'Outro assunto',
+  prePampus:        'Pré-campus',
+  semPagamento:     'Sem pagamento',
+  pagamentoParcial: 'Pagamento parcial',
+  valorErrado:      'Valor errado',
+  aDevolver:        'A devolver',
+  descontoClube:    'Promo desconto clube',
+  avisoPrazo:       'Aviso prazo',
+  infoPraticas:     'Info práticas',
+  confirmacao:      'Confirmação'
+};
+// Categoria do template para efeitos de "este pill já foi enviado".
+// Permite saber se a pill "Problema pagamento" do painel já foi disparada
+// independentemente de qual sub-template auto-detectado foi usado.
+const TEMPLATE_KIND = {
+  boasVindas:       'boasVindas',
+  generico:         'generico',
+  prePampus:        'prePampus',
+  semPagamento:     'problema',
+  pagamentoParcial: 'problema',
+  valorErrado:      'problema',
+  aDevolver:        'problema',
+  descontoClube:    'descontoClube',
+  avisoPrazo:       'problema',
+  infoPraticas:     'prePampus',
+  confirmacao:      'boasVindas'
+};
+
+// Lista cronológica (mais recente primeiro) de eventos de email para 1 atleta.
+// Cruza historicoBackend (per-atleta directo) + emailsBackend (incluindo bulk).
+function getCommHistoryForAtleta(atletaId){
+  if (!atletaId) return [];
+  const out = [];
+  (historicoBackend || []).forEach(h => {
+    if (h.id_atleta !== atletaId) return;
+    if (h.tipo === 'email_rascunho' || h.tipo === 'email_rascunho_bulk' ||
+        h.tipo === 'email_preparado' || h.tipo === 'email_enviado') {
+      out.push({
+        ts: h.timestamp,
+        tipo: h.tipo,
+        template: String(h.depois || ''),
+        subject: String(h.motivo || '')
+      });
+    }
+  });
+  (emailsBackend || []).forEach(e => {
+    const ids = String(e.ids_atletas || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (ids.indexOf(atletaId) === -1) return;
+    out.push({
+      ts: e.timestamp,
+      tipo: e.abriu_no_gmail ? 'email_enviado' : 'email_preparado',
+      template: String(e.template || ''),
+      subject: String(e.assunto || '')
+    });
+  });
+  out.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+  return out;
+}
+
+// Sumário rápido da última comunicação. Devolve null se nunca houve.
+function lastCommForAtleta(atletaId){
+  const ev = getCommHistoryForAtleta(atletaId);
+  if (ev.length === 0) return null;
+  const e = ev[0];
+  return {
+    template: e.template,
+    label: TEMPLATE_LABELS[e.template] || (e.template || 'email'),
+    ago: humanAgo(e.ts),
+    days: daysSince(e.ts),
+    ts: e.ts
+  };
+}
+
+// Indica se um "kind" do painel (boasVindas/generico/problema/prePampus)
+// foi enviado nos últimos withinDays. Devolve {days, label} ou null.
+function recentlySentKind(atletaId, kind, withinDays){
+  const limit = withinDays || 14;
+  const ev = getCommHistoryForAtleta(atletaId);
+  for (const e of ev) {
+    const d = daysSince(e.ts);
+    if (d === null || d > limit) continue;
+    const k = TEMPLATE_KIND[e.template] || null;
+    if (k === kind) {
+      return { days: d, label: TEMPLATE_LABELS[e.template] || e.template, ago: humanAgo(e.ts) };
+    }
+  }
+  return null;
+}
+
 function formatLastUpdate(){
   const ts = (Api && Api.lastUpdate) ? Api.lastUpdate : new Date();
   const t = ts.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
@@ -1474,6 +1730,18 @@ function renderWeeks(){
       </div>
     `;
   }).join('');
+  // Footer compacto: dias até cada semana + alerta se < 30
+  const foot = document.getElementById('weeks-foot');
+  if (foot) {
+    const dSem1 = daysUntil(CFT_START_DATE);
+    const dSem2 = daysUntil(CFT_WEEK2_DATE);
+    const pieces = [];
+    if (dSem1 !== null) pieces.push(`Semana 1 em <b>${dSem1 < 0 ? 'já decorreu' : (dSem1 + ' dia' + (dSem1 === 1 ? '' : 's'))}</b>`);
+    if (dSem2 !== null) pieces.push(`Semana 2 em <b>${dSem2 < 0 ? 'já decorreu' : (dSem2 + ' dia' + (dSem2 === 1 ? '' : 's'))}</b>`);
+    const totalLivres = (60 - weekCounts[1]) + (60 - weekCounts[2]);
+    pieces.push(`Total livres: <b>${totalLivres}</b> de 120`);
+    foot.innerHTML = pieces.map(p => `<span>${p}</span>`).join('');
+  }
 }
 
 // ============ FINANCEIRO (deprecated) ============
@@ -1487,13 +1755,26 @@ function renderClubes(){
   const sorted = Object.entries(cc).sort((a,b) => b[1] - a[1]);
   const max = sorted[0][1];
   document.getElementById('clube-meta').textContent = sorted.length + ' clubes';
-  document.getElementById('clubes').innerHTML = sorted.map(([name, count]) => `
+  // Mostra top 8 (encurtado); os restantes vão para o foot
+  const TOP = 8;
+  const top = sorted.slice(0, TOP);
+  const resto = sorted.slice(TOP);
+  document.getElementById('clubes').innerHTML = top.map(([name, count]) => `
     <div class="clube-row">
       <div class="clube-name">${name}</div>
       <div class="clube-bar"><div class="clube-bar-fill" style="width:${count/max*100}%; background:${count >= 8 ? 'var(--green-dark)' : 'var(--sage)'};"></div></div>
       <div class="clube-count">${count}</div>
     </div>
   `).join('');
+  const foot = document.getElementById('clubes-foot');
+  if (foot) {
+    if (resto.length === 0) {
+      foot.textContent = '';
+    } else {
+      const totalResto = resto.reduce((s, [,n]) => s + n, 0);
+      foot.textContent = `+ ${resto.length} clubes (${totalResto} atletas) · ` + resto.slice(0, 5).map(([n]) => n).join(' · ') + (resto.length > 5 ? '…' : '');
+    }
+  }
   renderEstadoDonut();
 }
 
@@ -1593,7 +1874,7 @@ function renderAlerts(){
 function updateAlertsCount(){
   // tc-trabalho é definido por renderTrabalho() com contagem mais precisa.
   document.getElementById('tc-list').textContent = data.length;
-  renderAlertStrip();
+  // Alert strip removido — substituído pela mini-card "A tratar" da Visão geral.
 }
 
 // ============ SORT STATE ============
@@ -1876,11 +2157,22 @@ function renderAtletaPanel(r, item, isResolved){
   // Bloco 2: painel de email universal
   const st = getEmailPanelState(r.id);
   const hasEmail = !!r.email_enc;
-  const pills = EMAIL_PANEL_TEMPLATES.map(o => `
-    <button class="email-tpl-pill ${o.kind === st.kind ? 'active' : ''}"
+  // Última comunicação com o atleta (cruza Histórico + Emails log)
+  const last = lastCommForAtleta(r.id);
+  const lastCommHtml = last
+    ? `<div class="email-last-comm">Última comunicação: <b>✉ ${escHtml(last.label)}</b> · ${escHtml(last.ago)}</div>`
+    : `<div class="email-last-comm never">Nunca contactado</div>`;
+  const pills = EMAIL_PANEL_TEMPLATES.map(o => {
+    const sent = recentlySentKind(r.id, o.kind, 14);
+    const sentBadge = sent ? `<span class="sent-badge" title="Já enviado ${escAttr(sent.ago)} · template ${escAttr(sent.label)}">✓ ${escHtml(sent.ago.replace('há ',''))}</span>` : '';
+    const sentCls = sent ? ' sent' : '';
+    const titleExtra = sent ? ` · já enviado ${sent.ago}` : '';
+    return `
+    <button class="email-tpl-pill${o.kind === st.kind ? ' active' : ''}${sentCls}"
             onclick="setEmailKind('${r.id}', '${o.kind}')"
-            title="${escAttr(o.hint)}">${escHtml(o.label)}</button>
-  `).join('');
+            title="${escAttr(o.hint + titleExtra)}">${escHtml(o.label)}${sentBadge}</button>
+  `;
+  }).join('');
   const activeOpt = EMAIL_PANEL_TEMPLATES.find(o => o.kind === st.kind);
   const hint = activeOpt ? `<p class="email-tpl-hint">${escHtml(activeOpt.hint)}</p>` : '';
   const genericFields = st.kind === 'generico'
@@ -1905,6 +2197,7 @@ function renderAtletaPanel(r, item, isResolved){
       <span class="email-panel-label">✉ Enviar email</span>
       ${destinatario}
     </div>
+    ${lastCommHtml}
     <div class="email-tpl-row">${pills}</div>
     ${hint}
     ${genericFields}
@@ -3677,12 +3970,400 @@ async function refreshNow(){
   }
 }
 
+// ============ HERO / DATAS-CHAVE · Visão geral ============
+// Datas-chave da edição (com fallback a config se vier do backend).
+const CFT_START_DATE = new Date('2026-07-12');   // semana 1
+const CFT_WEEK2_DATE = new Date('2026-07-19');   // semana 2
+const CFT_DEADLINE_DEFAULT = new Date('2026-06-21');
+
+function daysUntil(date){
+  if (!date) return null;
+  const d = (date instanceof Date) ? date : new Date(date);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((target - today) / 86400000);
+}
+
+function _fmtDateShort(d){
+  return d.toLocaleDateString('pt-PT', { day:'2-digit', month:'short' }).replace('.', '');
+}
+
+// ============ TIMELINE · marcos da edição ============
+// Marcos cronológicos com posição relativa à janela [first..last]. Hoje é
+// um ponto extra mostrado sobre a linha. Próximo marco futuro é destacado.
+
+// Marcos da edição. A timeline usa espaçamento ordinal (1 marco = 1/(N-1)
+// do espaço horizontal), não proporcional ao tempo real — evita 4 meses
+// vazios no início e marcos espremidos no fim.
+
+function _cftMarcos(){
+  const cfgPrazo = (configBackend && configBackend.prazo_pagamento) ? new Date(configBackend.prazo_pagamento) : CFT_DEADLINE_DEFAULT;
+  const cfgStart = (configBackend && configBackend.data_inicio) ? new Date(configBackend.data_inicio) : CFT_START_DATE;
+  const cfgCutoff = (configBackend && configBackend.cutoff_desconto) ? new Date(configBackend.cutoff_desconto) : new Date('2026-03-31');
+  const avisoPrazo = new Date(cfgPrazo.getTime() - 14 * 86400000);  // 2 semanas antes do prazo
+  const infoGeral = new Date(cfgStart.getTime() - 14 * 86400000);   // 2 semanas antes do início
+  const cfgWeek2 = new Date(cfgStart.getTime() + 7 * 86400000);
+  return [
+    { key: 'abertura', label: 'Inscrições abertas',   date: new Date('2025-11-01') },
+    { key: 'cutoff',   label: 'Cutoff desconto',      date: cfgCutoff },
+    { key: 'aviso',    label: 'Aviso prazo',          date: avisoPrazo,
+      cta: { text: '✉ enviar aviso prazo', fn: 'enviarAvisoPrazoBulk' } },
+    { key: 'prazo',    label: 'Prazo pagamento',      date: cfgPrazo },
+    { key: 'info',     label: 'Info geral',           date: infoGeral,
+      cta: { text: '✉ enviar info geral',  fn: 'enviarInfoPraticasBulk' } },
+    { key: 'sem1',     label: 'Semana 1',             date: cfgStart },
+    { key: 'sem2',     label: 'Semana 2',             date: cfgWeek2 }
+  ].sort((a, b) => a.date - b.date);
+}
+
+function renderTimeline(){
+  const host = document.getElementById('timeline');
+  const meta = document.getElementById('tl-meta');
+  const nextEl = document.getElementById('tl-next');
+  if (!host) return;
+  const marcos = _cftMarcos();
+  const today = new Date(); today.setHours(0,0,0,0);
+  const N = marcos.length;
+
+  // Espaçamento ordinal: cada marco ocupa uma fatia igual da timeline.
+  const pctOrdinal = idx => (N === 1 ? 50 : (idx / (N - 1)) * 100);
+
+  // Próximo marco futuro
+  const nextIdx = marcos.findIndex(m => m.date >= today);
+  const next = nextIdx >= 0 ? marcos[nextIdx] : null;
+
+  // Posição de "hoje" interpolada entre marcos adjacentes (mais natural).
+  let todayPct;
+  if (nextIdx === -1) {
+    todayPct = 100;
+  } else if (nextIdx === 0) {
+    todayPct = 0;
+  } else {
+    const prev = marcos[nextIdx - 1];
+    const span = next.date - prev.date;
+    const ratio = span > 0 ? Math.max(0, Math.min(1, (today - prev.date) / span)) : 0;
+    todayPct = pctOrdinal(nextIdx - 1) + ratio * (pctOrdinal(nextIdx) - pctOrdinal(nextIdx - 1));
+  }
+
+  // Helper: clamp nos extremos para alinhar label sem overflow
+  const edgeCls = p => p < 3 ? 'edge-left' : (p > 97 ? 'edge-right' : '');
+
+  // Marcos: alternar above/below
+  const points = marcos.map((m, idx) => {
+    const isPast = m.date < today;
+    const isNext = next && m.key === next.key;
+    const cls = isPast ? 'past' : (isNext ? 'next' : '');
+    const where = idx % 2 === 0 ? 'above' : 'below';
+    const p = pctOrdinal(idx);
+    return `<div class="tl-point ${cls} ${where} ${edgeCls(p)}" style="left:${p.toFixed(2)}%;">
+      <div class="tl-point-dot"></div>
+      <div class="tl-point-content">
+        <div class="tl-point-date">${escHtml(_fmtDateShort(m.date))}</div>
+        <div class="tl-point-label">${escHtml(m.label)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // "Hoje" — oposto ao marco "next" para não colidir
+  const todayWhere = next && nextIdx % 2 === 0 ? 'below' : 'above';
+  const todayHtml = `<div class="tl-point today ${todayWhere} ${edgeCls(todayPct)}" style="left:${todayPct.toFixed(2)}%;">
+    <div class="tl-point-dot"></div>
+    <div class="tl-point-content">
+      <div class="tl-point-date">hoje</div>
+      <div class="tl-point-label">${escHtml(_fmtDateShort(today))}</div>
+    </div>
+  </div>`;
+
+  host.innerHTML = `
+    <div class="timeline-line"></div>
+    <div class="timeline-line-done" style="width:${todayPct.toFixed(2)}%;"></div>
+    ${todayHtml}
+    ${points}
+  `;
+
+  if (meta) meta.textContent = next
+    ? `próximo · ${next.label.toLowerCase()} · ${_fmtDateShort(next.date)}`
+    : 'todos os marcos passados';
+
+  if (!nextEl) return;
+  if (!next) {
+    nextEl.className = 'tl-next done';
+    nextEl.innerHTML = `<b>Tudo dado.</b> A última semana já decorreu.`;
+    return;
+  }
+  const dias = daysUntil(next.date);
+  const diasTxt = dias === 0 ? '<b>hoje</b>' : dias === 1 ? 'amanhã' : `daqui a <b>${dias} dias</b>`;
+  const ctaHtml = next.cta
+    ? `<button class="tl-cta" onclick="${next.cta.fn}()">${escHtml(next.cta.text)}</button>`
+    : '';
+  nextEl.className = 'tl-next';
+  nextEl.innerHTML = `<b>→ a seguir</b> · ${escHtml(next.label)} ${diasTxt}. ${ctaHtml}`;
+}
+
+// ============ MAPA DE PORTUGAL · clubes ============
+// SVG inline simplificado de PT continental + pontos por cidade. Mapping
+// nome do clube → cidade por palavras-chave. Pontos dimensionados por
+// número de atletas; tooltip nativo via <title>.
+
+const _CITIES = {
+  // Norte
+  valenca:   { x: 56, y: 14,  label: 'Valença' },
+  viana:     { x: 41, y: 38,  label: 'Viana' },
+  pontelima: { x: 60, y: 32,  label: 'Ponte de Lima' },
+  braga:     { x: 70, y: 50,  label: 'Braga' },
+  guimaraes: { x: 78, y: 60,  label: 'Guimarães' },
+  porto:     { x: 50, y: 78,  label: 'Porto' },
+  maia:      { x: 56, y: 72,  label: 'Maia' },
+  matosinhos:{ x: 46, y: 76,  label: 'Matosinhos' },
+  guifoes:   { x: 48, y: 80,  label: 'Guifões' },
+  aveiro:    { x: 48, y: 115, label: 'Aveiro' },
+  coimbra:   { x: 60, y: 145, label: 'Coimbra' },
+  // Centro/Sul
+  leiria:    { x: 48, y: 175, label: 'Leiria' },
+  lisboa:    { x: 22, y: 215, label: 'Lisboa' },
+  setubal:   { x: 30, y: 240, label: 'Setúbal' },
+  evora:     { x: 78, y: 240, label: 'Évora' },
+  faro:      { x: 80, y: 300, label: 'Faro' }
+};
+
+function _guessCity(clubeName){
+  const n = String(clubeName || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (/valen[cç]a/.test(n)) return 'valenca';
+  if (/ponte\s*de\s*lima|limian|p\.?\s*lima/.test(n)) return 'pontelima';
+  if (/viana/.test(n)) return 'viana';
+  if (/braga/.test(n)) return 'braga';
+  if (/guimar/.test(n)) return 'guimaraes';
+  if (/guifoes/.test(n)) return 'guifoes';
+  if (/maia/.test(n)) return 'maia';
+  if (/matosinhos/.test(n)) return 'matosinhos';
+  if (/porto|fcp|boavista/.test(n)) return 'porto';
+  if (/aveiro/.test(n)) return 'aveiro';
+  if (/coimbra/.test(n)) return 'coimbra';
+  if (/leiria/.test(n)) return 'leiria';
+  if (/lisboa|sporting|benfica/.test(n)) return 'lisboa';
+  if (/setubal|almada/.test(n)) return 'setubal';
+  if (/evora/.test(n)) return 'evora';
+  if (/faro|algarve|portim/.test(n)) return 'faro';
+  return null;  // desconhecido — não vai para o mapa
+}
+
+function renderMapaPT(){
+  const host = document.getElementById('mapa-pt');
+  const meta = document.getElementById('mapa-meta');
+  if (!host) return;
+  const cc = clubeCounts();
+  const ptShape = 'M 35 28 L 50 8 L 95 12 L 122 28 L 135 70 L 142 140 L 140 200 L 132 250 L 128 288 L 95 305 L 35 308 L 12 280 L 10 235 L 16 180 L 22 130 L 30 80 Z';
+  // Agrupa contagem por cidade
+  const cityTotals = {};
+  let unmapped = 0;
+  Object.entries(cc).forEach(([clube, n]) => {
+    const key = _guessCity(clube);
+    if (key && _CITIES[key]) cityTotals[key] = (cityTotals[key] || 0) + n;
+    else unmapped += n;
+  });
+  // Raio escala suave: r = 3 + log2(n+1)*1.6 (clampa em [3, 11])
+  const radius = n => Math.min(11, Math.max(3, 3 + Math.log2(n + 1) * 1.6));
+  const dots = Object.entries(cityTotals).map(([key, n]) => {
+    const c = _CITIES[key];
+    const r = radius(n);
+    return `<circle class="mapa-club-dot" cx="${c.x}" cy="${c.y}" r="${r.toFixed(1)}">
+      <title>${c.label} · ${n} atleta${n === 1 ? '' : 's'}</title>
+    </circle>`;
+  }).join('');
+  // Labels só nas cidades com >= 3 atletas (para não encher de texto)
+  const labels = Object.entries(cityTotals).filter(([, n]) => n >= 3).map(([key, n]) => {
+    const c = _CITIES[key];
+    return `<text class="mapa-city-lbl" x="${c.x + radius(n) + 3}" y="${c.y + 3}">${c.label}</text>`;
+  }).join('');
+
+  host.innerHTML = `<svg class="mapa-svg" viewBox="0 0 200 340" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+    <path class="mapa-pt-shape" d="${ptShape}"></path>
+    <!-- Rio Tejo simplificado -->
+    <path class="mapa-pt-river" d="M 120 195 Q 80 200 30 218"></path>
+    <!-- Madeira + Açores como ilhas decorativas -->
+    <ellipse class="mapa-pt-island" cx="172" cy="265" rx="6" ry="3"></ellipse>
+    <ellipse class="mapa-pt-island" cx="172" cy="285" rx="9" ry="3"></ellipse>
+    ${dots}
+    ${labels}
+  </svg>`;
+
+  if (meta) {
+    const mapped = Object.keys(cityTotals).length;
+    meta.textContent = `${mapped} cidade${mapped === 1 ? '' : 's'}${unmapped > 0 ? ' · ' + unmapped + ' sem mapping' : ''}`;
+  }
+}
+
+// ============ MINI ACÇÕES (compacto) ============
+// Substitui o bloco "Próximas acções" grande. Apenas 2-3 linhas com contagem
+// + 1 botão. Sem listagem nominal — para isso há a Lista.
+
+function renderActionsMini(){
+  const body = document.getElementById('actions-mini-body');
+  const meta = document.getElementById('actions-mini-meta');
+  if (!body) return;
+
+  const cc = clubeCounts();
+  const rows = [];
+
+  // Linha 1: Promover desconto · clubes quase lá
+  let totalSemPromo = 0;
+  let primeiroClube = null;
+  Object.entries(cc).forEach(([clube, n]) => {
+    if (n < 6 || n >= 8) return;
+    const elegiveis = data.filter(r => r.clube === clube && r.tipo === 'Interno' && r.ativo &&
+      !((r.pricing && r.pricing.info) || {}).desc);
+    const semPromo = elegiveis.filter(r => !recentlySentKind(r.id, 'descontoClube', 30));
+    if (semPromo.length === 0) return;
+    totalSemPromo += semPromo.length;
+    if (!primeiroClube) primeiroClube = { clube, ids: semPromo.map(r => r.id), faltam: 8 - n };
+  });
+  if (primeiroClube && totalSemPromo > 0) {
+    const ids = JSON.stringify(primeiroClube.ids);
+    rows.push(`<div class="actions-mini-row">
+      <span class="am-icon promo">⊕</span>
+      <span class="am-text">Promover desconto · <b>${escHtml(primeiroClube.clube)}</b> (falta${primeiroClube.faltam === 1 ? '' : 'm'} ${primeiroClube.faltam}) — ${primeiroClube.ids.length} sem promo enviada</span>
+      <button class="am-cta primary" onclick='enviarPromoClube(${ids})'>✉ enviar</button>
+    </div>`);
+  }
+
+  // Linha 2: Pagamento em falta · sem contacto há > 7 dias
+  const reenviar = data.filter(r => {
+    if (!r.ativo) return false;
+    const st = paymentStatus(r).st;
+    if (!['pendente','parcial','problema'].includes(st)) return false;
+    return !recentlySentKind(r.id, 'problema', 7);
+  });
+  if (reenviar.length > 0) {
+    rows.push(`<div class="actions-mini-row">
+      <span class="am-icon warn">!</span>
+      <span class="am-text">Pagamento em falta · <b>${reenviar.length}</b> atleta${reenviar.length === 1 ? '' : 's'} sem contacto há &gt; 7 dias</span>
+      <button class="am-cta" onclick="showTab('list'); quickFilter('problema');">ver na lista</button>
+    </div>`);
+  }
+
+  // Linha 3: Pagamentos por confirmar (val_pago > 0 mas valor_confirmado=false)
+  const porConfirmar = data.filter(r => r.ativo && r.val_pago > 0 && !r.valor_confirmado);
+  if (porConfirmar.length > 0) {
+    rows.push(`<div class="actions-mini-row">
+      <span class="am-icon">⚠</span>
+      <span class="am-text"><b>${porConfirmar.length}</b> pagamento${porConfirmar.length === 1 ? '' : 's'} por confirmar manualmente</span>
+      <button class="am-cta" onclick="showTab('list');">ver na lista</button>
+    </div>`);
+  }
+
+  if (rows.length === 0) {
+    body.innerHTML = '<div class="actions-mini-clean">✓ tudo limpo · hoje</div>';
+    if (meta) meta.textContent = '0 itens';
+    return;
+  }
+  body.innerHTML = rows.join('');
+  if (meta) meta.textContent = rows.length + ' ite' + (rows.length === 1 ? 'm' : 'ns');
+}
+
+// Bulk envio de avisoPrazo a quem tem pagamento por concluir e não recebeu
+// este tipo de email há > 7 dias.
+async function enviarAvisoPrazoBulk(){
+  const elegiveis = data.filter(r => {
+    if (!r.ativo) return false;
+    const st = paymentStatus(r).st;
+    if (!['pendente','parcial','problema'].includes(st)) return false;
+    if (!r.email_enc) return false;
+    return !recentlySentKind(r.id, 'problema', 7);
+  });
+  if (elegiveis.length === 0) { toast('Ninguém para avisar — todos contactados nos últimos 7 dias'); return; }
+  if (!confirm(`Vai criar ${elegiveis.length} rascunho${elegiveis.length === 1 ? '' : 's'} "Aviso prazo" para atletas com pagamento em aberto. Continuar?`)) return;
+  await _bulkCreateDrafts(elegiveis.map(r => r.id), 'avisoPrazo', 'Aviso prazo');
+}
+
+async function enviarInfoPraticasBulk(){
+  const elegiveis = data.filter(r => r.ativo && r.email_enc && !recentlySentKind(r.id, 'prePampus', 21));
+  if (elegiveis.length === 0) { toast('Ninguém para contactar — todos já receberam info recentemente'); return; }
+  if (!confirm(`Vai criar ${elegiveis.length} rascunho${elegiveis.length === 1 ? '' : 's'} "Info práticas" para todos os atletas ativos. Continuar?`)) return;
+  await _bulkCreateDrafts(elegiveis.map(r => r.id), 'infoPraticas', 'Info práticas');
+}
+
+async function _bulkCreateDrafts(ids, template, label){
+  toast(`A criar ${ids.length} rascunho${ids.length === 1 ? '' : 's'}…`);
+  let ok = 0, firstUrl = null, errs = [];
+  for (const id of ids) {
+    try {
+      const res = await Api.createEmailDraft(id, template, null);
+      ok++;
+      if (!firstUrl) firstUrl = res.url;
+    } catch (e) { errs.push(e.message); }
+  }
+  if (ok > 0) {
+    toast(`${ok} rascunho${ok === 1 ? '' : 's'} criado${ok === 1 ? '' : 's'} (${label})${errs.length ? ' · ' + errs.length + ' falha(s)' : ''}`);
+    if (firstUrl) window.open(firstUrl, '_blank');
+    setTimeout(() => { try { refreshNow(); } catch(_) {} }, 700);
+  } else {
+    toast('Falha: ' + (errs[0] || 'desconhecido'), true);
+  }
+}
+
+// === Handlers de acções rápidas (chamados de dentro dos buckets) ===
+
+async function quickDraft(atletaId, template){
+  const r = data.find(x => x.id === atletaId);
+  if (!r) { toast('Atleta não encontrado', true); return; }
+  if (!r.email_enc) { toast('Atleta sem email do encarregado', true); return; }
+  toast('A criar rascunho…');
+  try {
+    const res = await Api.createEmailDraft(atletaId, template, null);
+    toast('Rascunho criado · ' + (res.template || template || 'auto'));
+    window.open(res.url, '_blank');
+    setTimeout(() => { try { refreshNow(); } catch(_) {} }, 700);
+  } catch (e) {
+    toast('Falha: ' + e.message, true);
+  }
+}
+
+async function enviarPromoClube(atletaIds){
+  if (!Array.isArray(atletaIds) || atletaIds.length === 0) return;
+  if (!confirm(`Vai criar ${atletaIds.length} rascunho${atletaIds.length === 1 ? '' : 's'} "Promover desconto". Continuar?`)) return;
+  toast(`A criar ${atletaIds.length} rascunho…`);
+  let ok = 0, firstUrl = null, errs = [];
+  for (const id of atletaIds) {
+    try {
+      const res = await Api.createEmailDraft(id, 'descontoClube', null);
+      ok++;
+      if (!firstUrl) firstUrl = res.url;
+    } catch (e) { errs.push(e.message); }
+  }
+  if (ok > 0) {
+    toast(`${ok} rascunho${ok === 1 ? '' : 's'} criado${ok === 1 ? '' : 's'}${errs.length ? ' · ' + errs.length + ' falha(s)' : ''}`);
+    if (firstUrl) window.open(firstUrl, '_blank');
+    setTimeout(() => { try { refreshNow(); } catch(_) {} }, 700);
+  } else {
+    toast('Falha a criar rascunhos: ' + (errs[0] || 'desconhecido'), true);
+  }
+}
+
+function abrirClubeNaLista(clube){
+  showTab('list');
+  setTimeout(() => {
+    const inp = document.getElementById('filt-clube');
+    if (inp) { inp.value = clube; renderTable(); }
+  }, 50);
+}
+
+function abrirAtletaNaLista(id){
+  showTab('list');
+  setTimeout(() => {
+    if (!expandedAtletas.has(id)) toggleAtletaExpand(id);
+    const row = document.querySelector(`tr[data-id="${id}"]`);
+    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 80);
+}
+
 function renderAll(){
   renderAppbar();
-  renderKPI();
-  renderAlertStrip();
+  renderTimeline();
+  renderActionsMini();
   renderWeeks();
-  renderFinanceiro();
   renderClubes();
   renderTrabalho();
   renderTable();
