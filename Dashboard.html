@@ -536,7 +536,7 @@
   .num-cell { font-family: var(--font-condensed); color: var(--mid-gray); text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
   /* Donut estado pagamentos */
   .donut-wrap { position: relative; width: 130px; height: 130px; flex-shrink: 0; }
-  .donut-row { display: flex; gap: 22px; align-items: center; justify-content: center; flex: 1; margin-top: 6px; }
+  .donut-row { display: flex; gap: 22px; align-items: center; justify-content: center; flex-wrap: wrap; flex: 1; margin-top: 6px; }
   .donut-row .donut-legend { flex: none; }
   .donut-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
   .donut-center {
@@ -779,7 +779,7 @@
   /* A timeline reserva 60px acima da linha e 60px abaixo para labels alternados. */
   .timeline { position: relative; padding: 0; height: 170px; margin: 0 70px; }
   .timeline-line { position: absolute; left: 0; right: 0; top: 82px; height: 6px; background: var(--beige-mid); border-radius: 3px; border: 1px solid var(--sand); box-sizing: border-box; }
-  .timeline-line-done { position: absolute; left: 0; top: 82px; height: 6px; background: linear-gradient(to right, var(--green-dark) 0%, #5fa46d 100%); border-radius: 3px; box-shadow: 0 1px 0 rgba(0,0,0,0.04); }
+  .timeline-line-done { position: absolute; left: 0; top: 82px; height: 6px; width: var(--tl-progress, 0%); background: linear-gradient(to right, var(--green-dark) 0%, #5fa46d 100%); border-radius: 3px; box-shadow: 0 1px 0 rgba(0,0,0,0.04); transition: width 600ms ease-out; }
   /* Ticks mensais finos sem label (apenas textura visual) */
   .timeline-tick { position: absolute; top: 89px; width: 1px; height: 5px; background: var(--sand); opacity: 0.7; }
   .timeline-tick.q { height: 9px; opacity: 1; background: var(--sand-dark); }
@@ -821,10 +821,54 @@
   .tl-next b { font-family: var(--font-condensed); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; font-size: 11.5px; }
   .tl-next .tl-cta { display: inline-block; margin-left: 8px; padding: 4px 10px; font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: var(--charcoal); color: var(--off-white); border-radius: 3px; cursor: pointer; border: none; }
   .tl-next .tl-cta:hover { background: var(--green-dark); }
+  /* Mobile: timeline vira stepper vertical (linha à esquerda, marcos em coluna).
+     O DOM já vem ordenado cronologicamente, por isso o flex column flui certo. */
   @media (max-width: 720px) {
-    .timeline { height: 140px; margin: 0 4px; }
-    .tl-point-content { width: 90px; }
-    .tl-point-label { font-size: 10px; }
+    .tl-card { padding: 16px 16px 16px 12px !important; }
+    .timeline {
+      position: relative; height: auto; min-height: 0;
+      margin: 0; padding: 6px 0 4px 0;
+      display: flex; flex-direction: column;
+    }
+    .timeline-line {
+      position: absolute; left: 11px; top: 8px; bottom: 8px;
+      width: 4px; height: auto; right: auto;
+      border-radius: 2px; border: none;
+    }
+    .timeline-line-done {
+      position: absolute; left: 11px; top: 8px;
+      width: 4px; height: var(--tl-progress, 0%);
+      background: linear-gradient(to bottom, var(--green-dark) 0%, #5fa46d 100%);
+      transition: height 600ms ease-out;
+    }
+    .tl-point {
+      position: relative !important; left: 0 !important;
+      display: flex; align-items: center; gap: 14px;
+      padding: 9px 0 9px 0;
+      margin-left: 0;
+    }
+    .tl-point-dot {
+      position: relative !important; left: 0 !important; top: 0 !important;
+      transform: none !important;
+      flex-shrink: 0;
+      width: 14px !important; height: 14px !important;
+      box-shadow: 0 0 0 4px var(--white);  /* "esconde" a linha por trás do ponto */
+    }
+    .tl-point.next .tl-point-dot {
+      width: 16px !important; height: 16px !important;
+    }
+    .tl-point-content {
+      position: relative !important; left: 0 !important; top: 0 !important;
+      transform: none !important;
+      width: auto !important; text-align: left !important;
+      display: flex; align-items: baseline; gap: 10px;
+      flex-wrap: wrap; flex: 1;
+    }
+    .tl-point-content::before,
+    .tl-point-content::after { display: none !important; }
+    .tl-point-date { margin-bottom: 0 !important; min-width: 50px; }
+    .tl-point-label { font-size: 11px !important; }
+    .tl-next { margin-top: 14px; }
   }
 
   /* ============ MINI ACÇÕES ============ */
@@ -841,6 +885,14 @@
   .am-cta.primary { background: var(--charcoal); color: var(--off-white); }
   .am-cta.primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
   .actions-mini-clean { padding: 16px 4px; font-family: var(--font-condensed); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--green-dark); text-align: center; }
+  @media (max-width: 720px) {
+    .actions-mini-row { gap: 8px; padding: 9px 0; }
+    .am-icon { width: 22px; height: 22px; font-size: 11px; }
+    .am-text { font-size: 11.5px; }
+    .am-cta { padding: 4px 8px; font-size: 9.5px; }
+    .tl-next { font-size: 12px; }
+    .tl-next .tl-cta { display: block; margin-left: 0; margin-top: 6px; }
+  }
 
   /* ============ Pequenos ajustes weeks / clubes ============ */
   .weeks-card, .donut-card, .actions-mini { min-height: 200px; }
@@ -869,6 +921,15 @@
   .email-generic-fields textarea { min-height: 110px; resize: vertical; line-height: 1.55; }
   .email-panel-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .email-panel-disabled-note { font-size: 11.5px; color: var(--orange-accent); font-style: italic; }
+  @media (max-width: 720px) {
+    .email-panel { padding: 12px 12px; }
+    .email-panel-head { gap: 6px; }
+    .email-panel-dest { font-size: 11px; word-break: break-all; }
+    .email-tpl-pill { padding: 5px 9px; font-size: 10px; }
+    .email-tpl-pill .sent-badge { font-size: 9px; padding: 1px 5px; }
+    .email-last-comm { font-size: 11px; }
+    .trab-act { padding: 6px 10px; font-size: 10px; }
+  }
   .atleta-encarregado { font-size: 11px; color: var(--mid-gray); margin-top: 2px; font-family: var(--font-body); line-height: 1.3; }
   .atleta-iban { font-family: ui-monospace,Menlo,monospace; cursor: pointer; color: var(--green-dark); text-decoration: underline dotted; }
   .atleta-iban:hover { color: var(--charcoal); }
@@ -4050,8 +4111,24 @@ function renderTimeline(){
   // Helper: clamp nos extremos para alinhar label sem overflow
   const edgeCls = p => p < 3 ? 'edge-left' : (p > 97 ? 'edge-right' : '');
 
-  // Marcos: alternar above/below
-  const points = marcos.map((m, idx) => {
+  // Composição: gera marcos + today num só array ordenado cronologicamente
+  // (importante para o stepper vertical em mobile fluir na ordem certa via DOM).
+  const items = marcos.map((m, idx) => ({ kind: 'marco', date: m.date, m, idx }));
+  items.push({ kind: 'today', date: today });
+  items.sort((a, b) => a.date - b.date);
+
+  const html = items.map(it => {
+    if (it.kind === 'today') {
+      const todayWhere = next && nextIdx % 2 === 0 ? 'below' : 'above';
+      return `<div class="tl-point today ${todayWhere} ${edgeCls(todayPct)}" style="left:${todayPct.toFixed(2)}%;">
+        <div class="tl-point-dot"></div>
+        <div class="tl-point-content">
+          <div class="tl-point-date">hoje</div>
+          <div class="tl-point-label">${escHtml(_fmtDateShort(today))}</div>
+        </div>
+      </div>`;
+    }
+    const m = it.m, idx = it.idx;
     const isPast = m.date < today;
     const isNext = next && m.key === next.key;
     const cls = isPast ? 'past' : (isNext ? 'next' : '');
@@ -4066,21 +4143,13 @@ function renderTimeline(){
     </div>`;
   }).join('');
 
-  // "Hoje" — oposto ao marco "next" para não colidir
-  const todayWhere = next && nextIdx % 2 === 0 ? 'below' : 'above';
-  const todayHtml = `<div class="tl-point today ${todayWhere} ${edgeCls(todayPct)}" style="left:${todayPct.toFixed(2)}%;">
-    <div class="tl-point-dot"></div>
-    <div class="tl-point-content">
-      <div class="tl-point-date">hoje</div>
-      <div class="tl-point-label">${escHtml(_fmtDateShort(today))}</div>
-    </div>
-  </div>`;
-
+  // CSS var --tl-progress: usado pela linha-preenchida em desktop (width) e
+  // mobile (height) — single source of truth.
+  host.style.setProperty('--tl-progress', todayPct.toFixed(2) + '%');
   host.innerHTML = `
     <div class="timeline-line"></div>
-    <div class="timeline-line-done" style="width:${todayPct.toFixed(2)}%;"></div>
-    ${todayHtml}
-    ${points}
+    <div class="timeline-line-done"></div>
+    ${html}
   `;
 
   if (meta) meta.textContent = next
