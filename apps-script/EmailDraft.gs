@@ -72,6 +72,10 @@ const EmailDraft = {
       clube:           atleta.clube || '',
       clube_atletas:   String(clubeCount),
       clube_faltam:    String(clubeFaltam),
+      // Inferência de género PT-PT pelo 1º nome (atleta + EE) — usada em todos
+      // os templates para concordância. Pode ser sobreposta por override.
+      gen_atleta:      EmailTemplates.guessGender(atleta.atleta || ''),
+      gen_ee:          EmailTemplates.guessGender(atleta.encarregado || ''),
       valor_esperado:  devido ? (devido + ' €') : '—',
       valor_pago:      pago   ? (pago   + ' €') : '0 €',
       valor_atual:     devido + ' €',
@@ -80,6 +84,7 @@ const EmailDraft = {
       falta:           falta  ? (falta  + ' €') : '0 €',
       excedente:       excedente ? (excedente + ' €') : '0 €',
       iban_cft:        EmailTemplates.IBAN_CFT,
+      data_inicio:     (Config.get('email_data_inicio')   || ''),
       data_limite:     (Config.get('email_data_limite')   || '21 de junho'),
       local:           (Config.get('email_local')         || 'Pavilhão Municipal de Sobral de Monte Agraço'),
       horario:         (Config.get('email_horario')       || '09h00 às 17h30'),

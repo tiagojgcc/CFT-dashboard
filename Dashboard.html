@@ -723,6 +723,10 @@
   .trab-chevron:hover { background: var(--charcoal); }
   .trab-chevron.resolved { background: var(--sage); color: white; opacity: 0.85; }
   .trab-chevron.devolver { background: var(--green-dark); }
+  /* Chevron neutro para atletas sem problema — abre o mesmo painel inline,
+     foco em comunicação (envio de emails). */
+  .trab-chevron.neutral { background: transparent; color: var(--mid-gray); border: 1px solid var(--sand); padding: 0 6px; font-weight: 600; }
+  .trab-chevron.neutral:hover { background: var(--beige-mid); color: var(--charcoal); border-color: var(--charcoal); }
   tr.row-expand > td { background: var(--beige-light); padding: 14px 18px; border-bottom: 2px solid var(--sand); }
   .trab-inline { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
   .trab-inline-l { flex: 1; min-width: 240px; }
@@ -736,6 +740,25 @@
   .trab-act.primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
   .trab-act.muted { color: var(--mid-gray); border-color: var(--sand); }
   .trab-resolved-tag { font-size: 11px; color: var(--green-dark); margin-left: 8px; }
+  /* ===== Painel de email inline (universal por atleta) ===== */
+  .email-panel { background: var(--white); border: 1px solid var(--sand); border-radius: 6px; padding: 14px 16px; margin-top: 12px; }
+  .email-panel-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .email-panel-label { font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--green-dark); }
+  .email-panel-dest { font-size: 12px; color: var(--mid-gray); font-family: var(--font-body); }
+  .email-panel-dest b { color: var(--charcoal); font-weight: 600; }
+  .email-tpl-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .email-tpl-pill { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 11px; border-radius: 999px; border: 1.5px solid var(--sand); background: var(--white); color: var(--charcoal); cursor: pointer; user-select: none; }
+  .email-tpl-pill:hover { border-color: var(--charcoal); }
+  .email-tpl-pill.active { background: var(--charcoal); color: var(--off-white); border-color: var(--charcoal); }
+  .email-tpl-hint { font-size: 11.5px; color: var(--mid-gray); font-style: italic; margin: 0 0 10px 0; line-height: 1.4; }
+  .email-generic-fields { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .email-generic-fields input,
+  .email-generic-fields textarea { font-family: var(--font-body); font-size: 13px; padding: 8px 10px; border: 1px solid var(--sand); border-radius: 4px; background: var(--off-white); color: var(--charcoal); width: 100%; box-sizing: border-box; }
+  .email-generic-fields input:focus,
+  .email-generic-fields textarea:focus { outline: none; border-color: var(--green-dark); background: var(--white); }
+  .email-generic-fields textarea { min-height: 110px; resize: vertical; line-height: 1.55; }
+  .email-panel-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .email-panel-disabled-note { font-size: 11.5px; color: var(--orange-accent); font-style: italic; }
   .atleta-encarregado { font-size: 11px; color: var(--mid-gray); margin-top: 2px; font-family: var(--font-body); line-height: 1.3; }
   .atleta-iban { font-family: ui-monospace,Menlo,monospace; cursor: pointer; color: var(--green-dark); text-decoration: underline dotted; }
   .atleta-iban:hover { color: var(--charcoal); }
@@ -1721,11 +1744,18 @@ function renderTable(){
     </span>`;
     const trabItem = trabIndex[r.id];
     const isResolved = trabItem ? !!resolvedMap[trabItem.id] : false;
-    const isExpanded = trabItem && expandedAtletas.has(r.id);
-    const chevronCls = isResolved ? 'trab-chevron resolved' : (trabItem && trabItem.tipoClass === 'devolver' ? 'trab-chevron devolver' : 'trab-chevron');
-    const chevron = trabItem
-      ? `<span class="${chevronCls}" onclick="event.stopPropagation(); toggleAtletaExpand('${r.id}')" title="${escAttr(trabItem.tipoLabel)}${isResolved ? ' · resolvido' : ''} (clica para ${isExpanded ? 'fechar' : 'abrir'})">${isExpanded ? '▾' : '▸'} ${isResolved ? '✓' : '!'}</span>`
-      : '';
+    const isExpanded = expandedAtletas.has(r.id);
+    let chevronCls, chevronGlyph, chevronTitle;
+    if (trabItem) {
+      chevronCls = isResolved ? 'trab-chevron resolved' : (trabItem.tipoClass === 'devolver' ? 'trab-chevron devolver' : 'trab-chevron');
+      chevronGlyph = `${isExpanded ? '▾' : '▸'} ${isResolved ? '✓' : '!'}`;
+      chevronTitle = `${trabItem.tipoLabel}${isResolved ? ' · resolvido' : ''} (clica para ${isExpanded ? 'fechar' : 'abrir'})`;
+    } else {
+      chevronCls = 'trab-chevron neutral';
+      chevronGlyph = isExpanded ? '▾' : '▸';
+      chevronTitle = isExpanded ? 'Fechar painel' : 'Abrir painel · enviar email';
+    }
+    const chevron = `<span class="${chevronCls}" onclick="event.stopPropagation(); toggleAtletaExpand('${r.id}')" title="${escAttr(chevronTitle)}">${chevronGlyph}</span>`;
     const dataRow = `<tr class="${isSel ? 'selected' : ''}${isExpanded ? ' parent-expanded' : ''}" data-id="${r.id}">
       <td class="col-check"><span class="row-check ${isSel ? 'checked' : ''}" onclick="toggleRow('${r.id}')">${isSel ? '✓' : ''}</span></td>
       <td class="num-cell">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</td>
@@ -1744,7 +1774,7 @@ function renderTable(){
       <td>${stB}</td>
       <td style="text-align:center;">${confCell}</td>
     </tr>`;
-    const expandRow = isExpanded ? renderTrabExpandRow(r, trabItem, isResolved) : '';
+    const expandRow = isExpanded ? renderAtletaPanel(r, trabItem, isResolved) : '';
     return dataRow + expandRow;
   }).join('');
   const counts = (Api && Api._cache && Api._cache.counts) || {};
@@ -1757,41 +1787,135 @@ function renderTable(){
 
 function escHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-// ============ EXPANSÃO INLINE: TRABALHO POR ATLETA ============
-// O antigo separador Trabalho desapareceu. Cada atleta com problema mostra
-// um chevron na linha da Lista; clicar abre um painel inline com diagnostico
-// + ações (criar rascunho branded, WhatsApp, marcar resolvido).
+// ============ EXPANSÃO INLINE: PAINEL POR ATLETA ============
+// Cada atleta (com ou sem problema) tem um chevron na linha da Lista;
+// clicar abre um painel inline com 4 templates de email branded + (se houver
+// problema) o diagnóstico clássico e botão de marcar resolvido.
 let expandedAtletas = new Set();
 function toggleAtletaExpand(id){
   if (expandedAtletas.has(id)) expandedAtletas.delete(id);
   else expandedAtletas.add(id);
   renderTable();
 }
-function renderTrabExpandRow(r, item, isResolved){
+
+// Estado transiente do painel de email por atleta (preservado entre re-renders
+// da tabela). Chave: id_inscricao → { kind, subject, body }.
+let emailPanelState = {};
+// Templates oferecidos no painel inline. `tpl` null = auto-deteta consoante
+// estado de pagamento (semPagamento / pagamentoParcial / valorErrado / aDevolver).
+const EMAIL_PANEL_TEMPLATES = [
+  { kind: 'boasVindas',  label: 'Boas-vindas',  tpl: 'boasVindas',
+    hint: 'Mensagem inicial pós-inscrição: confirmação, IBAN, próximos passos.' },
+  { kind: 'generico',    label: 'Outro assunto', tpl: 'generico',
+    hint: 'Escreva assunto + corpo livres — sai com header/assinatura CFT.' },
+  { kind: 'problema',    label: 'Problema pagamento', tpl: null,
+    hint: 'Auto-deteta o template: sem pagamento, parcial, valor errado ou a devolver.' },
+  { kind: 'prePampus',   label: 'Pré-campus',   tpl: 'prePampus',
+    hint: 'Update a 1-2 semanas do início: equipamento, prazos, próximas comunicações.' }
+];
+
+function getEmailPanelState(id){
+  if (!emailPanelState[id]) emailPanelState[id] = { kind: 'boasVindas', subject: '', body: '' };
+  return emailPanelState[id];
+}
+function setEmailKind(id, kind){
+  const st = getEmailPanelState(id);
+  st.kind = kind;
+  renderTable();
+}
+function updateEmailField(id, field, value){
+  const st = getEmailPanelState(id);
+  st[field] = value;
+  // Não re-rendariza — preserva focus do input/textarea
+}
+
+async function submitEmailFromPanel(id){
+  const r = data.find(x => x.id === id);
+  if (!r) return;
+  if (!r.email_enc) { toast('Atleta sem email do encarregado', true); return; }
+  const st = getEmailPanelState(id);
+  const opt = EMAIL_PANEL_TEMPLATES.find(o => o.kind === st.kind);
+  if (!opt) return;
+  let overrides = null;
+  if (opt.kind === 'generico') {
+    const subject = String(st.subject || '').trim();
+    const body = String(st.body || '').trim();
+    if (!subject || !body) { toast('Assunto e corpo são obrigatórios para o template genérico', true); return; }
+    overrides = { subject, body };
+  }
+  toast('A criar rascunho no Gmail…');
+  try {
+    const res = await Api.createEmailDraft(id, opt.tpl, overrides);
+    toast('Rascunho criado · ' + (res.template || opt.kind));
+    window.open(res.url, '_blank');
+  } catch (e) {
+    toast('Falha a criar rascunho: ' + e.message, true);
+  }
+}
+
+function renderAtletaPanel(r, item, isResolved){
   const waUrl = waLinkFor(r);
-  const tipoCls = item.tipoClass === 'devolver' ? 'devolver' : '';
-  const resolvedTag = isResolved ? `<span class="trab-resolved-tag">✓ marcado resolvido</span>` : '';
-  const actionResolve = isResolved
-    ? `<button class="trab-act muted" onclick="reopenAtletaTrab('${item.id}','${r.id}')" title="Reabrir item">↺ Reabrir</button>`
-    : `<button class="trab-act" onclick="resolveAtletaTrab('${item.id}','${r.id}')" title="Marcar como resolvido">✓ Marcar resolvido</button>`;
-  const emailBtn = r.email_enc
-    ? `<button class="trab-act primary" onclick="createDraftForAtleta('${r.id}')" title="Cria rascunho branded com template auto-detectado">✉ Rascunho branded</button>`
-    : '';
-  const waBtn = waUrl
-    ? `<a class="trab-act" href="${escAttr(waUrl)}" target="_blank" rel="noopener" title="WhatsApp para ${escAttr(r.encarregado||'')}">💬 WhatsApp</a>`
-    : '';
-  return `<tr class="row-expand" data-parent="${r.id}"><td colspan="12">
-    <div class="trab-inline">
+  // Bloco 1: diagnóstico do problema (apenas se houver item de trabalho)
+  let problemaBlock = '';
+  if (item) {
+    const tipoCls = item.tipoClass === 'devolver' ? 'devolver' : '';
+    const resolvedTag = isResolved ? `<span class="trab-resolved-tag">✓ marcado resolvido</span>` : '';
+    const actionResolve = isResolved
+      ? `<button class="trab-act muted" onclick="reopenAtletaTrab('${item.id}','${r.id}')" title="Reabrir item">↺ Reabrir</button>`
+      : `<button class="trab-act" onclick="resolveAtletaTrab('${item.id}','${r.id}')" title="Marcar como resolvido">✓ Marcar resolvido</button>`;
+    problemaBlock = `<div class="trab-inline">
       <div class="trab-inline-l">
         <div class="trab-inline-tipo ${tipoCls}">${escHtml(item.tipoLabel)}${resolvedTag}</div>
         <div class="trab-inline-detail">${escHtml(item.detail)}</div>
       </div>
       <div class="trab-inline-actions">
-        ${emailBtn}
-        ${waBtn}
         ${actionResolve}
       </div>
+    </div>`;
+  }
+  // Bloco 2: painel de email universal
+  const st = getEmailPanelState(r.id);
+  const hasEmail = !!r.email_enc;
+  const pills = EMAIL_PANEL_TEMPLATES.map(o => `
+    <button class="email-tpl-pill ${o.kind === st.kind ? 'active' : ''}"
+            onclick="setEmailKind('${r.id}', '${o.kind}')"
+            title="${escAttr(o.hint)}">${escHtml(o.label)}</button>
+  `).join('');
+  const activeOpt = EMAIL_PANEL_TEMPLATES.find(o => o.kind === st.kind);
+  const hint = activeOpt ? `<p class="email-tpl-hint">${escHtml(activeOpt.hint)}</p>` : '';
+  const genericFields = st.kind === 'generico'
+    ? `<div class="email-generic-fields">
+         <input type="text" placeholder="Assunto" value="${escAttr(st.subject)}"
+                oninput="updateEmailField('${r.id}', 'subject', this.value)">
+         <textarea placeholder="Escreva aqui a sua mensagem… (separe parágrafos com linha em branco)"
+                   oninput="updateEmailField('${r.id}', 'body', this.value)">${escHtml(st.body)}</textarea>
+       </div>`
+    : '';
+  const waBtn = waUrl
+    ? `<a class="trab-act" href="${escAttr(waUrl)}" target="_blank" rel="noopener" title="WhatsApp para ${escAttr(r.encarregado||'')}">💬 WhatsApp</a>`
+    : '';
+  const sendBtn = hasEmail
+    ? `<button class="trab-act primary" onclick="submitEmailFromPanel('${r.id}')" title="Cria rascunho branded no Gmail (revisão antes de enviar)">✉ Criar rascunho branded</button>`
+    : `<span class="email-panel-disabled-note">Sem email do encarregado — não é possível criar rascunho.</span>`;
+  const destinatario = hasEmail
+    ? `<span class="email-panel-dest">Para: <b>${escHtml(r.encarregado || 'Encarregado')}</b> &lt;${escHtml(r.email_enc)}&gt;</span>`
+    : `<span class="email-panel-dest" style="color:var(--orange-accent);">Sem email</span>`;
+  const emailBlock = `<div class="email-panel">
+    <div class="email-panel-head">
+      <span class="email-panel-label">✉ Enviar email</span>
+      ${destinatario}
     </div>
+    <div class="email-tpl-row">${pills}</div>
+    ${hint}
+    ${genericFields}
+    <div class="email-panel-actions">
+      ${sendBtn}
+      ${waBtn}
+    </div>
+  </div>`;
+  return `<tr class="row-expand" data-parent="${r.id}"><td colspan="12">
+    ${problemaBlock}
+    ${emailBlock}
   </td></tr>`;
 }
 async function resolveAtletaTrab(itemId, atletaId){

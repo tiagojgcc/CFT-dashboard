@@ -2424,6 +2424,12 @@ const Backfill = {
  *   {iban_cft}            IBAN da CFT
  *   {data_limite}         prazo de pagamento (texto)
  *   {local}, {horario}, {material}, {logistica}, {contacto_dia}  (info práticas)
+ *
+ * Concordância de género (G):
+ *   data.gen_atleta ∈ {'m','f'} — heurística pelo 1º nome do atleta
+ *   data.gen_ee     ∈ {'m','f'} — heurística pelo 1º nome do EE
+ *   helper G_atl(data) e G_ee(data) devolvem objecto com chaves prontas a
+ *   interpolar: {caro, oA, doA, oAtleta, oSeu, ele, dele, educando}.
  */
 const EmailTemplates = {
   // Cores (paleta do mock)
@@ -2443,7 +2449,7 @@ const EmailTemplates = {
   },
 
   IBAN_CFT: 'PT50 0007 0000 0065 0137 6512 3',
-  LOGO_URL: 'https://raw.githubusercontent.com/tiagojgcc/CFT-dashboard/main/assets/logo_CFT.png',
+  LOGO_URL: 'https://raw.githubusercontent.com/tiagojgcc/cft-dashboard/main/assets/logo_CFT.png',
   EDITION: '4ª EDIÇÃO · 2026',
 
   // ============ Helpers ============
@@ -2452,6 +2458,197 @@ const EmailTemplates = {
     if (parts.length === 0) return '';
     if (parts.length === 1) return parts[0];
     return parts[0] + ' ' + parts[parts.length - 1];
+  },
+
+  firstName(fullName) {
+    const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+    return parts[0] || '';
+  },
+
+  // Dicionários de nomes próprios PT-PT (normalizados sem diacríticos).
+  // Cobrem ~250 nomes masculinos + ~230 femininos: clássicos, modernos,
+  // diminutivos comuns e variantes Brasil/internacionais usadas em PT.
+  // Nomes ausentes caem na heurística por terminação.
+  NAMES_MALE: new Set([
+    'abel','abilio','adao','adelio','adelino','adolfo','adriano','afonso',
+    'agostinho','alberto','albino','alcides','alcino','aldo','aleixo','alex',
+    'alexandre','alfredo','alipio','alvaro','amadeu','amancio','amaro',
+    'ambrosio','americo','amilcar','anibal','antao','antonio','armando',
+    'armenio','arnaldo','arsenio','artur','augusto','aurelio','baltasar',
+    'bartolomeu','basilio','belmiro','benedito','benjamim','benjamin',
+    'bernardino','bernardo','bertino','boaventura','braulio','bruno','caetano',
+    'caio','camilo','candido','carlos','casimiro','cassiano','cassio',
+    'celestino','celio','celso','cesar','christian','cipriano','cirilo',
+    'claudio','clemente','conrado','cosme','cristiano','cristovao','custodio',
+    'damiao','daniel','danilo','dario','david','davi','denis','dennis','diego',
+    'diogo','dinis','diniz','dionisio','domingos','douglas','duarte','edgar',
+    'edmundo','edson','eduardo','egidio','elder','elias','elio','eliseu',
+    'elson','elvis','emanuel','emerson','emidio','emilio','enzo','eric',
+    'erick','ernani','ernesto','esteban','estevao','eugenio','eurico',
+    'eusebio','evandro','evaristo','ezequiel','fabiano','fabio','fabricio',
+    'fausto','federico','felipe','fernando','fidel','filipe','firmino',
+    'flavio','florencio','francisco','franklin','frederico','gabriel','gaspar',
+    'geraldo','gerardo','germano','gerson','gil','gilberto','gilson','gino',
+    'goncalo','gonzalo','gregorio','gualter','guido','guilherme','gustavo',
+    'hamilton','heitor','helder','helio','henrique','herbert','hermano',
+    'herminio','hernani','hilario','horacio','hudson','hugo','humberto','iago',
+    'ian','igor','ilidio','inacio','irineu','isaac','isaias','ismael','israel',
+    'italo','ivan','ivanildo','ivo','jacques','jaime','jair','jeremias',
+    'jeronimo','jesse','jesus','joao','joaquim','jonas','jonathan','jordi',
+    'jorge','jose','joshua','josue','juan','julian','juliano','julio','junior',
+    'kelvin','kennedy','kevin','klaus','lauro','lazaro','leandro','leao','leo',
+    'leon','leonardo','leonel','levi','lino','livio','lopo','lorenzo',
+    'lourenco','lucas','luciano','lucio','ludovico','luis','luiz','luca',
+    'luka','lukas','manuel','marc','marcel','marcelino','marcelo','marciano',
+    'marcio','marco','marcos','mariano','mario','marius','marko','marlon',
+    'martim','martin','martinho','marvin','mateus','matheus','matias',
+    'mathias','mathieu','mauricio','mauro','max','maxime','maximiliano',
+    'melchior','michel','miguel','milton','moises','murilo','natanael',
+    'nelson','nestor','nicolae','nicolas','nicolau','nilo','nilson','noa',
+    'noah','noel','norberto','nuno','octavio','olavo','olegario','omar',
+    'orlando','oscar','osmar','osvaldo','oswaldo','otavio','pablo','paco',
+    'paolo','pascoal','patricio','patrick','paulo','pedro','pierre','pio',
+    'plinio','prudencio','quintino','rafael','raimundo','ramiro','ramon',
+    'raul','ravi','reinaldo','renan','renato','rene','ricardo','rinaldo',
+    'rivelino','robert','roberto','rocco','rodolfo','rodrigo','rogerio',
+    'rolando','rolf','roman','romao','romario','romeo','romeu','ronald',
+    'ronaldo','ronan','roque','rosario','ruben','rui','rurik','ruy','sabino',
+    'salomao','salvador','salvio','samir','samuel','sancho','sandro',
+    'santiago','saul','sebastian','sebastiao','sergio','serafim','severino',
+    'severo','sidney','sidnei','sidonio','silas','silverio','silvestre',
+    'silvino','silvio','simao','simon','stefan','steve','tadeu','tales',
+    'tarcisio','telmo','teobaldo','teodoro','teofilo','thiago','tiago','tibor',
+    'tito','tobias','tom','tomas','tomaz','tome','tristao','tulio','ulisses',
+    'ulrico','urbano','valdemar','valdir','valentim','valter','vasco',
+    'venancio','venceslau','vergilio','vicente','victor','vinicius','virgilio',
+    'vital','vito','vitor','vladimir','waldemar','walter','washington',
+    'wellington','wesley','wilfredo','wilson','winston','xavier','yago','yann',
+    'yannick','yari','yuri','zacarias','ze','zeferino','zenildo'
+  ]),
+
+  NAMES_FEMALE: new Set([
+    'adelaide','adela','ada','adelia','adelina','adriana','agata','agueda',
+    'agnes','aida','alba','albertina','alcina','aldina','alessandra',
+    'alexandra','alice','alicia','aline','alma','almira','amalia','amanda',
+    'amaranta','amelia','amparo','ana','anabela','analu','andreia','angela',
+    'angelica','angelina','angie','anita','antonella','antonia','aparecida',
+    'apolonia','ariana','arlete','arlinda','armanda','armandina','arminda',
+    'augusta','aurora','avelina','barbara','beatriz','belarmina','belmira',
+    'benedita','benilde','benvinda','berenice','bernadete','bianca','brigida',
+    'bruna','cacilda','camila','candida','carina','carla','carlota','carmem',
+    'carmen','carmina','carminda','carolina','casandra','catarina','catia',
+    'cecilia','celeste','celestina','celia','celina','celma','chantal',
+    'chiara','cibele','cintia','cipriana','clara','clarice','claudia',
+    'claudina','clelia','clementina','cleopatra','clotilde','conceicao',
+    'constanca','constancia','consuelo','cora','coralia','corina','cornelia',
+    'cristal','cristela','cristiana','cristina','daiana','dalia','dalva',
+    'dania','daniela','danielle','dara','darcy','debora','deborah','delfina',
+    'delia','delma','demetria','denise','deolinda','diana','dilia','dilma',
+    'dina','divina','dolores','dora','dorinda','doris','dorotea','dulce',
+    'edda','edite','edith','edivania','edna','eduarda','elaine','elena',
+    'eleonora','elga','elia','eliana','eliane','elida','elisa','elisabete',
+    'elisabeth','elisete','eliza','ellen','eloisa','elsa','elvira','ema',
+    'emanuela','emily','emilia','emma','encarnacao','enedina','enia','erica',
+    'erika','erminia','ernestina','esmeralda','esperanca','estefania','estela',
+    'estelita','estephania','estrela','etelvina','eufemia','eugenia','eulalia',
+    'eunice','eva','evangelina','evelina','evelyn','fabia','fabiana','fabiola',
+    'fatima','felicia','felicidade','fernanda','filipa','filomena','fiona',
+    'flavia','flora','florbela','florencia','florinda','francisca','frederica',
+    'gabriela','gardenia','genoveva','georgina','geraldina','germana',
+    'gertrudes','gilda','gioconda','gisela','gisele','glaucia','gloria',
+    'graca','gracia','gracinda','graziela','guadalupe','guida','guilhermina',
+    'helena','helia','helga','heliana','helma','henriqueta','herminia',
+    'hilaria','hilda','honorina','idalia','idalina','ilda','ilidia','ilse',
+    'imelda','ines','ingrid','iolanda','iracema','iraida','irene','iria',
+    'iris','irma','isabel','isabela','isadora','isaura','ivete','ivone',
+    'izabel','jade','jaqueline','jacinta','janaina','jane','janete','janine',
+    'jasmim','jennifer','jessica','joana','joaquina','jocelia','joelma',
+    'jordana','josefa','josefina','josiane','judit','judite','julia','juliana',
+    'juliene','karen','karina','karla','katia','katherine','kathleen','kelly',
+    'kim','kristina','lara','larissa','latifa','laura','laurinda','lavinia',
+    'lea','leandra','leila','lena','lenita','leocadia','leonete','leonida',
+    'leonor','leontina','leticia','lia','liana','libania','lidia','lilian',
+    'liliana','lina','linda','lisa','livia','lola','lorena','lourdes','lucia',
+    'luciana','lucila','lucilia','lucineia','ludmila','luisa','luiza','lurdes',
+    'luzia','mabel','madalena','madeline','mafalda','magali','magda',
+    'magdalena','manuela','mara','marcia','margarida','margarita','maria',
+    'mariana','mariane','maribel','marielle','marilene','marilia','marina',
+    'marinalva','marisa','marlene','marta','martina','mary','matilde','maura',
+    'mauricia','melanie','melissa','mercedes','micaela','michele','michelle',
+    'milena','minerva','miranda','miriam','mirian','mona','monica','mor',
+    'morgana','muriel','nadia','nair','naomi','natacha','natalia','natasha',
+    'neide','nelida','nelma','nicole','nina','nilda','nilza','noemi','noemia',
+    'nora','norma','nubia','nuria','odete','olga','olimpia','olinda','olivia',
+    'ondina','ofelia','otavia','palmira','paola','paula','paulina','pamela',
+    'penelope','pia','pilar','piedade','priscila','priscilla','rafaela',
+    'raissa','raquel','rebeca','regina','remedios','renata','rita','rosa',
+    'rosalia','rosalina','rosana','rose','roseli','rosemarie','roxana','rufina',
+    'ruth','sabina','sabrina','salete','salome','samanta','samantha','sandra',
+    'sandrina','sara','sarah','sebastiana','selena','selma','serafina',
+    'serena','sibele','sidonia','silmara','silvana','silvia','simone','sofia',
+    'solange','soledade','sonia','sophia','soraia','stella','stephanie',
+    'suelen','susana','suzana','suzete','sylvia','tais','tamara','tania',
+    'tatiana','telma','teresa','terezinha','thais','thalia','thalita',
+    'thamires','tessa','tina','tomasia','tonia','valentina','valeria','vanda',
+    'vanessa','vania','vera','veronica','violeta','virginia','viviana',
+    'viviane','wanda','walesca','walquiria','xenia','ximena','yara','yasmin',
+    'yasmim','yolanda','yvette','zelinda','zilda','zilma','zelia','zenaide',
+    'zoe'
+  ]),
+
+  // Heurística PT-PT para inferir género a partir do 1º nome.
+  // Devolve 'm', 'f' ou 'u' (desconhecido / nome vazio).
+  //   1) Lookup explícito nos dicionários NAMES_MALE / NAMES_FEMALE.
+  //   2) Fallback por terminação: 'a' → feminino; 'o' → masculino;
+  //      consoantes / outras vogais → masculino (convenção PT-PT).
+  guessGender(fullName) {
+    const first = this.firstName(fullName).toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '');  // strip diacríticos
+    if (!first) return 'u';
+    if (this.NAMES_MALE.has(first)) return 'm';
+    if (this.NAMES_FEMALE.has(first)) return 'f';
+    const last = first.slice(-1);
+    if (last === 'a') return 'f';  // Maria, Joana, Sofia, …
+    if (last === 'o') return 'm';  // Pedro, Tiago, joao (após NFD)
+    // Consoante (Daniel, Manuel, Rafael, Miguel, …) ou vogal rara → masculino.
+    return 'm';
+  },
+
+  // Devolve concordância para o atleta.
+  G_atl(data) {
+    const g = (data && data.gen_atleta) || this.guessGender(data && data.atleta);
+    const isF = g === 'f';
+    return {
+      caro:      isF ? 'Cara' : 'Caro',
+      oA:        isF ? 'a' : 'o',
+      oAUpper:   isF ? 'A' : 'O',
+      doA:       isF ? 'da' : 'do',
+      noA:       isF ? 'na' : 'no',
+      oAtleta:   isF ? 'a atleta' : 'o atleta',
+      oSeu:      isF ? 'a sua' : 'o seu',
+      ele:       isF ? 'ela' : 'ele',
+      dele:      isF ? 'dela' : 'dele',
+      educando:  isF ? 'educanda' : 'educando',
+      pron_obj:  isF ? 'la' : 'lo',   // ex: ouvi-la / ouvi-lo
+      inscrito:  isF ? 'inscrita' : 'inscrito',
+      pronto:    isF ? 'pronta' : 'pronto',
+      preparado: isF ? 'preparada' : 'preparado',
+      benvindo:  isF ? 'bem-vinda' : 'bem-vindo'
+    };
+  },
+
+  // Devolve concordância para o encarregado (caro/cara · seu/sua…).
+  G_ee(data) {
+    const g = (data && data.gen_ee) || this.guessGender(data && data.ee_nome);
+    const isF = g === 'f';
+    return {
+      caro:    isF ? 'Cara' : 'Caro',
+      caroUp:  isF ? 'CARA' : 'CARO',
+      o:       isF ? 'a' : 'o',
+      oSeu:    isF ? 'a sua' : 'o seu',
+      seu:     isF ? 'sua' : 'seu',
+      pron:    isF ? 'a' : 'o'
+    };
   },
 
   fmt(value) {
@@ -2574,11 +2771,23 @@ const EmailTemplates = {
     return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   },
 
+  _greeting(ee, data) {
+    // Saudação personalizada ao EE quando temos nome; bulk usa fallback.
+    const C = this.C;
+    const name = String((data && data.ee_nome) || '').trim();
+    const txt = name
+      ? `${ee.caroUp} ${this._esc(name).toUpperCase()},`
+      : `${ee.caroUp} ENCARREGAD${ee.o === 'a' ? 'A' : 'O'} DE EDUCAÇÃO,`;
+    return `<div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">${txt}</div>`;
+  },
+
   // ============ Per-atleta templates ============
 
   // 1. Valor errado (pagou a menos)
   valorErrado(data) {
     const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
     const subject = `CFT · Acerto de pagamento — ${data.atleta}`;
     const body = `
       <div style="padding:48px 40px 24px 40px;">
@@ -2586,8 +2795,8 @@ const EmailTemplates = {
         ${this._display('Quase\ntudo certo.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
-        <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ${this._esc(data.ee_nome).toUpperCase()},</div>
-        ${this._para(`Antes de mais, obrigado pela inscrição do/a <b>${this._esc(data.atleta)}</b> no CFT 2026.`)}
+        ${this._greeting(ee, data)}
+        ${this._para(`Antes de mais, obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2026.`)}
         ${this._para(`Estamos a fechar os acertos das inscrições e, ao confrontar os valores, parece-nos haver uma pequena diferença em relação ao previsto. Pode ser engano nosso, por isso queríamos confirmar consigo antes de seguir.`)}
       </div>
       ${this._infoBox([
@@ -2597,7 +2806,7 @@ const EmailTemplates = {
         ['Diferença', `<b style="color:${C.orange};">${data.falta}€</b>`]
       ], 'Detalhes')}
       <div style="padding:24px 40px 8px 40px;">
-        ${this._para(`Se realmente faltar regularizar este valor, pode fazê-lo por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome do/a atleta na descrição.`)}
+        ${this._para(`Se realmente faltar regularizar este valor, pode fazê-lo por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome ${a.doA} atleta na descrição.`)}
         ${this._para(`Caso considere que há algum engano, responda a este email — verificamos do nosso lado e voltamos a falar.`)}
       </div>
       <div style="padding:8px 40px 16px 40px;">
@@ -2609,15 +2818,17 @@ const EmailTemplates = {
   // 2. Sem pagamento
   semPagamento(data) {
     const C = this.C;
-    const subject = `CFT · Inscrição do/a ${data.atleta}`;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
+    const subject = `CFT · Inscrição ${a.doA} ${data.atleta}`;
     const body = `
       <div style="padding:48px 40px 24px 40px;">
         ${this._over('Inscrição reservada', C.orange)}
         ${this._display('Falta um\núltimo passo.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
-        <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ${this._esc(data.ee_nome).toUpperCase()},</div>
-        ${this._para(`Obrigado pela inscrição do/a <b>${this._esc(data.atleta)}</b> no CFT 2026. Está praticamente tudo a postos para a participação dele/a.`)}
+        ${this._greeting(ee, data)}
+        ${this._para(`Obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2026. Está praticamente tudo a postos para a participação ${a.dele}.`)}
         ${this._para(`Estamos a finalizar os registos de pagamento e, à data de hoje, ainda não nos chegou nenhum comprovativo. Pode ter-nos escapado, por isso queríamos confirmar consigo antes de fechar.`)}
       </div>
       ${this._infoBox([
@@ -2627,7 +2838,7 @@ const EmailTemplates = {
       ], 'Inscrição')}
       <div style="padding:24px 40px 8px 40px;">
         ${this._para(`Se já efectuou a transferência, basta responder a este email com o comprovativo (ou data e valor) que acertamos do nosso lado.`)}
-        ${this._para(`Caso ainda esteja em falta, pode regularizar por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome do/a atleta na descrição.`)}
+        ${this._para(`Caso ainda esteja em falta, pode regularizar por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome ${a.doA} atleta na descrição.`)}
         ${this._para(`Qualquer dúvida, é só responder a este email.`)}
       </div>
       <div style="padding:8px 40px 16px 40px;">
@@ -2639,15 +2850,17 @@ const EmailTemplates = {
   // 3. Pagamento parcial
   pagamentoParcial(data) {
     const C = this.C;
-    const subject = `CFT · Inscrição do/a ${data.atleta}`;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
+    const subject = `CFT · Inscrição ${a.doA} ${data.atleta}`;
     const body = `
       <div style="padding:48px 40px 24px 40px;">
         ${this._over('1ª prestação recebida', C.greenDark)}
         ${this._display('Está quase\ntudo pronto.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
-        <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ${this._esc(data.ee_nome).toUpperCase()},</div>
-        ${this._para(`Obrigado pela 1ª prestação da inscrição do/a <b>${this._esc(data.atleta)}</b> — já está registada do nosso lado. Está praticamente tudo pronto para a participação dele/a no CFT 2026.`)}
+        ${this._greeting(ee, data)}
+        ${this._para(`Obrigado pela 1ª prestação da inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> — já está registada do nosso lado. Está praticamente tudo pronto para a participação ${a.dele} no CFT 2026.`)}
         ${this._para(`Este email é só para relembrar que a 2ª prestação tem como prazo <span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_limite)}</span>.`)}
       </div>
       ${this._infoBox([
@@ -2657,7 +2870,7 @@ const EmailTemplates = {
         ['Prazo', `<span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_limite)}</span>`]
       ], 'Pagamento em prestações')}
       <div style="padding:24px 40px 8px 40px;">
-        ${this._para(`Pode liquidar por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome do/a atleta na descrição.`)}
+        ${this._para(`Pode liquidar por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome ${a.doA} atleta na descrição.`)}
         ${this._para(`Se entretanto já tiver liquidado, ignore este email. E se houver alguma dificuldade com o prazo, fale connosco — encontramos solução.`)}
       </div>
       <div style="padding:8px 40px 16px 40px;">
@@ -2669,6 +2882,8 @@ const EmailTemplates = {
   // 4. A devolver
   aDevolver(data) {
     const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
     const subject = `CFT · Devolução de valor — ${data.atleta}`;
     const body = `
       <div style="padding:48px 40px 24px 40px;">
@@ -2676,8 +2891,8 @@ const EmailTemplates = {
         ${this._display('Temos um valor\na devolver-lhe.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
-        <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ${this._esc(data.ee_nome).toUpperCase()},</div>
-        ${this._para(`Antes de mais, obrigado pela inscrição do/a <b>${this._esc(data.atleta)}</b> no CFT 2026.`)}
+        ${this._greeting(ee, data)}
+        ${this._para(`Antes de mais, obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2026.`)}
         ${this._para(`Ao fechar os registos, vimos que o valor recebido ficou acima do valor previsto para esta inscrição. Há, portanto, uma diferença a devolver.`)}
       </div>
       ${this._infoBox([
@@ -2702,6 +2917,8 @@ const EmailTemplates = {
   // para incentivar inscrições adicionais do mesmo clube.
   descontoClube(data) {
     const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
     const subject = `CFT · ${data.clube} — desconto de clube ao virar da esquina`;
     const faltam = data.clube_faltam || '?';
     const body = `
@@ -2710,9 +2927,9 @@ const EmailTemplates = {
         ${this._display('Falta pouco\npara poupar.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
-        <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ${this._esc(data.ee_nome).toUpperCase()},</div>
-        ${this._para(`Obrigado pela inscrição do/a <b>${this._esc(data.atleta)}</b> no CFT 2026 pelo <b>${this._esc(data.clube)}</b>.`)}
-        ${this._para(`Como sabe, oferecemos um desconto a todos os atletas inscritos por clubes com 8 ou mais participantes. À data de hoje, o <b>${this._esc(data.clube)}</b> tem <b>${this._esc(data.clube_atletas)}</b> atleta${data.clube_atletas === '1' ? '' : 's'} inscrito${data.clube_atletas === '1' ? '' : 's'} — falta${faltam === '1' ? '' : 'm'} apenas <b style="color:${C.greenDark};">${this._esc(String(faltam))}</b> para destravar o desconto.`)}
+        ${this._greeting(ee, data)}
+        ${this._para(`Obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2026 pelo <b>${this._esc(data.clube)}</b>.`)}
+        ${this._para(`Como sabe, oferecemos um desconto a todos os atletas inscritos por clubes com 8 ou mais participantes. À data de hoje, o <b>${this._esc(data.clube)}</b> tem <b>${this._esc(data.clube_atletas)}</b> atleta${data.clube_atletas === '1' ? '' : 's'} ${data.clube_atletas === '1' ? 'inscrito' : 'inscritos'} — falta${faltam === '1' ? '' : 'm'} apenas <b style="color:${C.greenDark};">${this._esc(String(faltam))}</b> para destravar o desconto.`)}
       </div>
       ${this._infoBox([
         ['Clube', this._esc(data.clube)],
@@ -2733,7 +2950,7 @@ const EmailTemplates = {
 
   // ============ Bulk templates ============
 
-  // 5. Aviso de prazo
+  // 5. Aviso de prazo (bulk — sem atleta específico)
   avisoPrazo(data) {
     const C = this.C;
     const subject = `CFT · Lembrete: prazo de pagamento a ${data.data_limite}`;
@@ -2743,14 +2960,14 @@ const EmailTemplates = {
         ${this._display('A data\nestá perto.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
-        <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ENCARREGADO(A) DE EDUCAÇÃO,</div>
-        ${this._para(`Estamos perto da data limite para regularização das inscrições e ainda temos alguns pagamentos pendentes referentes ao/à seu/sua educando/a — este email é um lembrete amigável.`)}
+        <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO/A ENCARREGADO/A DE EDUCAÇÃO,</div>
+        ${this._para(`Estamos perto da data limite para regularização das inscrições e ainda temos alguns pagamentos pendentes referentes ao seu educando — este email é um lembrete amigável.`)}
       </div>
       ${this._infoBox([
         ['Prazo limite', `<b style="color:${C.orange};">${this._esc(data.data_limite)}</b>`],
         ['Pagamento', `Transferência bancária`],
         ['IBAN', `<span style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</span>`],
-        ['Referência', 'Nome do/a atleta na descrição']
+        ['Referência', 'Nome do atleta na descrição']
       ], 'Detalhes')}
       <div style="padding:24px 40px 8px 40px;">
         ${this._para(`Se já efetuou o pagamento nos últimos dias, ignore esta mensagem — pode estar simplesmente em processamento.`)}
@@ -2762,18 +2979,27 @@ const EmailTemplates = {
     return { subject, html: this._wrap(body) };
   },
 
-  // 6. Informações práticas
+  // 6. Informações práticas (per-atleta quando há nome; bulk quando não)
   infoPraticas(data) {
     const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
+    const hasName = !!String(data.atleta || '').trim();
     const subject = `CFT · Informações para o início das atividades`;
+    const greeting = hasName
+      ? this._greeting(ee, data)
+      : `<div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO/A ENCARREGADO/A,</div>`;
+    const intro = hasName
+      ? `Está quase a começar! Aqui ficam as informações práticas para os primeiros dias ${a.doA} <b>${this._esc(data.atleta)}</b>.`
+      : `Está quase a começar! Aqui ficam as informações práticas para os primeiros dias do seu educando.`;
     const body = `
       <div style="padding:48px 40px 24px 40px;">
         ${this._over('Está quase a começar', C.greenDark)}
         ${this._display('Tudo o que\nprecisa saber.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
-        <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ENCARREGADO(A),</div>
-        ${this._para(`Está quase a começar! Aqui ficam as informações práticas para os primeiros dias do/a seu/sua educando/a.`)}
+        ${greeting}
+        ${this._para(intro)}
       </div>
       ${this._infoBox([
         ['📍 Local', this._esc(data.local || '—')],
@@ -2791,9 +3017,11 @@ const EmailTemplates = {
     return { subject, html: this._wrap(body) };
   },
 
-  // 7. Confirmação de inscrição
+  // 7. Confirmação de inscrição (per-atleta)
   confirmacao(data) {
     const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
     const subject = `CFT · Inscrição confirmada`;
     const body = `
       <div style="padding:48px 40px 24px 40px;">
@@ -2801,12 +3029,110 @@ const EmailTemplates = {
         ${this._display('Bem-vindo\nao campus.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
-        <div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">CARO(A) ENCARREGADO(A),</div>
-        ${this._para(`A inscrição do/a seu/sua educando/a está confirmada e o pagamento recebido. Está tudo certo do nosso lado.`)}
+        ${this._greeting(ee, data)}
+        ${this._para(`A inscrição ${a.doA} <b>${this._esc(data.atleta || 'seu educando')}</b> está confirmada e o pagamento recebido. Está tudo certo do nosso lado.`)}
         ${this._para(`Mais perto da data de início, enviaremos as informações práticas (local, horário, material).`)}
       </div>
       <div style="padding:8px 40px 16px 40px;">
         <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Obrigado pela confiança,</div>
+      </div>`;
+    return { subject, html: this._wrap(body) };
+  },
+
+  // ============ Novos templates (Maio 2026) ============
+
+  // 8. Boas-vindas — primeiro contacto pós-inscrição (independente do estado
+  //    de pagamento; um abraço editorial com próximos passos).
+  boasVindas(data) {
+    const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
+    const subject = `CFT · ${a.benvindo === 'bem-vinda' ? 'Bem-vinda' : 'Bem-vindo'}, ${this.firstName(data.atleta) || 'atleta'}`;
+    const body = `
+      <div style="padding:48px 40px 24px 40px;">
+        ${this._over('Inscrição recebida', C.greenDark)}
+        ${this._display(a.benvindo === 'bem-vinda' ? 'Bem-vinda\nao campus.' : 'Bem-vindo\nao campus.')}
+      </div>
+      <div style="padding:0 40px 24px 40px;">
+        ${this._greeting(ee, data)}
+        ${this._para(`É com muito gosto que recebemos a inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no <b>CFT 2026 · 4ª edição</b>. Bem-${a.benvindo} ao nosso campus.`)}
+        ${this._para(`Vamos tratar de todos os detalhes nas próximas semanas. Nesta primeira mensagem, deixamos o resumo da inscrição e os passos seguintes.`)}
+      </div>
+      ${this._infoBox([
+        ['Atleta', this._esc(data.atleta)],
+        ['Clube', this._esc(data.clube || '—')],
+        ['Valor da inscrição', `<b>${data.valor_esperado}</b>`],
+        ['IBAN', `<span style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</span>`],
+        ['Prazo', `<span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_limite)}</span>`]
+      ], 'Resumo da inscrição')}
+      <div style="padding:24px 40px 8px 40px;">
+        ${this._para(`<b>Próximos passos.</b> Se ainda não regularizou o pagamento, pode fazê-lo por transferência para o IBAN acima, indicando o nome ${a.doA} atleta na descrição. Assim que o valor entrar, confirmamos por email.`)}
+        ${this._para(`Mais perto do início, enviaremos as <b>informações práticas</b> (local, horário, material, logística de chegada e saída).`)}
+        ${this._para(`Qualquer questão — sobre semanas, equipamento, refeições, ou outra coisa que ainda não esteja clara — responda a este email que respondemos em 24h.`)}
+      </div>
+      <div style="padding:8px 40px 16px 40px;">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Até breve,</div>
+      </div>`;
+    return { subject, html: this._wrap(body) };
+  },
+
+  // 9. Genérico — admin escreve assunto + corpo livre. Mantém o wrapper
+  //    branded (header, assinatura, footer). data.subject + data.body são
+  //    populados pelo painel inline da Lista.
+  generico(data) {
+    const C = this.C;
+    const ee = this.G_ee(data);
+    const subject = data.subject || `CFT · Mensagem para ${this.firstName(data.ee_nome) || 'si'}`;
+    // O corpo é texto livre; preserva quebras de linha em parágrafos.
+    const raw = String(data.body || '').trim();
+    const paragraphs = raw
+      ? raw.split(/\n{2,}/).map(p => this._para(this._esc(p).replace(/\n/g, '<br>'))).join('')
+      : this._para('<em>(escreva aqui a sua mensagem)</em>');
+    const body = `
+      <div style="padding:48px 40px 24px 40px;">
+        ${this._over('Mensagem', C.greenDark)}
+        ${this._display(data.heading || 'Uma palavra\nda nossa parte.')}
+      </div>
+      <div style="padding:0 40px 24px 40px;">
+        ${this._greeting(ee, data)}
+        ${paragraphs}
+      </div>
+      <div style="padding:8px 40px 16px 40px;">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">${this._esc(data.signoff || 'Obrigado,')}</div>
+      </div>`;
+    return { subject, html: this._wrap(body) };
+  },
+
+  // 10. Pré-campus — comunicação a 1-2 semanas do início.
+  //     Distinto do infoPraticas (que é mais perto da véspera): aqui dá-se
+  //     um update geral, antecipa-se equipamento, e reforça-se prazos finais.
+  prePampus(data) {
+    const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
+    const subject = `CFT · A duas semanas do início — preparação ${a.doA} ${data.atleta}`;
+    const body = `
+      <div style="padding:48px 40px 24px 40px;">
+        ${this._over('Conta decrescente · pré-campus', C.greenDark)}
+        ${this._display('A começar\nem breve.')}
+      </div>
+      <div style="padding:0 40px 24px 40px;">
+        ${this._greeting(ee, data)}
+        ${this._para(`Estamos a duas semanas do início do <b>CFT 2026</b> e ${a.oAtleta} <b>${this._esc(data.atleta)}</b> faz parte do grupo. Esta é uma mensagem rápida para ${ee.o === 'a' ? 'a' : 'o'} preparar para o que aí vem.`)}
+      </div>
+      ${this._infoBox([
+        ['📅 Início', `<span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_inicio || '—')}</span>`],
+        ['📍 Local', this._esc(data.local || '—')],
+        ['🎒 Material', this._esc(data.material || '—')],
+        ['🚗 Logística', this._esc(data.logistica || '—')]
+      ], 'O que já pode preparar')}
+      <div style="padding:24px 40px 8px 40px;">
+        ${this._para(`<b>Equipamento.</b> Aproveite estes dias para garantir que ${a.oAtleta} tem todo o material listado em condições — calçado adequado, garrafa de água, muda de roupa.`)}
+        ${this._para(`<b>Pagamento.</b> Se ainda houver alguma parcela em aberto, este é o momento para fechar antes do início (IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>). Se está tudo regularizado do seu lado e tem alguma dúvida, responda a este email.`)}
+        ${this._para(`<b>Comunicação.</b> Na semana anterior ao início, enviamos as informações finais (horários exactos, contactos de emergência, mapa do local). Mantenha-se atento à sua caixa de correio.`)}
+      </div>
+      <div style="padding:8px 40px 16px 40px;">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Até daqui a pouco,</div>
       </div>`;
     return { subject, html: this._wrap(body) };
   },
@@ -2892,6 +3218,10 @@ const EmailDraft = {
       clube:           atleta.clube || '',
       clube_atletas:   String(clubeCount),
       clube_faltam:    String(clubeFaltam),
+      // Inferência de género PT-PT pelo 1º nome (atleta + EE) — usada em todos
+      // os templates para concordância. Pode ser sobreposta por override.
+      gen_atleta:      EmailTemplates.guessGender(atleta.atleta || ''),
+      gen_ee:          EmailTemplates.guessGender(atleta.encarregado || ''),
       valor_esperado:  devido ? (devido + ' €') : '—',
       valor_pago:      pago   ? (pago   + ' €') : '0 €',
       valor_atual:     devido + ' €',
@@ -2900,6 +3230,7 @@ const EmailDraft = {
       falta:           falta  ? (falta  + ' €') : '0 €',
       excedente:       excedente ? (excedente + ' €') : '0 €',
       iban_cft:        EmailTemplates.IBAN_CFT,
+      data_inicio:     (Config.get('email_data_inicio')   || ''),
       data_limite:     (Config.get('email_data_limite')   || '21 de junho'),
       local:           (Config.get('email_local')         || 'Pavilhão Municipal de Sobral de Monte Agraço'),
       horario:         (Config.get('email_horario')       || '09h00 às 17h30'),
