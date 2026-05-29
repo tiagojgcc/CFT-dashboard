@@ -7,6 +7,10 @@
 <link rel="stylesheet" href="assets/cft-tokens.css">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* Rede de segurança contra scroll horizontal acidental (overflow-x: clip
+     mantém sticky a funcionar, ao contrário de hidden). */
+  html, body { overflow-x: clip; max-width: 100%; }
+  body { min-width: 320px; }
   html, body { background: var(--beige-light); color: var(--charcoal); font-family: var(--font-body); font-size: 13px; }
   body { min-height: 100vh; }
   a { color: inherit; }
@@ -907,8 +911,6 @@
   .cft-mark-motto { font-family: 'Playfair Display',Georgia,serif; font-style: italic; font-size: 13px; color: var(--mid-gray); margin-top: 4px; }
 
   @media (max-width: 820px) {
-    .timeline { padding: 38px 4px 18px 4px; overflow-x: auto; }
-    .tl-point { min-width: 80px; }
     .cft-mark-card { padding: 18px; }
     .cft-mark-logo { max-width: 140px; }
   }
