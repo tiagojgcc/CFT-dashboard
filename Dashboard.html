@@ -1005,12 +1005,30 @@
   /* ============ MOBILE (tablet+phone) ============ */
   @media (max-width: 820px) {
     .container { padding: 10px 10px 40px; }
-    .nav-inner, .appbar { padding: 0 12px; }
+    .nav-inner { padding: 0 12px; }
     .kpi-row { grid-template-columns: 1fr; }
     .grid-2, .grid-3 { grid-template-columns: 1fr; }
-    .appbar { flex-direction: column; align-items: flex-start; padding: 12px; gap: 8px; }
+    /* Appbar: o flex container é .appbar-inner (não .appbar). Em mobile
+       permite wrap para o botão "Atualizar" cair para uma 2ª linha em
+       viewports muito estreitos; logo encolhe; email do utilizador
+       esconde (continua acessível no Sheet). */
+    .appbar { padding: 0; }
+    .appbar-inner {
+      padding: 8px 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .appbar-divider { display: none; }
+    .brand img.brand-logo { height: 40px; }
+    .brand-title { font-size: 22px; }
+    .brand-edition { font-size: 9px; }
     .ab-stats { display: none; }
     .ab-meta { font-size: 11px; }
+    .ab-right { margin-left: auto; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .ab-user { display: none; }            /* email do utilizador escondido em mobile */
+    .live-meta { font-size: 9.5px; }       /* mantém o "sincronizado" mas mais pequeno */
+    .ab-refresh { font-size: 11px; padding: 6px 10px; }
     /* Navegação: scroll horizontal */
     .nav-tabs { overflow-x: auto; flex-wrap: nowrap; }
     .nav-tab { white-space: nowrap; flex-shrink: 0; }
