@@ -826,47 +826,55 @@
   .tl-next .tl-cta { display: inline-block; margin-left: 8px; padding: 4px 10px; font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: var(--charcoal); color: var(--off-white); border-radius: 3px; cursor: pointer; border: none; }
   .tl-next .tl-cta:hover { background: var(--green-dark); }
   /* Mobile: timeline vira stepper vertical (linha à esquerda, marcos em coluna).
-     O DOM já vem ordenado cronologicamente, por isso o flex column flui certo. */
+     O DOM já vem ordenado cronologicamente, por isso o flex column flui certo.
+     Os dots ficam centrados na linha vertical: linha em left:6px width:4px
+     (centro=8) e dots arrancam em x=0 com width:16px (centro=8). */
   @media (max-width: 720px) {
-    .tl-card { padding: 16px 16px 16px 12px !important; }
+    .tl-card { padding: 16px 16px 16px 14px !important; }
     .timeline {
       position: relative; height: auto; min-height: 0;
-      margin: 0; padding: 6px 0 4px 0;
+      margin: 0; padding: 6px 0 4px 2px;
       display: flex; flex-direction: column;
     }
     .timeline-line {
-      position: absolute; left: 11px; top: 8px; bottom: 8px;
+      position: absolute; left: 6px; top: 14px; bottom: 14px;
       width: 4px; height: auto; right: auto;
       border-radius: 2px; border: none;
     }
     .timeline-line-done {
-      position: absolute; left: 11px; top: 8px;
+      position: absolute; left: 6px; top: 14px;
       width: 4px; height: var(--tl-progress, 0%);
       background: linear-gradient(to bottom, var(--green-dark) 0%, #5fa46d 100%);
       transition: height 600ms ease-out;
     }
     .tl-point {
       position: relative !important; left: 0 !important;
-      display: flex; align-items: center; gap: 14px;
-      padding: 9px 0 9px 0;
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 0;
       margin-left: 0;
     }
     .tl-point-dot {
       position: relative !important; left: 0 !important; top: 0 !important;
       transform: none !important;
       flex-shrink: 0;
-      width: 14px !important; height: 14px !important;
-      box-shadow: 0 0 0 4px var(--white);  /* "esconde" a linha por trás do ponto */
+      width: 16px !important; height: 16px !important;
+      border-width: 3px !important;
+      box-shadow: 0 0 0 3px var(--off-white);  /* "esconde" a linha por trás do ponto */
     }
     .tl-point.next .tl-point-dot {
       width: 16px !important; height: 16px !important;
+      box-shadow: 0 0 0 3px var(--off-white), 0 0 0 6px rgba(212,132,90,0.22);
+    }
+    .tl-point.today .tl-point-dot {
+      width: 14px !important; height: 14px !important;
+      margin-left: 1px;  /* compensa diferença de 2px para manter centro alinhado */
     }
     .tl-point-content {
       position: relative !important; left: 0 !important; top: 0 !important;
       transform: none !important;
       width: auto !important; text-align: left !important;
       display: flex; align-items: baseline; gap: 10px;
-      flex-wrap: wrap; flex: 1;
+      flex-wrap: wrap; flex: 1; min-width: 0;
     }
     .tl-point-content::before,
     .tl-point-content::after { display: none !important; }
