@@ -781,7 +781,12 @@
   .tl-card { padding: 18px 22px 20px 22px !important; margin-bottom: 14px; }
   .tl-card .card-head { margin-bottom: 18px; }
   /* A timeline reserva 60px acima da linha e 60px abaixo para labels alternados. */
-  .timeline { position: relative; padding: 0; height: 170px; margin: 0 70px; }
+  .timeline { position: relative; padding: 0; height: 180px; margin: 0 50px; }
+  @media (max-width: 1100px) {
+    .timeline { margin: 0 36px; height: 178px; }
+    .tl-point-content { width: 108px !important; }
+    .tl-point-sub { font-size: 9px !important; }
+  }
   .timeline-line { position: absolute; left: 0; right: 0; top: 82px; height: 6px; background: var(--beige-mid); border-radius: 3px; border: 1px solid var(--sand); box-sizing: border-box; }
   .timeline-line-done { position: absolute; left: 0; top: 82px; height: 6px; width: var(--tl-progress, 0%); background: linear-gradient(to right, var(--green-dark) 0%, #5fa46d 100%); border-radius: 3px; box-shadow: 0 1px 0 rgba(0,0,0,0.04); transition: width 600ms ease-out; }
   /* Ticks mensais finos sem label (apenas textura visual) */
@@ -794,9 +799,12 @@
   .tl-point.next .tl-point-dot { background: var(--orange-accent); border-color: var(--orange-accent); box-shadow: 0 0 0 5px rgba(212,132,90,0.24); width: 18px; height: 18px; top: 76px; }
   .tl-point.today .tl-point-dot { background: var(--charcoal); border-color: var(--charcoal); width: 12px; height: 12px; top: 79px; }
   /* Conteúdo (data + label) acima ou abaixo da linha conforme parity */
-  .tl-point-content { position: absolute; left: 0; transform: translateX(-50%); width: 105px; text-align: center; }
-  .tl-point.above .tl-point-content { top: 8px; }
-  .tl-point.below .tl-point-content { top: 110px; }
+  .tl-point-content { position: absolute; left: 0; transform: translateX(-50%); width: 130px; text-align: center; }
+  .tl-point.above .tl-point-content { top: 4px; }
+  .tl-point.below .tl-point-content { top: 106px; }
+  /* Sub-texto pequeno por baixo do label principal (ex.: detalhe do aviso) */
+  .tl-point-sub { font-family: var(--font-body); font-size: 9.5px; font-weight: 500; color: var(--mid-gray); margin-top: 3px; line-height: 1.25; letter-spacing: 0.01em; text-transform: none; }
+  .tl-point.next .tl-point-sub { color: var(--orange-accent); }
   /* Clamp: marcos junto às bordas não centram o label (evita overflow para fora do card) */
   .tl-point.edge-left .tl-point-content { transform: translateX(0); text-align: left; }
   .tl-point.edge-right .tl-point-content { transform: translateX(-100%); text-align: right; }
@@ -4098,7 +4106,8 @@ function _cftMarcos(){
   return [
     { key: 'abertura', label: 'Abertura das inscrições',  date: new Date('2025-11-01') },
     { key: 'cutoff',   label: 'Fim do desconto',          date: cfgCutoff },
-    { key: 'aviso',    label: 'Enviar aviso · 2 semanas para o final do prazo de pagamento', date: avisoPrazo,
+    { key: 'aviso',    label: 'Enviar aviso',             sub: '2 semanas para o final do prazo de pagamento',
+      date: avisoPrazo,
       cta: { text: '✉ enviar aviso prazo', fn: 'enviarAvisoPrazoBulk' } },
     { key: 'prazo',    label: 'Final do prazo de pagamento', date: cfgPrazo },
     { key: 'info',     label: 'Enviar info geral',        date: infoGeral,
@@ -4165,11 +4174,13 @@ function renderTimeline(){
     const cls = isPast ? 'past' : (isNext ? 'next' : '');
     const where = idx % 2 === 0 ? 'above' : 'below';
     const p = pctOrdinal(idx);
+    const subHtml = m.sub ? `<div class="tl-point-sub">${escHtml(m.sub)}</div>` : '';
     return `<div class="tl-point ${cls} ${where} ${edgeCls(p)}" style="left:${p.toFixed(2)}%;">
       <div class="tl-point-dot"></div>
       <div class="tl-point-content">
         <div class="tl-point-date">${escHtml(_fmtDateShort(m.date))}</div>
         <div class="tl-point-label">${escHtml(m.label)}</div>
+        ${subHtml}
       </div>
     </div>`;
   }).join('');
