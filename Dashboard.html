@@ -833,9 +833,10 @@
     .tl-card { padding: 16px 16px 16px 14px !important; }
     .timeline {
       position: relative; height: auto; min-height: 0;
-      margin: 0; padding: 6px 0 4px 2px;
+      margin: 0; padding: 6px 0 4px 0;       /* sem padding-left para dots e linha alinharem */
       display: flex; flex-direction: column;
     }
+    /* Linha vertical em x=6 width=4 → centro x=8. Dots em x=0 width=16 → centro x=8. */
     .timeline-line {
       position: absolute; left: 6px; top: 14px; bottom: 14px;
       width: 4px; height: auto; right: auto;
@@ -851,23 +852,23 @@
       position: relative !important; left: 0 !important;
       display: flex; align-items: center; gap: 12px;
       padding: 8px 0;
-      margin-left: 0;
+      margin: 0 !important;
     }
     .tl-point-dot {
       position: relative !important; left: 0 !important; top: 0 !important;
       transform: none !important;
-      flex-shrink: 0;
+      flex-shrink: 0; margin: 0 !important;
       width: 16px !important; height: 16px !important;
       border-width: 3px !important;
-      box-shadow: 0 0 0 3px var(--off-white);  /* "esconde" a linha por trás do ponto */
+      box-shadow: 0 0 0 3px var(--off-white);
     }
     .tl-point.next .tl-point-dot {
       width: 16px !important; height: 16px !important;
       box-shadow: 0 0 0 3px var(--off-white), 0 0 0 6px rgba(212,132,90,0.22);
     }
     .tl-point.today .tl-point-dot {
-      width: 14px !important; height: 14px !important;
-      margin-left: 1px;  /* compensa diferença de 2px para manter centro alinhado */
+      /* Forçar mesmo tamanho do resto para o centro coincidir com a linha */
+      width: 16px !important; height: 16px !important;
     }
     .tl-point-content {
       position: relative !important; left: 0 !important; top: 0 !important;
@@ -4095,15 +4096,17 @@ function _cftMarcos(){
   const infoGeral = new Date(cfgStart.getTime() - 14 * 86400000);   // 2 semanas antes do início
   const cfgWeek2 = new Date(cfgStart.getTime() + 7 * 86400000);
   return [
-    { key: 'abertura', label: 'Inscrições abertas',   date: new Date('2025-11-01') },
-    { key: 'cutoff',   label: 'Cutoff desconto',      date: cfgCutoff },
-    { key: 'aviso',    label: 'Aviso prazo',          date: avisoPrazo,
+    { key: 'abertura', label: 'Abertura das inscrições',  date: new Date('2025-11-01') },
+    { key: 'cutoff',   label: 'Fim do desconto',          date: cfgCutoff },
+    { key: 'aviso',    label: 'Enviar aviso prazo',       date: avisoPrazo,
       cta: { text: '✉ enviar aviso prazo', fn: 'enviarAvisoPrazoBulk' } },
-    { key: 'prazo',    label: 'Prazo pagamento',      date: cfgPrazo },
-    { key: 'info',     label: 'Info geral',           date: infoGeral,
+    { key: 'prazo',    label: 'Final do prazo de pagamento', date: cfgPrazo },
+    { key: 'info',     label: 'Enviar info geral',        date: infoGeral,
       cta: { text: '✉ enviar info geral',  fn: 'enviarInfoPraticasBulk' } },
-    { key: 'sem1',     label: 'Semana 1',             date: cfgStart },
-    { key: 'sem2',     label: 'Semana 2',             date: cfgWeek2 }
+    { key: 'sem1',     label: 'Início CFT · semana 1',    date: cfgStart },
+    { key: 'sem2',     label: 'Início CFT · semana 2',    date: cfgWeek2 },
+    { key: 'pagar',    label: 'Realizar pagamentos',      date: new Date('2026-07-25') },
+    { key: 'agradec',  label: 'Email agradecimento aos pais', date: new Date('2026-07-26') }
   ].sort((a, b) => a.date - b.date);
 }
 
