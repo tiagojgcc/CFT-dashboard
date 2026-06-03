@@ -768,7 +768,7 @@
   /* ============ OVERVIEW · grid system ============ */
   .ov-grid { display: grid; gap: 14px; margin-bottom: 14px; }
   .ov-grid--3        { grid-template-columns: 1fr 1fr 1fr; align-items: stretch; }
-  .ov-grid--clubes   { grid-template-columns: 2fr 1fr; }       /* clubes + logo */
+  .ov-grid--clubes   { grid-template-columns: 1fr 1fr; }       /* total + por semana */
   .ov-grid > .card { padding: 16px 18px; display: flex; flex-direction: column; }
   @media (max-width: 1100px) {
     .ov-grid--3 { grid-template-columns: 1fr 1fr; }
@@ -921,15 +921,26 @@
   .weeks-foot { margin-top: auto; padding-top: 12px; border-top: 1px dashed var(--sand); font-size: 11.5px; color: var(--mid-gray); font-family: var(--font-body); display: flex; gap: 14px; flex-wrap: wrap; }
   .weeks-foot b { color: var(--charcoal); font-family: var(--font-condensed); letter-spacing: 0.04em; }
   .clubes-foot { padding-top: 8px; font-size: 11.5px; color: var(--mid-gray); font-style: italic; }
-  /* ============ LOGO CFT (linha 3 direita) ============ */
-  .cft-mark-card { display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--beige-mid); border: 1px solid var(--sand); padding: 28px 18px; text-align: center; }
-  .cft-mark-logo { width: 70%; max-width: 220px; height: auto; opacity: 0.88; margin-bottom: 14px; }
-  .cft-mark-edition { font-family: var(--font-condensed); font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--charcoal); }
-  .cft-mark-motto { font-family: 'Playfair Display',Georgia,serif; font-style: italic; font-size: 13px; color: var(--mid-gray); margin-top: 4px; }
+  /* ============ CLUBES POR SEMANA (linha 3 direita) ============ */
+  .clubes-week { display: flex; flex-direction: column; gap: 9px; margin-top: 6px; }
+  .cw-row { display: grid; grid-template-columns: 1fr 90px auto; gap: 10px; align-items: center; }
+  .cw-name { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cw-bar { height: 14px; background: var(--beige-mid); border-radius: 2px; display: flex; overflow: hidden; }
+  .cw-bar-s1 { background: var(--green-dark); height: 100%; }
+  .cw-bar-s2 { background: var(--orange-accent); height: 100%; }
+  .cw-counts { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; color: var(--charcoal); white-space: nowrap; }
+  .cw-counts .s1 { color: var(--green-dark); }
+  .cw-counts .s2 { color: var(--orange-accent); }
+  .cw-counts .sep { color: var(--sand); margin: 0 4px; }
+  /* Legenda no topo */
+  .cw-legend { display: flex; gap: 14px; font-family: var(--font-condensed); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 6px; }
+  .cw-legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  .cw-legend-dot.s1 { background: var(--green-dark); }
+  .cw-legend-dot.s2 { background: var(--orange-accent); }
 
   @media (max-width: 820px) {
-    .cft-mark-card { padding: 18px; }
-    .cft-mark-logo { max-width: 140px; }
+    .cw-row { grid-template-columns: 1fr 60px auto; gap: 8px; }
+    .cw-name { font-size: 10.5px; }
   }
   .email-tpl-hint { font-size: 11.5px; color: var(--mid-gray); font-style: italic; margin: 0 0 10px 0; line-height: 1.4; }
   .email-generic-fields { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
@@ -1200,10 +1211,12 @@
         <div class="clubes" id="clubes"></div>
         <div class="clubes-foot" id="clubes-foot"></div>
       </div>
-      <div class="card cft-mark-card" aria-hidden="true">
-        <img src="assets/logo_CFT.png" alt="" class="cft-mark-logo">
-        <div class="cft-mark-edition">4ª edição · 2026</div>
-        <div class="cft-mark-motto">Campos de Formação Técnica</div>
+      <div class="card clubes-week-card">
+        <div class="card-head">
+          <div class="card-title">Por semana</div>
+          <div class="card-meta" id="clubes-week-meta">—</div>
+        </div>
+        <div class="clubes-week" id="clubes-week"></div>
       </div>
     </div>
   </div>
@@ -1853,11 +1866,8 @@ function renderClubes(){
   const sorted = Object.entries(cc).sort((a,b) => b[1] - a[1]);
   const max = sorted[0][1];
   document.getElementById('clube-meta').textContent = sorted.length + ' clubes';
-  // Mostra top 8 (encurtado); os restantes vão para o foot
-  const TOP = 8;
-  const top = sorted.slice(0, TOP);
-  const resto = sorted.slice(TOP);
-  document.getElementById('clubes').innerHTML = top.map(([name, count]) => `
+  // Mostra todos os clubes no gráfico
+  document.getElementById('clubes').innerHTML = sorted.map(([name, count]) => `
     <div class="clube-row">
       <div class="clube-name">${name}</div>
       <div class="clube-bar"><div class="clube-bar-fill" style="width:${count/max*100}%; background:${count >= 8 ? 'var(--green-dark)' : 'var(--sage)'};"></div></div>
@@ -1865,15 +1875,56 @@ function renderClubes(){
     </div>
   `).join('');
   const foot = document.getElementById('clubes-foot');
-  if (foot) {
-    if (resto.length === 0) {
-      foot.textContent = '';
-    } else {
-      const totalResto = resto.reduce((s, [,n]) => s + n, 0);
-      foot.textContent = `+ ${resto.length} clubes (${totalResto} atletas) · ` + resto.slice(0, 5).map(([n]) => n).join(' · ') + (resto.length > 5 ? '…' : '');
-    }
-  }
+  if (foot) foot.textContent = '';
   renderEstadoDonut();
+  renderClubesPorSemana();
+}
+
+// ============ CLUBES · POR SEMANA ============
+// Barra empilhada por clube: segmento verde = inscritos sem 1, segmento
+// laranja = inscritos sem 2. Atletas inscritos nas 2 semanas contam para ambas.
+// Largura da barra proporcional à soma s1+s2 do maior clube.
+function renderClubesPorSemana(){
+  const host = document.getElementById('clubes-week');
+  const meta = document.getElementById('clubes-week-meta');
+  if (!host) return;
+  const counts = {};
+  let totS1 = 0, totS2 = 0;
+  data.forEach(r => {
+    if (!r.ativo) return;
+    if (!counts[r.clube]) counts[r.clube] = { s1: 0, s2: 0 };
+    parseSems(r.semana).forEach(s => {
+      if (s === 1) { counts[r.clube].s1++; totS1++; }
+      else if (s === 2) { counts[r.clube].s2++; totS2++; }
+    });
+  });
+  const rows = Object.entries(counts)
+    .map(([name, c]) => ({ name, s1: c.s1, s2: c.s2, total: c.s1 + c.s2 }))
+    .sort((a, b) => b.total - a.total);
+  if (rows.length === 0) {
+    host.innerHTML = '<div style="color:var(--mid-gray);font-size:12px;">Sem dados</div>';
+    if (meta) meta.textContent = '0 inscrições';
+    return;
+  }
+  const maxTotal = rows[0].total;
+  const legend = `<div class="cw-legend">
+    <span><span class="cw-legend-dot s1"></span>Semana 1</span>
+    <span><span class="cw-legend-dot s2"></span>Semana 2</span>
+  </div>`;
+  const items = rows.map(r => {
+    const w1 = maxTotal > 0 ? (r.s1 / maxTotal * 100) : 0;
+    const w2 = maxTotal > 0 ? (r.s2 / maxTotal * 100) : 0;
+    return `<div class="cw-row" title="${escAttr(r.name)} · sem 1: ${r.s1} · sem 2: ${r.s2}">
+      <div class="cw-name">${escHtml(r.name)}</div>
+      <div class="cw-bar">
+        ${r.s1 > 0 ? `<div class="cw-bar-s1" style="width:${w1.toFixed(2)}%;"></div>` : ''}
+        ${r.s2 > 0 ? `<div class="cw-bar-s2" style="width:${w2.toFixed(2)}%;"></div>` : ''}
+      </div>
+      <div class="cw-counts"><span class="s1">${r.s1}</span><span class="sep">·</span><span class="s2">${r.s2}</span></div>
+    </div>`;
+  }).join('');
+  host.innerHTML = legend + items;
+  if (meta) meta.textContent = `${totS1 + totS2} inscriç${(totS1 + totS2) === 1 ? 'ão' : 'ões'} · S1 ${totS1} · S2 ${totS2}`;
 }
 
 function renderEstadoDonut(){
