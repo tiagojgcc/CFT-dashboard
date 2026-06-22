@@ -3302,20 +3302,61 @@ function openListaSergio(){
 
 
 function openCamisolas(){
-  const ordered = (data || []).slice().sort((a, b) => (a.num || 9999) - (b.num || 9999));
-  const rows = ordered.map(r => {
-    const tam = (r._raw && r._raw.tshirt) || '';
-    const num = (r._raw && r._raw.tshirt_num) || '';
-    const nm  = (r._raw && r._raw.tshirt_nome) || '';
-    return `<tr>
-      <td class="num">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</td>
-      <td>${escHtml(r.nome)}</td>
-      <td>${escHtml(r.clube || '')}</td>
-      <td><b>${escHtml(tam)}</b></td>
-      <td class="num">${escHtml(num)}</td>
-      <td>${escHtml(nm)}</td>
-    </tr>`;
-  }).join('');
+  // Expande cada atleta pelas semanas em que está inscrito — atletas com
+  // sem 1+2 têm direito a 2 camisolas, aparecem 2 vezes. Listagem agrupada
+  // por semana, ordenada por num dentro de cada secção.
+  const expanded = [];
+  (data || []).forEach(r => {
+    if (!r.ativo) return;
+    const sems = parseSems(r.semana);
+    (sems.length > 0 ? sems : [null]).forEach(s => expanded.push({ r, sem: s }));
+  });
+  const buildSection = (semNum, label) => {
+    const items = expanded
+      .filter(x => x.sem === semNum)
+      .sort((a, b) => (a.r.num || 9999) - (b.r.num || 9999));
+    if (items.length === 0) return '';
+    const rows = items.map(({ r }) => {
+      const tam = (r._raw && r._raw.tshirt) || '';
+      const num = (r._raw && r._raw.tshirt_num) || '';
+      const nm  = (r._raw && r._raw.tshirt_nome) || '';
+      return `<tr>
+        <td class="num">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</td>
+        <td>${escHtml(r.nome)}</td>
+        <td><b>${escHtml(tam)}</b></td>
+        <td class="num">${escHtml(num)}</td>
+        <td>${escHtml(nm)}</td>
+      </tr>`;
+    }).join('');
+    return `<h2 class="sec">${label} <span class="cnt">${items.length} camisola${items.length === 1 ? '' : 's'}</span></h2>
+    <table>
+      <thead><tr>
+        <th class="num">Nº</th><th>Atleta</th><th>Tamanho</th><th class="num">Número</th><th>Nome na camisola</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  };
+  const sec1 = buildSection(1, 'Semana 1');
+  const sec2 = buildSection(2, 'Semana 2');
+  const semOutros = expanded.filter(x => x.sem !== 1 && x.sem !== 2);
+  let secOutros = '';
+  if (semOutros.length > 0) {
+    const rows = semOutros.map(({ r }) => {
+      const tam = (r._raw && r._raw.tshirt) || '';
+      const num = (r._raw && r._raw.tshirt_num) || '';
+      const nm  = (r._raw && r._raw.tshirt_nome) || '';
+      return `<tr>
+        <td class="num">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</td>
+        <td>${escHtml(r.nome)}</td>
+        <td><b>${escHtml(tam)}</b></td>
+        <td class="num">${escHtml(num)}</td>
+        <td>${escHtml(nm)}</td>
+      </tr>`;
+    }).join('');
+    secOutros = `<h2 class="sec">Sem semana definida</h2>
+    <table><thead><tr><th class="num">Nº</th><th>Atleta</th><th>Tamanho</th><th class="num">Número</th><th>Nome na camisola</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  const totalCamisolas = expanded.filter(x => x.sem === 1 || x.sem === 2).length + semOutros.length;
   const html = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
 <title>CFT 2026 — Camisolas</title>
 <style>
@@ -3324,23 +3365,20 @@ function openCamisolas(){
   header { border-bottom: 3px solid #1a1a1a; padding-bottom: 10px; margin-bottom: 14px; }
   h1 { margin: 0; font-size: 28px; letter-spacing: 0.04em; text-transform: uppercase; }
   .sub { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7a3a; margin-top: 4px; }
+  h2.sec { font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; margin: 22px 0 8px; padding-bottom: 5px; border-bottom: 2px solid #1a1a1a; display: flex; align-items: baseline; justify-content: space-between; }
+  h2.sec .cnt { font-size: 11px; letter-spacing: 0.1em; color: #6b7a3a; font-weight: 600; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
   th, td { padding: 6px 8px; border-bottom: 1px solid #ddd; text-align: left; }
   th { background: #1a1a1a; color: #fff; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
   td.num, th.num { text-align: center; }
   tr:nth-child(even) td { background: #f7f3eb; }
-  @media print { .no-print { display: none; } body { padding: 0; } }
+  @media print { .no-print { display: none; } body { padding: 0; } h2.sec { page-break-before: auto; break-inside: avoid; } table { break-inside: auto; } }
 </style></head><body>
 <div class="no-print" style="background:#1a1a1a;color:#fff;padding:10px 14px;border-radius:6px;margin-bottom:14px;">
   📄 Para guardar como PDF: <b>Ctrl+P</b> → "Guardar como PDF".
 </div>
-<header><h1>CFT — Camisolas</h1><div class="sub">Encomenda · 4ª edição · 2026</div></header>
-<table>
-  <thead><tr>
-    <th class="num">Nº</th><th>Atleta</th><th>Clube</th><th>Tamanho</th><th class="num">Número</th><th>Nome na camisola</th>
-  </tr></thead>
-  <tbody>${rows}</tbody>
-</table>
+<header><h1>CFT — Camisolas</h1><div class="sub">Encomenda · 4ª edição · 2026 · ${totalCamisolas} camisolas</div></header>
+${sec1}${sec2}${secOutros}
 </body></html>`;
   const w = window.open('', '_blank');
   if (!w) { toast('Bloqueador de popups impede abrir. Permite popups para este site.', true); return; }
