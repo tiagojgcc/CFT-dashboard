@@ -2234,7 +2234,7 @@ function renderTable(){
       <td class="col-check"><span class="row-check ${isSel ? 'checked' : ''}" onclick="toggleRow('${r.id}')">${isSel ? '✓' : ''}</span></td>
       <td class="num-cell">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</td>
       <td class="atleta">
-        <div class="atleta-name" onclick="openAtletaDetail('${r.id}')" title="Ver histórico do dinheiro">${escHtml(r.nome)}${flags}${chevron}</div>
+        <div class="atleta-name-row"><span class="atleta-name" onclick="openAtletaDetail('${r.id}')" title="Ver histórico do dinheiro">${escHtml(r.nome)}</span>${flags}${chevron}</div>
         <div class="atleta-encarregado" title="Encarregado · útil para identificar transferências bancárias">${escHtml(r.encarregado || '')}${(r._raw && r._raw.iban) ? ` · <span class="atleta-iban" title="IBAN do encarregado (cópia ao clicar)" onclick="event.stopPropagation(); copyIban('${escAttr(r._raw.iban)}', this)">${escHtml(String(r._raw.iban).replace(/\s+/g,'').slice(-4).padStart(4,'•'))}</span>` : ''}</div>
         <div class="atleta-icons">${contactBtns}${acts}</div>
       </td>
