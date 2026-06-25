@@ -507,6 +507,44 @@
   }
   .ab-refresh:hover { background: var(--green-bright); color: var(--charcoal); border-color: var(--green-bright); }
   .ab-refresh.spinning { opacity: 0.6; cursor: wait; }
+  /* Botão Anonimizar: cor diferente quando activo */
+  .ab-anon.active { background: #f4c542; color: var(--charcoal); border-color: #f4c542; }
+  .ab-anon.active:hover { background: var(--orange-accent); border-color: var(--orange-accent); color: white; }
+
+  /* ============ MODO ANONIMIZADO ============
+     Quando body.anonymized está activo, borra nomes/emails/IBANs em toda
+     a UI. Útil para apresentações com dados reais sem expor identidades. */
+  body.anonymized .atleta-name,
+  body.anonymized .atleta-encarregado,
+  body.anonymized .atleta-iban,
+  body.anonymized .email-panel-dest,
+  body.anonymized .hist-event-body .who,
+  body.anonymized .elim-table td:nth-child(2),
+  body.anonymized .elim-table td:nth-child(3),
+  body.anonymized .banco-name,
+  body.anonymized .banco-match-info,
+  body.anonymized .ad-atleta-name,
+  body.anonymized .ad-encarregado,
+  body.anonymized .bi-name,
+  body.anonymized .contact-btn,
+  body.anonymized .ab-user {
+    filter: blur(5px) saturate(0.4);
+    user-select: none !important;
+    pointer-events: none !important;
+    transition: filter 200ms ease-out;
+  }
+  /* Avisa visualmente que está ligado */
+  body.anonymized::before {
+    content: '🙈 modo anonimizado · nomes, emails e IBANs borratados';
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #f4c542; color: var(--charcoal);
+    text-align: center; padding: 4px 12px;
+    font-family: var(--font-condensed); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+  body.anonymized { padding-top: 24px; }
+  body.anonymized .appbar { top: 24px !important; }
   .ab-user { font-family: var(--font-condensed); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sand); }
 
   /* ============ ROW ACTIONS (LIST TABLE) ============ */
@@ -1130,6 +1168,7 @@
     <div class="ab-right">
       <span class="ab-user" id="ab-user">—</span>
       <span class="live-meta" id="live-meta"><span class="live-dot"></span>sincronizado</span>
+      <button class="ab-refresh ab-anon" id="btn-anon" onclick="toggleAnonimizar()" title="Borratar nomes/emails/IBANs · útil para apresentações">🙈 Anonimizar</button>
       <button class="ab-refresh" id="btn-refresh" onclick="refreshNow()" title="Atualizar agora">↻ Atualizar</button>
     </div>
   </div>
@@ -4142,6 +4181,35 @@ async function saveDevidoOverride(id, value, prevCalculado){
   catch (e) { toast('Erro: ' + e.message, true); }
   _bgRefresh();
 }
+
+// ============ ANONIMIZAR (toggle de blur em nomes/emails/IBANs) ============
+const ANON_KEY = 'cft_anonimizado';
+function _applyAnonState(on){
+  document.body.classList.toggle('anonymized', !!on);
+  const btn = document.getElementById('btn-anon');
+  if (btn) {
+    btn.classList.toggle('active', !!on);
+    btn.textContent = on ? '👁 Mostrar' : '🙈 Anonimizar';
+    btn.title = on ? 'Voltar a mostrar nomes/emails/IBANs' : 'Borratar nomes/emails/IBANs · útil para apresentações';
+  }
+}
+function toggleAnonimizar(){
+  const on = !document.body.classList.contains('anonymized');
+  _applyAnonState(on);
+  try { localStorage.setItem(ANON_KEY, on ? '1' : '0'); } catch(_) {}
+  if (window.toast) toast(on ? '🙈 Modo anonimizado · nomes borratados' : '👁 Modo normal');
+}
+// Restaura estado ao carregar (antes do render para evitar flash de nomes)
+(function _initAnon(){
+  try {
+    const saved = localStorage.getItem(ANON_KEY);
+    if (saved === '1') {
+      // Aplica logo (sem esperar pelo DOMContentLoaded — o body já existe)
+      if (document.body) _applyAnonState(true);
+      else document.addEventListener('DOMContentLoaded', () => _applyAnonState(true));
+    }
+  } catch(_) {}
+})();
 
 // ============ REFRESH / BOOTSTRAP ============
 let refreshTimer = null;
