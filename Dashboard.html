@@ -1431,6 +1431,15 @@
       #panel-financas .fin-cat-pill { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:600; color:#fff; }
       #panel-financas .fin-alvo-input { width:48px; padding:3px 6px; border:1px solid var(--sand); border-radius:4px; font-size:12px; text-align:center; }
       #panel-financas .fin-empty { color:var(--mid-gray); font-size:13px; padding:14px 4px; font-style:italic; }
+      #panel-financas .fin-sim { display:grid; grid-template-columns:1fr 1fr; gap:14px 22px; align-items:end; }
+      #panel-financas .fin-sim-ctrl label { display:block; font-size:12.5px; color:var(--charcoal); margin-bottom:6px; }
+      #panel-financas .fin-sim-ctrl input { width:90px; padding:8px 10px; border:1px solid var(--sand); background:var(--beige-light); font-size:15px; border-radius:4px; font-weight:600; }
+      #panel-financas .fin-sim-out { grid-column:1/-1; border-top:1px solid var(--sand); padding-top:12px; display:flex; gap:26px; flex-wrap:wrap; font-size:14px; }
+      #panel-financas .fin-sim-out b { font-family:var(--font-display); font-size:22px; display:block; line-height:1.1; }
+      #panel-financas .fin-be-week { margin:16px 0; }
+      #panel-financas .fin-be-track { position:relative; height:26px; background:var(--beige-light); border-radius:5px; overflow:hidden; }
+      #panel-financas .fin-be-note { font-size:12px; color:var(--mid-gray); margin-top:6px; }
+      @media (max-width:560px){ #panel-financas .fin-sim { grid-template-columns:1fr; } }
     </style>
 
     <div class="panel-head">
@@ -1491,9 +1500,37 @@
       </div>
     </div>
 
-    <div class="card" style="margin-top:14px;">
-      <div class="card-head"><div class="card-title">Margem e desconto por clube</div><div class="card-meta" id="fin-clube-meta">—</div></div>
-      <div id="fin-chart-clube"></div>
+    <div class="fin-grid3" style="margin-top:14px;">
+      <div class="card" style="grid-column:1/-1;">
+        <div class="card-head">
+          <div class="card-title">Ocupação e ponto de equilíbrio</div>
+          <div class="card-meta" id="fin-be-meta">quantos atletas cobrem os custos</div>
+        </div>
+        <div id="fin-breakeven"></div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:var(--mid-gray)">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e0a83f;vertical-align:middle"></span> cobre custos</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2e7d32;vertical-align:middle"></span> lucro</span>
+          <span>┊ ponto de equilíbrio · cinza = vagas livres</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fin-sim-card" style="margin-top:14px;">
+      <div class="card-head">
+        <div class="card-title">Simulador — e se…?</div>
+        <div class="card-meta">arrasta os números e vê o impacto no lucro</div>
+      </div>
+      <div class="fin-sim">
+        <div class="fin-sim-ctrl">
+          <label>Subir o preço por atleta em</label>
+          <div><input type="number" id="fin-sim-preco" value="0" min="0" step="5" oninput="finSim()"> €</div>
+        </div>
+        <div class="fin-sim-ctrl">
+          <label>Encher vagas livres (<span id="fin-sim-livres">0</span> disponíveis)</label>
+          <div><input type="number" id="fin-sim-vagas" value="0" min="0" step="1" oninput="finSim()"> atletas</div>
+        </div>
+        <div class="fin-sim-out" id="fin-sim-out"></div>
+      </div>
     </div>
 
     <div class="card" style="margin-top:14px;">
@@ -4830,6 +4867,10 @@ const FIN_CAT_COLORS = {
   'Outro': '#b0b0b0'
 };
 function finCatColor(c){ return FIN_CAT_COLORS[c] || '#b0b0b0'; }
+// Custos que escalam com o nº de atletas (variáveis). O resto é fixo por semana
+// (treinadores, equipamento, deslocações) — base do cálculo de break-even.
+const FIN_VAR_CATS = new Set(['Refeições', 'Medalhas/Prémios']);
+function finIsVar(d){ return FIN_VAR_CATS.has(d.categoria); }
 
 function finLoad(){
   try {
@@ -4934,12 +4975,30 @@ function finMetrics(){
   const denom = atletaWeeksTotal || 1;
   const geral = ds.filter(d => !d.semana).reduce((s, d) => s + (Number(d.valor) || 0), 0);
   const totAtlSem = (weeksAg[1].atl + weeksAg[2].atl) || 1;
+  // Fixos vs variáveis (para break-even e valor das vagas livres)
+  const varTotal = ds.filter(finIsVar).reduce((s, d) => s + (Number(d.valor) || 0), 0);
+  const fixTotal = despesaTotal - varTotal;
+  const varPorAtletaSem = atletaWeeksTotal ? varTotal / atletaWeeksTotal : 0;
+  const vagasSem = (typeof VAGAS_SEM !== 'undefined') ? VAGAS_SEM : 60;
   [1, 2].forEach(w => {
     const tagged = ds.filter(d => String(d.semana) === String(w)).reduce((s, d) => s + (Number(d.valor) || 0), 0);
     const share = geral * (weeksAg[w].atl / totAtlSem);
     weeksAg[w].desp = tagged + share;
     weeksAg[w].lucro = weeksAg[w].rec - weeksAg[w].desp;
     weeksAg[w].lpa = weeksAg[w].atl ? weeksAg[w].lucro / weeksAg[w].atl : 0;
+    // Break-even: custo fixo da semana ÷ contribuição (preço − custo variável) por atleta
+    const taggedFix = ds.filter(d => !finIsVar(d) && String(d.semana) === String(w)).reduce((s, d) => s + (Number(d.valor) || 0), 0);
+    const geralFix = ds.filter(d => !finIsVar(d) && !d.semana).reduce((s, d) => s + (Number(d.valor) || 0), 0);
+    const fixo = taggedFix + geralFix * (weeksAg[w].atl / totAtlSem);
+    const preco = weeksAg[w].atl ? weeksAg[w].rec / weeksAg[w].atl : 0;
+    const contrib = preco - varPorAtletaSem;
+    weeksAg[w].fixo = fixo;
+    weeksAg[w].preco = preco;
+    weeksAg[w].contrib = contrib;
+    weeksAg[w].breakEven = contrib > 0 ? Math.ceil(fixo / contrib) : null;
+    weeksAg[w].vagasLivres = Math.max(0, vagasSem - weeksAg[w].atl);
+    weeksAg[w].valorVagas = weeksAg[w].vagasLivres * Math.max(0, contrib);
+    weeksAg[w].ocup = vagasSem ? weeksAg[w].atl / vagasSem : 0;
   });
   Object.values(clubes).forEach(c => {
     c.custo = despesaTotal * (c.atletaWeeks / denom);
@@ -4950,9 +5009,12 @@ function finMetrics(){
   const lucro = receita - despesaTotal;
   const margem = receita > 0 ? lucro / receita : 0;
   const nAtl = ativos.length;
+  const vagasLivresTotal = (weeksAg[1].vagasLivres || 0) + (weeksAg[2].vagasLivres || 0);
+  const valorVagasTotal = (weeksAg[1].valorVagas || 0) + (weeksAg[2].valorVagas || 0);
   return {
     despesaTotal, porCat, receita, recebido, descontoTotal, nComDesc, lucro, margem, nAtl,
-    clubes, weeksAg,
+    clubes, weeksAg, fixTotal, varTotal, varPorAtletaSem, vagasSem,
+    vagasLivresTotal, valorVagasTotal,
     custoPorAtleta: nAtl ? despesaTotal / nAtl : 0,
     lucroPorAtleta: nAtl ? lucro / nAtl : 0,
     precoMedio: nAtl ? receita / nAtl : 0,
@@ -4999,6 +5061,66 @@ function finRenderDonut(porCat, total){
       <span style="flex:1">${c}</span><b>${fmt(porCat[c])}</b></div>`).join('');
 }
 
+function finBreakEven(m){
+  const vag = m.vagasSem || 60;
+  return [1, 2].map(w => {
+    const a = m.weeksAg[w];
+    if (!a.atl) return '';
+    const atlP = Math.min(100, a.atl / vag * 100);
+    const beP = (a.breakEven != null) ? Math.min(100, a.breakEven / vag * 100) : 0;
+    const coverW = Math.min(atlP, beP);
+    const profitW = Math.max(0, atlP - beP);
+    let note;
+    if (!m.despesaTotal) {
+      note = `${a.atl}/${vag} vagas ocupadas. Adiciona despesas para veres o ponto de equilíbrio.`;
+    } else if (a.breakEven == null) {
+      note = `⚠ Cada atleta custa mais do que paga (preço ${fmt(a.preco)} vs custo variável ${fmt(m.varPorAtletaSem)}). Revê o preço ou o custo da comida.`;
+    } else if (a.atl >= a.breakEven) {
+      note = `✓ Cobres os custos com <b>${a.breakEven}</b> atletas — estás <b>${a.atl - a.breakEven}</b> acima. Cada uma das <b>${a.vagasLivres}</b> vagas livres valia +${fmt(a.contrib)} de lucro → <b>${fmt(a.valorVagas)}</b> em cima da mesa.`;
+    } else {
+      note = `Faltam <b>${a.breakEven - a.atl}</b> atletas para cobrir custos (precisas de ${a.breakEven}). Estás a ${fmt(-a.lucro)} de prejuízo nesta semana.`;
+    }
+    const beMarker = (m.despesaTotal && a.breakEven != null && a.breakEven <= vag)
+      ? `<div style="position:absolute;left:${beP}%;top:-2px;height:30px;border-left:2px dashed #333"></div>` : '';
+    return `<div class="fin-be-week">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+        <b>Semana ${w}</b>
+        <span style="color:var(--mid-gray)">${a.atl}/${vag} atletas · ${Math.round(a.ocup * 100)}% cheio · lucro ${fmt(a.lucro)}</span>
+      </div>
+      <div class="fin-be-track">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${coverW}%;background:#e0a83f"></div>
+        <div style="position:absolute;left:${beP}%;top:0;height:100%;width:${profitW}%;background:#2e7d32"></div>
+        ${beMarker}
+      </div>
+      <div class="fin-be-note">${note}</div>
+    </div>`;
+  }).join('');
+}
+
+// Recalcula lucro/margem com as alavancas do simulador, sem re-render do painel todo.
+function finSim(){
+  const out = document.getElementById('fin-sim-out');
+  if (!out) return;
+  const m = finMetrics();
+  if (!m.nAtl) { out.innerHTML = '<span style="color:var(--mid-gray)">Sem atletas carregados.</span>'; return; }
+  const subida = Math.max(0, Number((document.getElementById('fin-sim-preco') || {}).value) || 0);
+  let novosAtl = Math.max(0, Math.round(Number((document.getElementById('fin-sim-vagas') || {}).value) || 0));
+  novosAtl = Math.min(novosAtl, m.vagasLivresTotal);
+  // preço sobe para todos; novos atletas pagam o preço médio (já com a subida) e custam o variável
+  const precoNovo = m.precoMedio + subida;
+  const receitaNova = (m.receita + subida * m.nAtl) + novosAtl * precoNovo;
+  const despesaNova = m.despesaTotal + novosAtl * m.varPorAtletaSem;
+  const lucroNovo = receitaNova - despesaNova;
+  const margemNova = receitaNova > 0 ? lucroNovo / receitaNova : 0;
+  const dLucro = lucroNovo - m.lucro;
+  const cor = lucroNovo >= 0 ? 'var(--green-dark)' : '#c0392b';
+  const dCor = dLucro >= 0 ? 'var(--green-dark)' : '#c0392b';
+  out.innerHTML = `
+    <div><span style="font-size:11px;color:var(--mid-gray);letter-spacing:.1em;text-transform:uppercase">Novo lucro</span><b style="color:${cor}">${fmt(lucroNovo)}</b></div>
+    <div><span style="font-size:11px;color:var(--mid-gray);letter-spacing:.1em;text-transform:uppercase">Variação</span><b style="color:${dCor}">${dLucro >= 0 ? '+' : ''}${fmt(dLucro)}</b></div>
+    <div><span style="font-size:11px;color:var(--mid-gray);letter-spacing:.1em;text-transform:uppercase">Nova margem</span><b style="color:${cor}">${Math.round(margemNova * 100)}%</b></div>`;
+}
+
 function finAdvice(m){
   const out = [];
   const alvo = finState.margemAlvo / 100;
@@ -5030,18 +5152,19 @@ function finAdvice(m){
     if (piorClube) txt += ` A maior fatia foi no <b>${piorClube.nome}</b> (${fmt(piorClube.desconto)} em ${piorClube.nDesc} atletas).`;
     out.push({ t: 'warn', text: txt });
   }
-  // Margem por clube — pior caso
-  const clubesArr = Object.values(m.clubes).filter(c => c.receita > 0 && c.n >= 1);
-  if (m.despesaTotal > 0 && clubesArr.length >= 2) {
-    const pior = clubesArr.slice().sort((a, b) => a.margem - b.margem)[0];
-    const melhor = clubesArr.slice().sort((a, b) => b.margem - a.margem)[0];
-    if (pior && melhor && pior.nome !== melhor.nome) {
-      let txt = `Por clube, a margem mais baixa é no <b>${pior.nome}</b> (${pct(pior.margem)}, lucro ${fmt(pior.lucro)})`;
-      if (pior.desconto > 0) txt += ` — puxada para baixo pelos <b>${fmt(pior.desconto)}</b> de desconto que deste lá`;
-      txt += `. O <b>${melhor.nome}</b> rende melhor (${pct(melhor.margem)}). Se o desconto não trouxe atletas extra, foi mau negócio nesse clube.`;
-      out.push({ t: pior.margem < alvo ? 'bad' : 'info', text: txt });
-    }
+  // Vagas livres — a alavanca mais forte (custos quase fixos)
+  if (m.despesaTotal > 0 && m.vagasLivresTotal > 0 && m.valorVagasTotal > 0) {
+    out.push({ t: 'warn', text: `Tens <b>${m.vagasLivresTotal} vagas por preencher</b>. Como os treinadores já estão pagos, cada atleta extra é quase tudo lucro (~${fmt(m.varPorAtletaSem ? m.precoMedio - m.varPorAtletaSem : m.precoMedio)} cada). Enchê-las valia <b>${fmt(m.valorVagasTotal)}</b> — mais do que cortar despesas. Foca o marketing em encher o campo.` });
+  } else if (m.despesaTotal > 0 && m.vagasLivresTotal === 0) {
+    out.push({ t: 'good', text: 'Campo esgotado nas duas semanas — ocupação a 100%. Aqui a alavanca já não é volume, é <b>preço</b>: testa subir para 2027 sem medo de perder procura.' });
   }
+  // Semana abaixo do break-even
+  [1, 2].forEach(w => {
+    const a = m.weeksAg[w];
+    if (m.despesaTotal > 0 && a.atl > 0 && a.breakEven != null && a.atl < a.breakEven) {
+      out.push({ t: 'bad', text: `A <b>Semana ${w}</b> está abaixo do ponto de equilíbrio: tens ${a.atl} atletas e precisavas de ${a.breakEven} só para cobrir custos. Considera juntá-la a outra semana ou reduzir treinadores se ficar com poucos inscritos.` });
+    }
+  });
   // Semana menos rentável
   const w1 = m.weeksAg[1], w2 = m.weeksAg[2];
   if (m.despesaTotal > 0 && w1.atl > 0 && w2.atl > 0) {
@@ -5106,24 +5229,19 @@ function renderFinancas(){
   document.getElementById('fin-week-meta').textContent = m.despesaTotal ? '' : 'adiciona despesas';
   document.getElementById('fin-chart-week').innerHTML = m.nAtl ? finBars(wRows) : '<div class="fin-empty">Sem atletas carregados.</div>';
 
-  // Margem por clube
-  const clubesArr = Object.values(m.clubes).filter(c => c.receita > 0).sort((a, b) => a.margem - b.margem).slice(0, 10);
-  document.getElementById('fin-clube-meta').textContent = clubesArr.length + ' clubes';
-  if (!m.despesaTotal) {
-    document.getElementById('fin-chart-clube').innerHTML = '<div class="fin-empty">Adiciona despesas para ver a margem por clube (a receita e descontos já estão calculados).</div>';
-  } else if (!clubesArr.length) {
-    document.getElementById('fin-chart-clube').innerHTML = '<div class="fin-empty">Sem atletas carregados.</div>';
-  } else {
-    const alvo = finState.margemAlvo / 100;
-    document.getElementById('fin-chart-clube').innerHTML = finBars(clubesArr.map(c => ({
-      label: `${c.nome} (${c.n})`,
-      value: Math.max(0, c.margem * 100),
-      color: c.margem >= alvo ? '#2e7d32' : (c.margem >= 0 ? '#e07a3f' : '#c0392b'),
-      valText: Math.round(c.margem * 100) + '%',
-      valColor: c.margem >= alvo ? 'var(--green-dark)' : (c.margem >= 0 ? '#c0612a' : '#c0392b'),
-      sub: `lucro ${fmt(c.lucro)} · receita ${fmt(c.receita)} · custo ${fmt(c.custo)}${c.desconto > 0 ? ' · desconto dado ' + fmt(c.desconto) : ''}`
-    })));
-  }
+  // Ocupação e ponto de equilíbrio
+  document.getElementById('fin-breakeven').innerHTML = m.nAtl ? finBreakEven(m)
+    : '<div class="fin-empty">Sem atletas carregados ainda.</div>';
+  document.getElementById('fin-be-meta').textContent = m.despesaTotal
+    ? `${m.vagasLivresTotal} vagas livres · valem ${fmt(m.valorVagasTotal)}`
+    : 'adiciona despesas para ver o break-even';
+
+  // Simulador
+  const simLivres = document.getElementById('fin-sim-livres');
+  if (simLivres) simLivres.textContent = m.vagasLivresTotal;
+  const simVagas = document.getElementById('fin-sim-vagas');
+  if (simVagas) simVagas.max = m.vagasLivresTotal;
+  finSim();
 
   // Conselhos
   const adv = finAdvice(m);
