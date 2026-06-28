@@ -1186,6 +1186,7 @@
       <div class="nav-more-menu" id="nav-more-menu">
         <div class="more-item" data-panel="banco"        onclick="showTab('banco'); document.getElementById('nav-more-menu').classList.remove('open');">Banco <span class="tab-count" id="tc-banco">0</span></div>
         <div class="more-item" data-panel="entregaveis"  onclick="showTab('entregaveis'); document.getElementById('nav-more-menu').classList.remove('open');">Entregáveis</div>
+        <div class="more-item" data-panel="financas"     onclick="showTab('financas'); document.getElementById('nav-more-menu').classList.remove('open');">Finanças</div>
         <div class="more-item" data-panel="historico"    onclick="showTab('historico'); document.getElementById('nav-more-menu').classList.remove('open');">Histórico</div>
         <div class="more-item" data-panel="eliminados"   onclick="showTab('eliminados'); document.getElementById('nav-more-menu').classList.remove('open');">Eliminados <span class="tab-count" id="tc-eliminados">0</span></div>
       </div>
@@ -1391,6 +1392,122 @@
       <div class="panel-sub" id="elim-sub">— inscrições inativas</div>
     </div>
     <div id="elim-content"></div>
+  </div>
+
+  <!-- ============ FINANÇAS ============ -->
+  <div class="panel" id="panel-financas">
+    <style>
+      #panel-financas .fin-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px; }
+      #panel-financas .fin-kpi { background:var(--white); border:1px solid var(--sand); border-radius:6px; padding:14px 16px; }
+      #panel-financas .fin-kpi-label { font-family:var(--font-condensed); font-size:10.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--mid-gray); margin-bottom:6px; }
+      #panel-financas .fin-kpi-num { font-family:var(--font-display); font-size:26px; line-height:1; }
+      #panel-financas .fin-kpi-sub { font-size:11.5px; color:var(--mid-gray); margin-top:6px; }
+      #panel-financas .fin-form { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+      #panel-financas .fin-form select, #panel-financas .fin-form input { padding:9px 10px; border:1px solid var(--sand); background:var(--beige-light); font-size:13px; border-radius:4px; font-family:var(--font-body); }
+      #panel-financas .fin-form input#fin-desc { flex:1; min-width:180px; }
+      #panel-financas .fin-form input#fin-val { width:120px; }
+      #panel-financas .fin-add-btn { padding:9px 18px; border:none; background:var(--green-dark); color:#fff; font-weight:600; font-size:13px; border-radius:4px; cursor:pointer; }
+      #panel-financas .fin-add-btn:hover { background:var(--green-bright,#1a7a3a); }
+      #panel-financas .fin-mini-btn { padding:5px 10px; border:1px solid var(--sand); background:var(--white); font-size:11px; border-radius:4px; cursor:pointer; margin-left:6px; color:var(--charcoal); }
+      #panel-financas .fin-grid3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; }
+      #panel-financas .fin-bars { display:flex; flex-direction:column; gap:9px; margin-top:8px; }
+      #panel-financas .fin-bar-row { display:grid; grid-template-columns:minmax(86px,auto) 1fr auto; gap:10px; align-items:center; font-size:12.5px; }
+      #panel-financas .fin-bar-label { color:var(--charcoal); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      #panel-financas .fin-bar-track { background:var(--beige-light); border-radius:4px; height:20px; overflow:hidden; position:relative; }
+      #panel-financas .fin-bar-fill { height:100%; border-radius:4px; transition:width .3s; min-width:2px; }
+      #panel-financas .fin-bar-val { font-weight:700; white-space:nowrap; font-variant-numeric:tabular-nums; }
+      #panel-financas .fin-bar-sub { grid-column:1/-1; font-size:11px; color:var(--mid-gray); margin-top:-4px; }
+      #panel-financas .fin-advice-item { display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--sand); font-size:13.5px; line-height:1.5; }
+      #panel-financas .fin-advice-item:last-child { border-bottom:none; }
+      #panel-financas .fin-advice-ico { flex-shrink:0; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; }
+      #panel-financas .fin-t-good .fin-advice-ico { background:#2e7d32; } #panel-financas .fin-t-good { }
+      #panel-financas .fin-t-warn .fin-advice-ico { background:#e07a3f; }
+      #panel-financas .fin-t-bad  .fin-advice-ico { background:#c0392b; }
+      #panel-financas .fin-t-info .fin-advice-ico { background:#4a78a8; }
+      #panel-financas .fin-tbl { width:100%; border-collapse:collapse; font-size:13px; }
+      #panel-financas .fin-tbl th { text-align:left; font-family:var(--font-condensed); font-size:10.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--mid-gray); padding:6px 8px; border-bottom:1px solid var(--sand); }
+      #panel-financas .fin-tbl td { padding:8px; border-bottom:1px solid var(--beige-light); }
+      #panel-financas .fin-tbl .fin-del { color:#c0392b; cursor:pointer; font-weight:700; border:none; background:none; font-size:14px; }
+      #panel-financas .fin-cat-pill { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:600; color:#fff; }
+      #panel-financas .fin-alvo-input { width:48px; padding:3px 6px; border:1px solid var(--sand); border-radius:4px; font-size:12px; text-align:center; }
+      #panel-financas .fin-empty { color:var(--mid-gray); font-size:13px; padding:14px 4px; font-style:italic; }
+    </style>
+
+    <div class="panel-head">
+      <div class="panel-title">Finanças</div>
+      <div class="panel-sub" id="fin-sub">— receitas, despesas, margem e recomendações</div>
+    </div>
+
+    <div class="fin-kpis" id="fin-kpis"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Adicionar despesa</div>
+        <div class="card-meta">
+          <button class="fin-mini-btn" onclick="finExport()" title="Descarregar cópia de segurança (JSON)">↓ Backup</button>
+          <button class="fin-mini-btn" onclick="document.getElementById('fin-import').click()" title="Restaurar de um backup">↑ Restaurar</button>
+          <input type="file" id="fin-import" accept="application/json" style="display:none" onchange="finImport(this)">
+        </div>
+      </div>
+      <div class="fin-form">
+        <select id="fin-cat">
+          <option>Refeições</option>
+          <option>Staff (treinadores/fisio)</option>
+          <option>Equipamentos</option>
+          <option>Medalhas/Prémios</option>
+          <option>Gasóleo/Deslocações</option>
+          <option>Jantares equipa</option>
+          <option>Outro</option>
+        </select>
+        <input type="text" id="fin-desc" placeholder="Descrição (ex: Camisolas de treino)">
+        <input type="number" id="fin-val" placeholder="Valor €" min="0" step="0.01">
+        <select id="fin-sem">
+          <option value="">Geral / ambas as semanas</option>
+          <option value="1">Semana 1</option>
+          <option value="2">Semana 2</option>
+        </select>
+        <button class="fin-add-btn" onclick="finAdd()">Adicionar</button>
+      </div>
+    </div>
+
+    <div class="fin-grid3" style="margin-top:14px;">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Receita · Despesa · Lucro</div><div class="card-meta" id="fin-rdl-meta">—</div></div>
+        <div id="fin-chart-rdl"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Despesas por categoria</div><div class="card-meta" id="fin-cat-meta">—</div></div>
+        <div class="donut-row">
+          <div class="donut-wrap">
+            <svg class="donut-svg" id="fin-donut" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg" aria-label="Despesas por categoria"></svg>
+            <div class="donut-center" id="fin-donut-center"></div>
+          </div>
+          <div class="donut-legend" id="fin-donut-legend"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Lucro por semana</div><div class="card-meta" id="fin-week-meta">—</div></div>
+        <div id="fin-chart-week"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="card-head"><div class="card-title">Margem e desconto por clube</div><div class="card-meta" id="fin-clube-meta">—</div></div>
+      <div id="fin-chart-clube"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="card-head">
+        <div class="card-title">Análise e recomendações</div>
+        <div class="card-meta">margem-alvo <input type="number" class="fin-alvo-input" id="fin-alvo" min="0" max="90" onchange="finSetAlvo(this.value)">% · gerado dos teus números</div>
+      </div>
+      <div id="fin-advice"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="card-head"><div class="card-title">Despesas registadas</div><div class="card-meta" id="fin-list-meta">—</div></div>
+      <div id="fin-list"></div>
+    </div>
   </div>
 
 </div>
@@ -1718,6 +1835,7 @@ function showTab(id){
   if (id === 'trabalho') { renderTrabalho(); }
   if (id === 'banco') { renderBanco(); }
   if (id === 'entregaveis') { renderEntregaveis(); }
+  if (id === 'financas') { renderFinancas(); }
 }
 // Fecha o menu "⋯" se clicar fora
 document.addEventListener('click', e => {
@@ -4649,6 +4767,8 @@ function renderAll(){
   updateAlertsCount();
   formatLastUpdate();
   updateToolbarHeight();
+  const finPanel = document.getElementById('panel-financas');
+  if (finPanel && finPanel.classList.contains('active')) renderFinancas();
 }
 
 // Mede a altura efectiva da toolbar (inclui margin-bottom) e expõe como CSS var
@@ -4693,6 +4813,341 @@ Auth.onChange((token, email) => {
   if (refreshTimer) clearInterval(refreshTimer);
   refreshTimer = setInterval(refreshNow, 300000);  // 5 min — clica "↻ Atualizar" para forçar
 });
+
+// ============================================================
+// ============ FINANÇAS (despesas + análise + gráficos) ======
+// ============================================================
+// Dados guardados localmente no browser (chave abaixo). Backup/Restauro em JSON.
+// Quando quisermos mover para o Sheet, só muda a camada finLoad/finSave/finAdd/finDelete.
+const FIN_KEY = 'cft_financas_v1';
+const FIN_CAT_COLORS = {
+  'Refeições': '#2e7d32',
+  'Staff (treinadores/fisio)': '#e07a3f',
+  'Equipamentos': '#4a78a8',
+  'Medalhas/Prémios': '#c9a227',
+  'Gasóleo/Deslocações': '#8a8a8a',
+  'Jantares equipa': '#a0522d',
+  'Outro': '#b0b0b0'
+};
+function finCatColor(c){ return FIN_CAT_COLORS[c] || '#b0b0b0'; }
+
+function finLoad(){
+  try {
+    const s = JSON.parse(localStorage.getItem(FIN_KEY));
+    if (s && Array.isArray(s.despesas)) return { despesas: s.despesas, margemAlvo: Number(s.margemAlvo) || 35 };
+  } catch (e) {}
+  return { despesas: [], margemAlvo: 35 };
+}
+let finState = finLoad();
+function finSaveState(){ try { localStorage.setItem(FIN_KEY, JSON.stringify(finState)); } catch (e) { alert('Não foi possível guardar (armazenamento cheio?).'); } }
+
+function finAdd(){
+  const cat = document.getElementById('fin-cat').value;
+  const desc = document.getElementById('fin-desc').value.trim();
+  const val = Number(document.getElementById('fin-val').value);
+  const sem = document.getElementById('fin-sem').value;
+  if (!val || val <= 0) { alert('Indica um valor maior que zero.'); return; }
+  finState.despesas.push({
+    id: 'd' + Date.now() + Math.random().toString(36).slice(2, 6),
+    data: new Date().toISOString().slice(0, 10),
+    categoria: cat, descricao: desc, valor: val, semana: sem
+  });
+  finSaveState();
+  document.getElementById('fin-desc').value = '';
+  document.getElementById('fin-val').value = '';
+  renderFinancas();
+}
+function finDelete(id){
+  finState.despesas = finState.despesas.filter(d => d.id !== id);
+  finSaveState();
+  renderFinancas();
+}
+function finSetAlvo(v){
+  const n = Number(v);
+  finState.margemAlvo = (n >= 0 && n <= 90) ? n : 35;
+  finSaveState();
+  renderFinancas();
+}
+function finExport(){
+  const blob = new Blob([JSON.stringify(finState, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'cft-financas-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click(); URL.revokeObjectURL(url);
+}
+function finImport(input){
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const obj = JSON.parse(reader.result);
+      if (!obj || !Array.isArray(obj.despesas)) throw new Error('Ficheiro inválido');
+      if (!confirm('Substituir as despesas atuais (' + finState.despesas.length + ') pelas do ficheiro (' + obj.despesas.length + ')?')) return;
+      finState = { despesas: obj.despesas, margemAlvo: Number(obj.margemAlvo) || 35 };
+      finSaveState();
+      renderFinancas();
+    } catch (e) { alert('Não foi possível ler o ficheiro: ' + e.message); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// Desconto estimado dado a um atleta (irmão / clube≥8 / ≥2 semanas).
+// 35€/semana antes do cutoff, 45€/semana depois (regime pronto). Estimativa direcional.
+function finDescontoAtleta(r){
+  const info = (r.pricing && r.pricing.info) || {};
+  if (!info.desc) return 0;
+  const perSem = info.before ? 35 : 45;
+  const nSem = info.nSem || parseSems(r.semana).length || 1;
+  return perSem * nSem;
+}
+
+function finMetrics(){
+  const ds = finState.despesas || [];
+  const despesaTotal = ds.reduce((s, d) => s + (Number(d.valor) || 0), 0);
+  const porCat = {};
+  ds.forEach(d => { const c = d.categoria || 'Outro'; porCat[c] = (porCat[c] || 0) + (Number(d.valor) || 0); });
+
+  const ativos = (typeof data !== 'undefined' && data) ? data : [];
+  let receita = 0, recebido = 0, descontoTotal = 0, atletaWeeksTotal = 0, nComDesc = 0;
+  const clubes = {};
+  const weeksAg = { 1: { atl: 0, rec: 0 }, 2: { atl: 0, rec: 0 } };
+
+  ativos.forEach(r => {
+    const devido = (calcTotal(r).total) || 0;
+    const pago = Number(r.val_pago) || 0;
+    const weeks = parseSems(r.semana);
+    const nSem = weeks.length || 1;
+    const disc = finDescontoAtleta(r);
+    receita += devido; recebido += pago; descontoTotal += disc;
+    if (disc > 0) nComDesc++;
+    atletaWeeksTotal += weeks.length;
+    weeks.forEach(w => { if (weeksAg[w]) { weeksAg[w].atl++; weeksAg[w].rec += devido / nSem; } });
+    const cl = r.clube || '—';
+    const c = clubes[cl] || (clubes[cl] = { nome: cl, n: 0, receita: 0, recebido: 0, desconto: 0, atletaWeeks: 0, nDesc: 0 });
+    c.n++; c.receita += devido; c.recebido += pago; c.desconto += disc; c.atletaWeeks += weeks.length;
+    if (disc > 0) c.nDesc++;
+  });
+
+  // Alocação de despesa por atleta-semana (atletas de 2 semanas "pesam" o dobro)
+  const denom = atletaWeeksTotal || 1;
+  const geral = ds.filter(d => !d.semana).reduce((s, d) => s + (Number(d.valor) || 0), 0);
+  const totAtlSem = (weeksAg[1].atl + weeksAg[2].atl) || 1;
+  [1, 2].forEach(w => {
+    const tagged = ds.filter(d => String(d.semana) === String(w)).reduce((s, d) => s + (Number(d.valor) || 0), 0);
+    const share = geral * (weeksAg[w].atl / totAtlSem);
+    weeksAg[w].desp = tagged + share;
+    weeksAg[w].lucro = weeksAg[w].rec - weeksAg[w].desp;
+    weeksAg[w].lpa = weeksAg[w].atl ? weeksAg[w].lucro / weeksAg[w].atl : 0;
+  });
+  Object.values(clubes).forEach(c => {
+    c.custo = despesaTotal * (c.atletaWeeks / denom);
+    c.lucro = c.receita - c.custo;
+    c.margem = c.receita > 0 ? c.lucro / c.receita : 0;
+  });
+
+  const lucro = receita - despesaTotal;
+  const margem = receita > 0 ? lucro / receita : 0;
+  const nAtl = ativos.length;
+  return {
+    despesaTotal, porCat, receita, recebido, descontoTotal, nComDesc, lucro, margem, nAtl,
+    clubes, weeksAg,
+    custoPorAtleta: nAtl ? despesaTotal / nAtl : 0,
+    lucroPorAtleta: nAtl ? lucro / nAtl : 0,
+    precoMedio: nAtl ? receita / nAtl : 0,
+    nDespesas: ds.length
+  };
+}
+
+// ---- componentes de gráfico (barras em div, donut em SVG) ----
+function finBars(rows){
+  const max = Math.max(1, ...rows.map(r => Math.abs(r.value || 0)));
+  return '<div class="fin-bars">' + rows.map(r => {
+    const w = Math.round(Math.abs(r.value || 0) / max * 100);
+    return `<div class="fin-bar-row">
+      <div class="fin-bar-label" title="${(r.label || '').replace(/"/g,'')}">${r.label}</div>
+      <div class="fin-bar-track"><div class="fin-bar-fill" style="width:${w}%;background:${r.color}"></div></div>
+      <div class="fin-bar-val" style="color:${r.valColor || 'var(--charcoal)'}">${r.valText}</div>
+      ${r.sub ? `<div class="fin-bar-sub">${r.sub}</div>` : ''}
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function finRenderDonut(porCat, total){
+  const svg = document.getElementById('fin-donut');
+  const center = document.getElementById('fin-donut-center');
+  const legend = document.getElementById('fin-donut-legend');
+  const cats = Object.keys(porCat).filter(c => porCat[c] > 0).sort((a, b) => porCat[b] - porCat[a]);
+  if (!total || cats.length === 0) {
+    svg.innerHTML = `<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--beige-light)" stroke-width="6"></circle>`;
+    center.innerHTML = `<div style="font-size:12px;color:var(--mid-gray)">sem<br>despesas</div>`;
+    legend.innerHTML = '';
+    return;
+  }
+  let offset = 25; // começa no topo
+  const parts = cats.map(c => {
+    const pct = porCat[c] / total * 100;
+    const seg = `<circle cx="21" cy="21" r="15.915" fill="none" stroke="${finCatColor(c)}" stroke-width="6" stroke-dasharray="${pct.toFixed(2)} ${(100 - pct).toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"><title>${c}: ${fmt(porCat[c])}</title></circle>`;
+    offset -= pct;
+    return seg;
+  });
+  svg.innerHTML = parts.join('');
+  center.innerHTML = `<div style="font-family:var(--font-display);font-size:18px;line-height:1">${fmt(total).replace('€','').trim()}<span style="font-size:11px"> €</span></div>`;
+  legend.innerHTML = cats.map(c => `<div class="donut-legend-item" style="display:flex;align-items:center;gap:7px;font-size:12px;margin:3px 0">
+      <span style="width:10px;height:10px;border-radius:2px;background:${finCatColor(c)};flex-shrink:0"></span>
+      <span style="flex:1">${c}</span><b>${fmt(porCat[c])}</b></div>`).join('');
+}
+
+function finAdvice(m){
+  const out = [];
+  const alvo = finState.margemAlvo / 100;
+  const pct = v => Math.round(v * 100) + '%';
+  if (m.nDespesas === 0) {
+    out.push({ t: 'info', text: 'Ainda não registaste despesas. Adiciona-as acima (staff, refeições, equipamentos…) para veres lucro e margem reais.' });
+  }
+  if (m.nAtl === 0) {
+    out.push({ t: 'info', text: 'Sem atletas carregados ainda — a receita aparece quando os dados do dashboard sincronizarem.' });
+    return out;
+  }
+  // Margem global
+  if (m.despesaTotal > 0) {
+    if (m.margem >= alvo) {
+      out.push({ t: 'good', text: `Margem de <b>${pct(m.margem)}</b>, acima do teu alvo de ${finState.margemAlvo}%. Lucro de <b>${fmt(m.lucro)}</b> (${fmt(m.lucroPorAtleta)}/atleta). Tens folga — mantém preços e controla custos.` });
+    } else if (m.margem > 0) {
+      const precoIdeal = m.custoPorAtleta / (1 - alvo);
+      const subida = Math.max(0, precoIdeal - m.precoMedio);
+      out.push({ t: 'warn', text: `Margem de <b>${pct(m.margem)}</b>, abaixo do alvo de ${finState.margemAlvo}%. Custas em média <b>${fmt(m.custoPorAtleta)}</b>/atleta e cobras <b>${fmt(m.precoMedio)}</b>. Para o alvo, o preço médio devia ser ~<b>${fmt(precoIdeal)}</b> → considera subir ~${fmt(subida)}/atleta em 2027.` });
+    } else {
+      out.push({ t: 'bad', text: `Estás a ter <b>prejuízo</b> de ${fmt(-m.lucro)}: as despesas (${fmt(m.despesaTotal)}) superam a receita (${fmt(m.receita)}). Urgente rever custos ou preços.` });
+    }
+  }
+  // Impacto dos descontos
+  if (m.descontoTotal > 0) {
+    const pctRec = m.receita + m.descontoTotal > 0 ? m.descontoTotal / (m.receita + m.descontoTotal) : 0;
+    const piorClube = Object.values(m.clubes).filter(c => c.desconto > 0).sort((a, b) => b.desconto - a.desconto)[0];
+    let txt = `Os descontos custaram-te <b>${fmt(m.descontoTotal)}</b> (~${pct(pctRec)} da receita potencial), em ${m.nComDesc} atletas. Sem eles terias recebido <b>${fmt(m.receita + m.descontoTotal)}</b>.`;
+    if (piorClube) txt += ` A maior fatia foi no <b>${piorClube.nome}</b> (${fmt(piorClube.desconto)} em ${piorClube.nDesc} atletas).`;
+    out.push({ t: 'warn', text: txt });
+  }
+  // Margem por clube — pior caso
+  const clubesArr = Object.values(m.clubes).filter(c => c.receita > 0 && c.n >= 1);
+  if (m.despesaTotal > 0 && clubesArr.length >= 2) {
+    const pior = clubesArr.slice().sort((a, b) => a.margem - b.margem)[0];
+    const melhor = clubesArr.slice().sort((a, b) => b.margem - a.margem)[0];
+    if (pior && melhor && pior.nome !== melhor.nome) {
+      let txt = `Por clube, a margem mais baixa é no <b>${pior.nome}</b> (${pct(pior.margem)}, lucro ${fmt(pior.lucro)})`;
+      if (pior.desconto > 0) txt += ` — puxada para baixo pelos <b>${fmt(pior.desconto)}</b> de desconto que deste lá`;
+      txt += `. O <b>${melhor.nome}</b> rende melhor (${pct(melhor.margem)}). Se o desconto não trouxe atletas extra, foi mau negócio nesse clube.`;
+      out.push({ t: pior.margem < alvo ? 'bad' : 'info', text: txt });
+    }
+  }
+  // Semana menos rentável
+  const w1 = m.weeksAg[1], w2 = m.weeksAg[2];
+  if (m.despesaTotal > 0 && w1.atl > 0 && w2.atl > 0) {
+    const pior = w1.lpa <= w2.lpa ? 1 : 2; const bom = pior === 1 ? 2 : 1;
+    const pw = m.weeksAg[pior], bw = m.weeksAg[bom];
+    if (pw.lpa < bw.lpa) {
+      out.push({ t: 'info', text: `A <b>Semana ${pior}</b> rende menos por atleta (${fmt(pw.lpa)} vs ${fmt(bw.lpa)} na Semana ${bom}): tem ${pw.atl} atletas contra ${bw.atl}. Custos fixos (treinadores) diluem-se pior com menos inscritos — vale a pena um mínimo de inscrições por semana ou juntar semanas fracas.` });
+    }
+  }
+  // Maior categoria de despesa
+  const catArr = Object.entries(m.porCat).sort((a, b) => b[1] - a[1]);
+  if (catArr.length > 0 && m.despesaTotal > 0) {
+    const [topCat, topVal] = catArr[0];
+    out.push({ t: 'info', text: `<b>${topCat}</b> é a tua maior despesa: ${fmt(topVal)} (${pct(topVal / m.despesaTotal)} do total). É aí que cortar custo tem mais impacto na margem.` });
+  }
+  // Receita por cobrar
+  const porCobrar = m.receita - m.recebido;
+  if (porCobrar > 0.5) {
+    out.push({ t: 'info', text: `Nota de tesouraria: ainda há <b>${fmt(porCobrar)}</b> por receber dos atletas. O lucro acima é o esperado quando todos pagarem; em caixa tens ${fmt(m.recebido - m.despesaTotal)} até agora.` });
+  }
+  return out;
+}
+
+function renderFinancas(){
+  if (!document.getElementById('panel-financas')) return;
+  const m = finMetrics();
+
+  // alvo input
+  const alvoInp = document.getElementById('fin-alvo');
+  if (alvoInp && document.activeElement !== alvoInp) alvoInp.value = finState.margemAlvo;
+
+  // KPIs
+  const lucroCor = m.lucro >= 0 ? 'var(--green-dark)' : '#c0392b';
+  document.getElementById('fin-kpis').innerHTML = `
+    <div class="fin-kpi"><div class="fin-kpi-label">Receita (inscrições)</div><div class="fin-kpi-num" style="color:var(--green-dark)">${fmt(m.receita)}</div><div class="fin-kpi-sub">${fmt(m.recebido)} já recebidos</div></div>
+    <div class="fin-kpi"><div class="fin-kpi-label">Despesas</div><div class="fin-kpi-num" style="color:#c0392b">${fmt(m.despesaTotal)}</div><div class="fin-kpi-sub">${m.nDespesas} registo${m.nDespesas === 1 ? '' : 's'}</div></div>
+    <div class="fin-kpi"><div class="fin-kpi-label">Lucro</div><div class="fin-kpi-num" style="color:${lucroCor}">${fmt(m.lucro)}</div><div class="fin-kpi-sub">${fmt(m.lucroPorAtleta)} por atleta</div></div>
+    <div class="fin-kpi"><div class="fin-kpi-label">Margem</div><div class="fin-kpi-num" style="color:${lucroCor}">${Math.round(m.margem * 100)}%</div><div class="fin-kpi-sub">alvo ${finState.margemAlvo}%</div></div>
+    <div class="fin-kpi"><div class="fin-kpi-label">Custo por atleta</div><div class="fin-kpi-num">${fmt(m.custoPorAtleta)}</div><div class="fin-kpi-sub">preço médio ${fmt(m.precoMedio)}</div></div>
+  `;
+  document.getElementById('fin-sub').textContent = `${m.nAtl} atletas · ${m.nDespesas} despesas · margem ${Math.round(m.margem * 100)}%`;
+
+  // Receita · Despesa · Lucro
+  document.getElementById('fin-rdl-meta').textContent = `margem ${Math.round(m.margem * 100)}%`;
+  document.getElementById('fin-chart-rdl').innerHTML = finBars([
+    { label: 'Receita', value: m.receita, color: '#2e7d32', valText: fmt(m.receita) },
+    { label: 'Despesa', value: m.despesaTotal, color: '#c0392b', valText: fmt(m.despesaTotal) },
+    { label: 'Lucro', value: Math.abs(m.lucro), color: m.lucro >= 0 ? '#1e6f2e' : '#c0392b', valText: fmt(m.lucro), valColor: lucroCor }
+  ]);
+
+  // Donut categorias
+  document.getElementById('fin-cat-meta').textContent = Object.keys(m.porCat).length ? Object.keys(m.porCat).length + ' categorias' : '—';
+  finRenderDonut(m.porCat, m.despesaTotal);
+
+  // Lucro por semana
+  const wRows = [1, 2].map(w => {
+    const a = m.weeksAg[w];
+    return { label: 'Semana ' + w, value: Math.abs(a.lucro || 0), color: (a.lucro || 0) >= 0 ? '#2e7d32' : '#c0392b',
+      valText: fmt(a.lucro || 0), valColor: (a.lucro || 0) >= 0 ? 'var(--green-dark)' : '#c0392b',
+      sub: `${a.atl} atletas · receita ${fmt(a.rec || 0)} · custo ${fmt(a.desp || 0)} · ${fmt(a.lpa || 0)}/atleta` };
+  });
+  document.getElementById('fin-week-meta').textContent = m.despesaTotal ? '' : 'adiciona despesas';
+  document.getElementById('fin-chart-week').innerHTML = m.nAtl ? finBars(wRows) : '<div class="fin-empty">Sem atletas carregados.</div>';
+
+  // Margem por clube
+  const clubesArr = Object.values(m.clubes).filter(c => c.receita > 0).sort((a, b) => a.margem - b.margem).slice(0, 10);
+  document.getElementById('fin-clube-meta').textContent = clubesArr.length + ' clubes';
+  if (!m.despesaTotal) {
+    document.getElementById('fin-chart-clube').innerHTML = '<div class="fin-empty">Adiciona despesas para ver a margem por clube (a receita e descontos já estão calculados).</div>';
+  } else if (!clubesArr.length) {
+    document.getElementById('fin-chart-clube').innerHTML = '<div class="fin-empty">Sem atletas carregados.</div>';
+  } else {
+    const alvo = finState.margemAlvo / 100;
+    document.getElementById('fin-chart-clube').innerHTML = finBars(clubesArr.map(c => ({
+      label: `${c.nome} (${c.n})`,
+      value: Math.max(0, c.margem * 100),
+      color: c.margem >= alvo ? '#2e7d32' : (c.margem >= 0 ? '#e07a3f' : '#c0392b'),
+      valText: Math.round(c.margem * 100) + '%',
+      valColor: c.margem >= alvo ? 'var(--green-dark)' : (c.margem >= 0 ? '#c0612a' : '#c0392b'),
+      sub: `lucro ${fmt(c.lucro)} · receita ${fmt(c.receita)} · custo ${fmt(c.custo)}${c.desconto > 0 ? ' · desconto dado ' + fmt(c.desconto) : ''}`
+    })));
+  }
+
+  // Conselhos
+  const adv = finAdvice(m);
+  const icoMap = { good: '✓', warn: '!', bad: '✕', info: 'i' };
+  document.getElementById('fin-advice').innerHTML = adv.length
+    ? adv.map(a => `<div class="fin-advice-item fin-t-${a.t}"><div class="fin-advice-ico">${icoMap[a.t]}</div><div>${a.text}</div></div>`).join('')
+    : '<div class="fin-empty">Sem recomendações.</div>';
+
+  // Tabela de despesas
+  const ds = finState.despesas.slice().sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+  document.getElementById('fin-list-meta').textContent = ds.length ? fmt(m.despesaTotal) + ' em ' + ds.length : '—';
+  document.getElementById('fin-list').innerHTML = ds.length ? `
+    <table class="fin-tbl">
+      <thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Semana</th><th style="text-align:right">Valor</th><th></th></tr></thead>
+      <tbody>${ds.map(d => `<tr>
+        <td>${d.data || ''}</td>
+        <td><span class="fin-cat-pill" style="background:${finCatColor(d.categoria)}">${d.categoria || 'Outro'}</span></td>
+        <td>${(d.descricao || '').replace(/</g, '&lt;') || '<span style="color:var(--mid-gray)">—</span>'}</td>
+        <td>${d.semana ? 'Semana ' + d.semana : 'Geral'}</td>
+        <td style="text-align:right;font-weight:600">${fmt(d.valor)}</td>
+        <td style="text-align:right"><button class="fin-del" title="Eliminar" onclick="finDelete('${d.id}')">✕</button></td>
+      </tr>`).join('')}</tbody>
+    </table>` : '<div class="fin-empty">Ainda não há despesas. Adiciona a primeira acima.</div>';
+}
 
 window.addEventListener('DOMContentLoaded', () => {
   Auth.init();
