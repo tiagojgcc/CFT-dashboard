@@ -2857,7 +2857,7 @@ async function createBulkDraft(atletaIds, template){
 }
 
 // ============ Promo desconto de clube ============
-// Devolve atletas elegíveis: interno + clube com 1-7 atletas + sem desconto já aplicado
+// Devolve atletas elegíveis: interno + clube com 1-7 inscrições + sem desconto já aplicado
 function elegiveisDescontoClube(){
   const cc = (Api && Api._cache && Api._cache.clube_counts) || {};
   return (data || []).filter(r => {

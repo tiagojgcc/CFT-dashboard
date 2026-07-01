@@ -39,10 +39,11 @@ const Inscricoes = {
       const values = sh.getRange(2, 1, last - 1, ATL_NCOLS).getValues();
       values.forEach(row => atletas.push(this._rowToObj(row)));
     }
+    // Conta INSCRIÇÕES por clube (1 atleta em 2 semanas = 2), base do desconto ≥8.
     const cc = {};
     atletas.forEach(a => {
       if (a.ativo === true || a.ativo === 'TRUE') {
-        cc[a.clube] = (cc[a.clube] || 0) + 1;
+        cc[a.clube] = (cc[a.clube] || 0) + Pricing.parseSems(a.semanas_atuais).length;
       }
     });
     // Deteção de possíveis duplicados: mesmo nome + mesmas semanas (entre atletas ativos)

@@ -8,7 +8,7 @@
  * Interno + inscrição depois de 31 mar:
  *    pronto obrigatório: 375 (s/desc) | 330 (c/desc)
  *
- * Desconto se: irmao_desconto = TRUE  OU  nSem >= 2  OU  clube_count >= 8.
+ * Desconto se: irmao_desconto = TRUE  OU  nSem >= 2  OU  clube_inscricoes >= 8.
  *
  * Classificação a partir de valor_pago: o admin tipa o valor depois de ver o
  * comprovativo; o sistema classifica em pago / parcial_1 / parcial_2 / valor_errado.
@@ -39,7 +39,7 @@ const Pricing = {
   // Devolve a razão textual do desconto (ou null se não há)
   descontoMotivo(atleta, clubeCounts) {
     if (atleta.irmao_desconto === true || atleta.irmao_desconto === 'TRUE') return 'irmão';
-    if ((clubeCounts[atleta.clube] || 0) >= 8) return '8 atletas';
+    if ((clubeCounts[atleta.clube] || 0) >= 8) return '8 inscrições';
     if (this.parseSems(atleta.semanas_atuais).length >= 2) return '≥2 semanas';
     if (atleta.desconto_outro_motivo && String(atleta.desconto_outro_motivo).trim()) {
       return String(atleta.desconto_outro_motivo).trim();
