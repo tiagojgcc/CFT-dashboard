@@ -2061,13 +2061,21 @@ function renderFinanceiro(){ /* substituído pelo donut */ }
 
 // ============ CLUBES ============
 function renderClubes(){
-  const cc = clubeCounts();
+  // Conta INSCRIÇÕES por clube (1 atleta em 2 semanas = 2 inscrições), pois é sobre
+  // inscrições que assenta o desconto de volume (≥8). Ver clubeCounts() para atletas únicos.
+  const cc = {};
+  data.forEach(r => { const n = parseSems(r.semana).length; if (n) cc[r.clube] = (cc[r.clube] || 0) + n; });
   const sorted = Object.entries(cc).sort((a,b) => b[1] - a[1]);
+  document.getElementById('clube-meta').textContent = sorted.length + ' clubes · inscrições';
+  if (!sorted.length) {
+    document.getElementById('clubes').innerHTML = '';
+    const foot0 = document.getElementById('clubes-foot'); if (foot0) foot0.textContent = '';
+    renderEstadoDonut(); renderClubesPorSemana(); return;
+  }
   const max = sorted[0][1];
-  document.getElementById('clube-meta').textContent = sorted.length + ' clubes';
   // Mostra todos os clubes no gráfico
   document.getElementById('clubes').innerHTML = sorted.map(([name, count]) => `
-    <div class="clube-row">
+    <div class="clube-row" title="${name}: ${count} inscriç${count === 1 ? 'ão' : 'ões'}${count >= 8 ? ' · desconto de volume' : ''}">
       <div class="clube-name">${name}</div>
       <div class="clube-bar"><div class="clube-bar-fill" style="width:${count/max*100}%; background:${count >= 8 ? 'var(--green-dark)' : 'var(--sage)'};"></div></div>
       <div class="clube-count">${count}</div>
