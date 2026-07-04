@@ -171,11 +171,23 @@ const EmailDraft = {
 
     const { subject, html } = EmailTemplates.render(tpl, data);
 
-    const draft = GmailApp.createDraft('geral@camposft.com', subject, this._plainFallback(html), {
-      bcc: bccList.join(','),
-      htmlBody: html,
-      name: 'CFT — Inscrições'
-    });
+    // GmailApp.createDraft limita a ~50 destinatários por mensagem, o que
+    // rebenta com envios a todos os pais. Acima desse limite criamos o draft
+    // via API REST do Gmail (limites normais do Gmail: 500 destinatários).
+    let draftId, msgId;
+    if (bccList.length <= 45) {
+      const draft = GmailApp.createDraft('geral@camposft.com', subject, this._plainFallback(html), {
+        bcc: bccList.join(','),
+        htmlBody: html,
+        name: 'CFT — Inscrições'
+      });
+      draftId = draft.getId();
+      msgId = '';
+    } else {
+      const created = this._createDraftRaw('geral@camposft.com', bccList, subject, html, this._plainFallback(html));
+      draftId = created.id;
+      msgId = (created.message && created.message.id) || '';
+    }
 
     // Log em Emails com ids_atletas — permite ao dashboard marcar "já enviado"
     // por atleta mesmo quando o envio foi um único rascunho BCC.
@@ -200,8 +212,48 @@ const EmailDraft = {
       });
     } catch (e) { Logger.log('Historico bulk falhou: ' + e.message); }
 
-    const url = 'https://mail.google.com/mail/u/0/#drafts?compose=' + draft.getId();
-    return { draftId: draft.getId(), url: url, template: tpl, count: bccList.length, bcc: bccList };
+    const url = 'https://mail.google.com/mail/u/0/#drafts?compose=' + (msgId || draftId);
+    return { draftId: draftId, url: url, template: tpl, count: bccList.length, bcc: bccList };
+  },
+
+  /**
+   * Cria um draft via API REST do Gmail (users.drafts.create) com o token
+   * OAuth do próprio script. Necessário para BCC > ~50: o GmailApp impõe um
+   * limite de destinatários por mensagem que a API não tem (aplica-se apenas
+   * o limite normal do Gmail, 500).
+   * Scopes: gmail.compose (drafts) + script.external_request (UrlFetchApp).
+   */
+  _createDraftRaw(to, bccList, subject, htmlBody, plainBody) {
+    const nl = '\r\n';
+    const wrap = (b64) => b64.replace(/(.{76})/g, '$1\r\n');
+    const boundary = 'cft_' + Utilities.getUuid().replace(/-/g, '');
+    const mime =
+      'To: ' + to + nl +
+      'Bcc: ' + bccList.join(',') + nl +
+      'Subject: =?UTF-8?B?' + Utilities.base64Encode(subject, Utilities.Charset.UTF_8) + '?=' + nl +
+      'MIME-Version: 1.0' + nl +
+      'Content-Type: multipart/alternative; boundary="' + boundary + '"' + nl + nl +
+      '--' + boundary + nl +
+      'Content-Type: text/plain; charset=UTF-8' + nl +
+      'Content-Transfer-Encoding: base64' + nl + nl +
+      wrap(Utilities.base64Encode(plainBody, Utilities.Charset.UTF_8)) + nl +
+      '--' + boundary + nl +
+      'Content-Type: text/html; charset=UTF-8' + nl +
+      'Content-Transfer-Encoding: base64' + nl + nl +
+      wrap(Utilities.base64Encode(htmlBody, Utilities.Charset.UTF_8)) + nl +
+      '--' + boundary + '--';
+    const resp = UrlFetchApp.fetch('https://gmail.googleapis.com/gmail/v1/users/me/drafts', {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      payload: JSON.stringify({ message: { raw: Utilities.base64EncodeWebSafe(mime) } }),
+      muteHttpExceptions: true
+    });
+    const code = resp.getResponseCode();
+    if (code < 200 || code >= 300) {
+      throw new Error('Gmail API drafts.create falhou (' + code + '): ' + resp.getContentText().slice(0, 300));
+    }
+    return JSON.parse(resp.getContentText());
   },
 
   /** Converte HTML em texto simples (fallback para clientes sem HTML). */
