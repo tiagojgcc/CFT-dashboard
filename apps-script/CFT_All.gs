@@ -3444,13 +3444,18 @@ const EmailDraft = {
   },
 
   /**
-   * Cria um draft via API REST do Gmail (users.drafts.create) com o token
-   * OAuth do próprio script. Necessário para BCC > ~50: o GmailApp impõe um
-   * limite de destinatários por mensagem que a API não tem (aplica-se apenas
-   * o limite normal do Gmail, 500).
-   * Scopes: gmail.compose (drafts) + script.external_request (UrlFetchApp).
+   * Cria um draft via serviço avançado Gmail (users.drafts.create).
+   * Necessário para BCC > ~50: o GmailApp impõe um limite de destinatários
+   * por mensagem que a API não tem (aplica-se o limite normal do Gmail, 500).
+   * Requer o serviço avançado "Gmail API" ativo no editor do Apps Script
+   * (Serviços + → Gmail API → Adicionar) — isto também ativa a API no
+   * projeto GCP por trás do script, que é gerido pelo Google e não é
+   * acessível pela consola.
    */
   _createDraftRaw(to, bccList, subject, htmlBody, plainBody) {
+    if (typeof Gmail === 'undefined') {
+      throw new Error('O serviço avançado "Gmail API" não está ativo. No editor do Apps Script: barra lateral → Serviços (+) → Gmail API → Adicionar, e volte a tentar.');
+    }
     const nl = '\r\n';
     const wrap = (b64) => b64.replace(/(.{76})/g, '$1\r\n');
     const boundary = 'cft_' + Utilities.getUuid().replace(/-/g, '');
@@ -3469,18 +3474,10 @@ const EmailDraft = {
       'Content-Transfer-Encoding: base64' + nl + nl +
       wrap(Utilities.base64Encode(htmlBody, Utilities.Charset.UTF_8)) + nl +
       '--' + boundary + '--';
-    const resp = UrlFetchApp.fetch('https://gmail.googleapis.com/gmail/v1/users/me/drafts', {
-      method: 'post',
-      contentType: 'application/json',
-      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
-      payload: JSON.stringify({ message: { raw: Utilities.base64EncodeWebSafe(mime) } }),
-      muteHttpExceptions: true
-    });
-    const code = resp.getResponseCode();
-    if (code < 200 || code >= 300) {
-      throw new Error('Gmail API drafts.create falhou (' + code + '): ' + resp.getContentText().slice(0, 300));
-    }
-    return JSON.parse(resp.getContentText());
+    return Gmail.Users.Drafts.create(
+      { message: { raw: Utilities.base64EncodeWebSafe(mime) } },
+      'me'
+    );
   },
 
   /** Converte HTML em texto simples (fallback para clientes sem HTML). */
