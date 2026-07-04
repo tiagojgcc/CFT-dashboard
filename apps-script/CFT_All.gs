@@ -2452,6 +2452,7 @@ const EmailTemplates = {
 
   IBAN_CFT: 'PT50 0007 0000 0065 0137 6512 3',
   LOGO_URL: 'https://raw.githubusercontent.com/tiagojgcc/cft-dashboard/main/assets/logo_CFT.png',
+  LOGO_DARK_URL: 'https://raw.githubusercontent.com/tiagojgcc/cft-dashboard/main/assets/logo_CFT_dark.png',
   EDITION: '4ª EDIÇÃO · 2026',
 
   // ============ Helpers ============
@@ -2680,15 +2681,15 @@ const EmailTemplates = {
   },
 
   _header() {
-    // Header em bege para que o logo (preto) seja visível. Gmail remove `filter` CSS,
-    // por isso evitamos brightness/invert e usamos directamente fundo claro.
+    // Banda preta com o logo claro (logo_CFT_dark) — versão Gmail-safe do
+    // BrandHeader do design: table + bgcolor (Gmail remove `filter` CSS,
+    // por isso o asset já vem claro) e width/height no <img> para o Gmail
+    // não redimensionar o logo.
     const C = this.C;
-    return `<div style="background:${C.beige};padding:24px 40px;border-bottom:1.5px solid ${C.charcoal};">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td style="vertical-align:middle;"><img src="${this.LOGO_URL}" alt="CFT" style="height:44px;display:block;" /></td>
-        <td style="vertical-align:middle;text-align:right;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;color:${C.charcoal};text-transform:uppercase;">${this.EDITION}</td>
-      </tr></table>
-    </div>`;
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.nearBlack}" style="background-color:${C.nearBlack};border-collapse:collapse;width:100%;"><tr>
+      <td bgcolor="${C.nearBlack}" width="50%" align="left" style="background-color:${C.nearBlack};padding:26px 40px;"><img src="${this.LOGO_DARK_URL}" alt="CFT" width="150" height="55" style="display:block;width:150px;height:55px;" /></td>
+      <td bgcolor="${C.nearBlack}" width="50%" align="right" style="background-color:${C.nearBlack};padding:26px 40px;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;color:${C.sand};text-transform:uppercase;">${this.EDITION}</td>
+    </tr></table>`;
   },
 
   _signature() {
@@ -2777,9 +2778,11 @@ const EmailTemplates = {
     // Saudação personalizada ao EE quando temos nome; bulk usa fallback.
     const C = this.C;
     const name = String((data && data.ee_nome) || '').trim();
+    // Sem nome (ex.: bulk BCC) a saudação é neutra — o género de ee viria do
+    // 1º atleta do lote, que não representa os restantes destinatários.
     const txt = name
       ? `${ee.caroUp} ${this._esc(name).toUpperCase()},`
-      : `${ee.caroUp} ENCARREGAD${ee.o === 'a' ? 'A' : 'O'} DE EDUCAÇÃO,`;
+      : `CARO(A) ENCARREGADO(A) DE EDUCAÇÃO,`;
     return `<div style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:32px;color:${C.charcoal};margin:0 0 18px 0;">${txt}</div>`;
   },
 
@@ -2799,16 +2802,16 @@ const EmailTemplates = {
       <div style="padding:0 40px 24px 40px;">
         ${this._greeting(ee, data)}
         ${this._para(`Antes de mais, obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2026.`)}
-        ${this._para(`Estamos a fechar os acertos das inscrições e, ao confrontar os valores, parece-nos haver uma pequena diferença em relação ao previsto. Pode ser engano nosso, por isso queríamos confirmar consigo antes de seguir.`)}
+        ${this._para(`Estamos a fechar os acertos das inscrições e, ao contabilizar as inscrições ${data.clube ? `do <b>${this._esc(data.clube)}</b>` : 'do clube'}, verificámos que o grupo ficou aquém do mínimo de <b>8 inscrições</b> necessário para atribuir o desconto de clube. Por esse motivo, precisamos de pedir a regularização da diferença face ao valor individual.`)}
       </div>
       ${this._infoBox([
         ['Atleta', this._esc(data.atleta)],
-        ['Valor da inscrição', `${data.valor_esperado}€`],
-        ['Valor recebido', `${data.valor_pago}€`],
-        ['Diferença', `<b style="color:${C.orange};">${data.falta}€</b>`]
+        ['Valor da inscrição', `${data.valor_esperado}`],
+        ['Valor recebido', `${data.valor_pago}`],
+        ['Diferença', `<b style="color:${C.orange};">${data.falta}</b>`]
       ], 'Detalhes')}
       <div style="padding:24px 40px 8px 40px;">
-        ${this._para(`Se realmente faltar regularizar este valor, pode fazê-lo por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome ${a.doA} atleta na descrição.`)}
+        ${this._para(`A regularização pode ser feita por transferência bancária para o IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>, indicando o nome ${a.doA} atleta na descrição.`)}
         ${this._para(`Caso considere que há algum engano, responda a este email — verificamos do nosso lado e voltamos a falar.`)}
       </div>
       <div style="padding:8px 40px 16px 40px;">
@@ -2835,7 +2838,7 @@ const EmailTemplates = {
       </div>
       ${this._infoBox([
         ['Atleta', this._esc(data.atleta)],
-        ['Valor da inscrição', `<b>${data.valor_esperado}€</b>`],
+        ['Valor da inscrição', `<b>${data.valor_esperado}</b>`],
         ['Prazo', `<span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_limite)}</span>`]
       ], 'Inscrição')}
       <div style="padding:24px 40px 8px 40px;">
@@ -2867,8 +2870,8 @@ const EmailTemplates = {
       </div>
       ${this._infoBox([
         ['Atleta', this._esc(data.atleta)],
-        ['1ª prestação', `${data.valor_pago}€ <span style="color:${C.greenDark};">✓</span>`],
-        ['2ª prestação', `<b>${data.falta}€</b>`],
+        ['1ª prestação', `${data.valor_pago} <span style="color:${C.greenDark};">✓</span>`],
+        ['2ª prestação', `<b>${data.falta}</b>`],
         ['Prazo', `<span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_limite)}</span>`]
       ], 'Pagamento em prestações')}
       <div style="padding:24px 40px 8px 40px;">
@@ -2899,9 +2902,9 @@ const EmailTemplates = {
       </div>
       ${this._infoBox([
         ['Atleta', this._esc(data.atleta)],
-        ['Valor da inscrição', `${data.valor_esperado}€`],
-        ['Valor recebido', `${data.valor_pago}€`],
-        ['A devolver', `<b style="color:${C.greenDark};">${data.excedente}€</b>`]
+        ['Valor da inscrição', `${data.valor_esperado}`],
+        ['Valor recebido', `${data.valor_pago}`],
+        ['A devolver', `<b style="color:${C.greenDark};">${data.excedente}</b>`]
       ], 'Detalhes')}
       <div style="padding:24px 40px 8px 40px;">
         ${this._para(`Para fazermos a devolução, responda a este email com o IBAN para onde quer que transfiramos. Tratamos disso em poucos dias.`)}
@@ -3105,36 +3108,112 @@ const EmailTemplates = {
     return { subject, html: this._wrap(body) };
   },
 
-  // 10. Pré-campus — comunicação a 1-2 semanas do início.
-  //     Distinto do infoPraticas (que é mais perto da véspera): aqui dá-se
-  //     um update geral, antecipa-se equipamento, e reforça-se prazos finais.
+  // 10. Informações finais — email logístico enviado dias antes do início.
+  //     (Substitui o antigo "pré-campus".) Conteúdo fixo do CFT 2026:
+  //     datas, check-in, horário dos externos, encerramento, local, o que
+  //     trazer, alimentação/segurança, 2.ª semana, contacto e nota t-shirts.
+  //     Design: claude.ai/design "Email" · Informacoes Finais para Gmail.html
   prePampus(data) {
     const C = this.C;
-    const a = this.G_atl(data);
     const ee = this.G_ee(data);
-    const subject = `CFT · A duas semanas do início — preparação ${a.doA} ${data.atleta}`;
+    const subject = `[CFT 2026] Informações finais — tudo o que precisa antes do início`;
+    const cond = `font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-weight:700;text-transform:uppercase;`;
+    const bebas = `font-family:'Bebas Neue','Arial Narrow',sans-serif;`;
+    const serif = `font-family:'Playfair Display',Georgia,serif;font-style:italic;`;
+    const sans = `font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;`;
+    // Chip de hora grande (faz as horas saltar dos blocos logísticos)
+    const time = (t) => `<span style="${bebas}font-size:30px;line-height:1;color:${C.greenDark};letter-spacing:0.02em;">${t}</span>`;
+    const timeCol = (label, t, padRight) => `<td valign="bottom" style="${padRight ? 'padding-right:40px;' : ''}">
+      <div style="${cond}font-size:11px;letter-spacing:0.2em;color:${C.midGray};margin-bottom:2px;">${label}</div>
+      ${time(t)}
+    </td>`;
+    // Secção logística: label condensado + conteúdo livre
+    const logBlock = (label, inner, last) => `<div style="padding:22px 0;${last ? '' : `border-bottom:1px solid ${C.beigeMid};`}">
+      <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenDark};margin-bottom:10px;">${label}</div>
+      ${inner}
+    </div>`;
+    const p15 = (html) => `<p style="${sans}font-size:15px;line-height:1.65;color:${C.charcoal};margin:0;">${html}</p>`;
+    // Coluna de semana no bloco escuro de datas
+    const semana = (nome, dias, borda) => `<td valign="top" width="50%" style="width:50%;${borda ? `padding-right:20px;border-right:1px solid rgba(201,185,154,0.3);` : 'padding-left:24px;'}">
+      <div style="${serif}font-size:16px;color:${C.sand};">${nome}</div>
+      <div style="${bebas}font-size:46px;line-height:0.95;color:${C.beige};margin-top:4px;letter-spacing:0.01em;">${dias}</div>
+      <div style="${cond}font-size:15px;font-weight:600;letter-spacing:0.14em;color:${C.greenBright};margin-top:2px;">de julho</div>
+    </td>`;
+    const trazer = [
+      'Roupa e sapatilhas de treino para todos os dias',
+      'Saco-cama/lençóis e almofada (o colchão é fornecido pela organização)',
+      'Chinelos, calções de banho, toalha e protetor solar',
+      'Produtos de higiene pessoal',
+      'Medicação habitual ou ocasional, se aplicável — entregue identificada (nome + posologia) a um treinador no check-in'
+    ].map(x => `<tr>
+      <td valign="top" width="22" style="width:22px;padding:9px 14px 9px 0;border-bottom:1px solid ${C.beigeMid};"><span style="display:inline-block;width:8px;height:8px;background:${C.greenBright};border-radius:50%;">&nbsp;</span></td>
+      <td valign="top" style="padding:9px 0;border-bottom:1px solid ${C.beigeMid};${sans}font-size:15px;color:${C.charcoal};line-height:1.55;">${x}</td>
+    </tr>`).join('');
     const body = `
-      <div style="padding:48px 40px 24px 40px;">
-        ${this._over('Conta decrescente · pré-campus', C.greenDark)}
-        ${this._display('A começar\nem breve.')}
+      <div style="padding:48px 40px 28px 40px;">
+        ${this._over('CFT 2026 · Informações finais')}
+        <h1 style="${bebas}font-size:62px;line-height:1.04;color:${C.nearBlack};margin:0;text-transform:uppercase;letter-spacing:0.005em;">Tudo o que precisa<br>antes do <span style="color:${C.greenDark};">início.</span></h1>
+        <div style="${serif}font-size:21px;color:${C.midGray};margin-top:16px;">Campus de Formação Técnica 2026 · Ponte da Barca</div>
       </div>
-      <div style="padding:0 40px 24px 40px;">
+      <div style="padding:0 40px 8px 40px;">
         ${this._greeting(ee, data)}
-        ${this._para(`Estamos a duas semanas do início do <b>CFT 2026</b> e ${a.oAtleta} <b>${this._esc(data.atleta)}</b> faz parte do grupo. Esta é uma mensagem rápida para ${ee.o === 'a' ? 'a' : 'o'} preparar para o que aí vem.`)}
+        ${this._para(`Falta pouco para o arranque do <b>Campus de Formação Técnica 2026</b> e queremos deixar-lhe toda a informação necessária para uma semana tranquila.`)}
       </div>
-      ${this._infoBox([
-        ['📅 Início', `<span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_inicio || '—')}</span>`],
-        ['📍 Local', this._esc(data.local || '—')],
-        ['🎒 Material', this._esc(data.material || '—')],
-        ['🚗 Logística', this._esc(data.logistica || '—')]
-      ], 'O que já pode preparar')}
-      <div style="padding:24px 40px 8px 40px;">
-        ${this._para(`<b>Equipamento.</b> Aproveite estes dias para garantir que ${a.oAtleta} tem todo o material listado em condições — calçado adequado, garrafa de água, muda de roupa.`)}
-        ${this._para(`<b>Pagamento.</b> Se ainda houver alguma parcela em aberto, este é o momento para fechar antes do início (IBAN <b style="font-family:ui-monospace,Menlo,monospace;">${this.IBAN_CFT}</b>). Se está tudo regularizado do seu lado e tem alguma dúvida, responda a este email.`)}
-        ${this._para(`<b>Comunicação.</b> Na semana anterior ao início, enviamos as informações finais (horários exactos, contactos de emergência, mapa do local). Mantenha-se atento à sua caixa de correio.`)}
+      <div style="margin:20px 40px 0 40px;background:${C.nearBlack};color:${C.beige};padding:28px 30px;">
+        <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenBright};margin-bottom:18px;">Datas</div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;"><tr>
+          ${semana('1.ª semana', '12 a 18', true)}
+          ${semana('2.ª semana', '19 a 25', false)}
+        </tr></table>
       </div>
-      <div style="padding:8px 40px 16px 40px;">
-        <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Até daqui a pouco,</div>
+      <div style="padding:12px 40px 8px 40px;">
+        ${logBlock('Check-in (domingo)', `
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>
+            ${timeCol('Internos', '21h00', true)}
+            ${timeCol('Externos', '21h45', false)}
+          </tr></table>
+          ${p15(`Às <b style="color:${C.greenDark};">22h00</b> há um treino de abertura para organização dos grupos — todos os atletas devem estar presentes. Pedimos também a presença dos encarregados de educação dos atletas em regime de externato neste momento inicial.`)}
+        `)}
+        ${logBlock('Horário dos externos (dias de semana)', `
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
+            ${timeCol('Entrada', '9h30', true)}
+            ${timeCol('Saída', '19h00', true)}
+            <td valign="bottom" style="${serif}font-size:16px;color:${C.charcoal};padding-bottom:2px;">O almoço está incluído.</td>
+          </tr></table>
+        `)}
+        ${logBlock('Encerramento (sábado)', p15(`Os pais podem estar no pavilhão a partir das <b style="color:${C.greenDark};">9h30</b>; a atividade final começa às <b style="color:${C.greenDark};">10h00</b>. Encerramento e levantamento dos atletas entre as <b style="color:${C.greenDark};">12h15</b> e as <b style="color:${C.greenDark};">13h30</b>.`), true)}
+      </div>
+      <div style="margin:8px 40px 0 40px;background:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.greenDark};padding:20px 24px;">
+        <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenDark};margin-bottom:8px;">Local</div>
+        <div style="${bebas}font-size:30px;line-height:1;color:${C.nearBlack};letter-spacing:0.01em;text-transform:uppercase;">Escola Básica Integrada Diogo Bernardes</div>
+        <div style="${serif}font-size:17px;color:${C.midGray};margin-top:6px;">Pct Frei Agostinho da Cruz, Ponte da Barca</div>
+      </div>
+      <div style="padding:32px 40px 8px 40px;">
+        ${this._over('O que trazer', C.charcoal)}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;margin-top:12px;">${trazer}</table>
+      </div>
+      <div style="padding:28px 40px 8px 40px;">
+        ${logBlock('Alimentação', p15(`São asseguradas todas as refeições (pequeno-almoço, lanche da manhã, almoço, lanche da tarde, jantar e ceia). Não é necessário trazer alimentos; os atletas podem trazer snacks individuais, se quiserem.`))}
+        ${logBlock('Segurança', p15(`Os atletas nunca saem do recinto sem acompanhamento dos treinadores. A ida à praia fluvial decorre numa zona de baía vigiada por nadadores-salvadores.`), true)}
+      </div>
+      <div style="margin:8px 40px 0 40px;background:${C.offWhite};border:1px solid ${C.beigeMid};padding:20px 24px;">
+        <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenDark};margin-bottom:8px;">Atletas da 2.ª semana (e das duas semanas)</div>
+        ${p15(`Todos os atletas terminam e são levantados no sábado. Os inscritos na 2.ª semana — quer façam só a 2.ª semana, quer façam as duas — entram no domingo para o novo check-in.`)}
+      </div>
+      <div style="margin:24px 40px 0 40px;background:${C.greenDark};color:${C.white};padding:28px 30px;">
+        <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenBright};margin-bottom:8px;">Contacto durante o campus</div>
+        <p style="${sans}font-size:14px;color:rgba(255,255,255,0.85);line-height:1.55;margin:0 0 12px 0;">Para qualquer necessidade ao longo da semana:</p>
+        <a href="tel:+351963474592" style="display:inline-block;text-decoration:none;${bebas}font-size:54px;line-height:0.9;color:${C.white};letter-spacing:0.03em;">963 474 592</a>
+      </div>
+      <div style="margin:24px 40px 0 40px;padding:16px 22px;background:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};">
+        <div style="${cond}font-size:11px;letter-spacing:0.22em;color:${C.orange};margin-bottom:4px;">Nota</div>
+        <div style="${sans}font-size:14px;color:${C.charcoal};line-height:1.55;">Os atletas inscritos após 22 de junho poderão receber a t-shirt CFT em data posterior ao início do campus.</div>
+      </div>
+      <div style="padding:28px 40px 16px 40px;">
+        ${this._para(`Em anexo seguem os planos semanais (Semana 1 e Semana 2) e o documento com todas as informações oficiais.`)}
+        ${this._para(`Qualquer dúvida, estamos disponíveis por esta via.`)}
+        ${this._para(`Os melhores cumprimentos,`)}
+        <div style="${serif}font-size:20px;color:${C.charcoal};">Organização do Campus de Formação Técnica 2026</div>
       </div>`;
     return { subject, html: this._wrap(body) };
   },
@@ -3307,7 +3386,9 @@ const EmailDraft = {
 
     const atletas = atletaIds.map(id => map[id]).filter(Boolean);
     if (atletas.length === 0) throw new Error('Nenhum atleta encontrado');
-    const bccList = atletas.map(a => (a.email || '').trim()).filter(Boolean);
+    const comEmail = atletas.filter(a => (a.email || '').trim());
+    // Dedupe (irmãos partilham o email do encarregado) preservando a ordem.
+    const bccList = [...new Set(comEmail.map(a => a.email.trim()))];
     if (bccList.length === 0) throw new Error('Nenhum dos atletas tem email');
 
     // Para bulk usamos dados genéricos (placeholders por-atleta ficam vazios).
@@ -3323,6 +3404,17 @@ const EmailDraft = {
       name: 'CFT — Inscrições'
     });
 
+    // Log em Emails com ids_atletas — permite ao dashboard marcar "já enviado"
+    // por atleta mesmo quando o envio foi um único rascunho BCC.
+    try {
+      Emails.log({
+        template:      tpl,
+        assunto:       subject,
+        corpo:         '',
+        destinatarios: bccList,
+        ids_atletas:   comEmail.map(a => a.id_inscricao)
+      }, user);
+    } catch (e) { Logger.log('Emails.log bulk falhou: ' + e.message); }
     try {
       Historico.append({
         utilizador: user,
@@ -3331,12 +3423,12 @@ const EmailDraft = {
         tipo:       'email_rascunho_bulk',
         antes:      '',
         depois:     tpl,
-        motivo:     subject + ' [' + atletas.length + ' destinatários]'
+        motivo:     subject + ' [' + bccList.length + ' destinatários]'
       });
     } catch (e) { Logger.log('Historico bulk falhou: ' + e.message); }
 
     const url = 'https://mail.google.com/mail/u/0/#drafts?compose=' + draft.getId();
-    return { draftId: draft.getId(), url: url, template: tpl, count: atletas.length, bcc: bccList };
+    return { draftId: draft.getId(), url: url, template: tpl, count: bccList.length, bcc: bccList };
   },
 
   /** Converte HTML em texto simples (fallback para clientes sem HTML). */

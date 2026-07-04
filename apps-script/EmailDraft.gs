@@ -159,7 +159,9 @@ const EmailDraft = {
 
     const atletas = atletaIds.map(id => map[id]).filter(Boolean);
     if (atletas.length === 0) throw new Error('Nenhum atleta encontrado');
-    const bccList = atletas.map(a => (a.email || '').trim()).filter(Boolean);
+    const comEmail = atletas.filter(a => (a.email || '').trim());
+    // Dedupe (irmãos partilham o email do encarregado) preservando a ordem.
+    const bccList = [...new Set(comEmail.map(a => a.email.trim()))];
     if (bccList.length === 0) throw new Error('Nenhum dos atletas tem email');
 
     // Para bulk usamos dados genéricos (placeholders por-atleta ficam vazios).
@@ -175,6 +177,17 @@ const EmailDraft = {
       name: 'CFT — Inscrições'
     });
 
+    // Log em Emails com ids_atletas — permite ao dashboard marcar "já enviado"
+    // por atleta mesmo quando o envio foi um único rascunho BCC.
+    try {
+      Emails.log({
+        template:      tpl,
+        assunto:       subject,
+        corpo:         '',
+        destinatarios: bccList,
+        ids_atletas:   comEmail.map(a => a.id_inscricao)
+      }, user);
+    } catch (e) { Logger.log('Emails.log bulk falhou: ' + e.message); }
     try {
       Historico.append({
         utilizador: user,
@@ -183,12 +196,12 @@ const EmailDraft = {
         tipo:       'email_rascunho_bulk',
         antes:      '',
         depois:     tpl,
-        motivo:     subject + ' [' + atletas.length + ' destinatários]'
+        motivo:     subject + ' [' + bccList.length + ' destinatários]'
       });
     } catch (e) { Logger.log('Historico bulk falhou: ' + e.message); }
 
     const url = 'https://mail.google.com/mail/u/0/#drafts?compose=' + draft.getId();
-    return { draftId: draft.getId(), url: url, template: tpl, count: atletas.length, bcc: bccList };
+    return { draftId: draft.getId(), url: url, template: tpl, count: bccList.length, bcc: bccList };
   },
 
   /** Converte HTML em texto simples (fallback para clientes sem HTML). */

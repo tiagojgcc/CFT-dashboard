@@ -1291,6 +1291,7 @@
         <span class="sel-info" id="sel-info">0 selecionados</span>
         <button class="compose-btn" id="compose-btn" disabled onclick="openCompose()">Enviar email</button>
         <button class="quick-template" id="promo-desconto-btn" onclick="promoverDescontoClube()" title="Envia rascunho branded a atletas internos cujo clube tem 1-7 atletas (potencial desconto se chegarem a 8). Pode incluir já-pagos.">📢 Promover desconto de clube</button>
+        <button class="quick-template" id="info-finais-btn" onclick="enviarInfoFinaisBulk()" title="Cria 1 único rascunho no Gmail com o email 'Informações finais' e todos os encarregados (atletas ativos com email) em BCC — mesma mensagem para todos, sem personalização.">✉ Informações finais · todos em BCC</button>
       </div>
     </div>
 
@@ -1757,7 +1758,7 @@ function humanAgo(ts){
 const TEMPLATE_LABELS = {
   boasVindas:       'Boas-vindas',
   generico:         'Outro assunto',
-  prePampus:        'Pré-campus',
+  prePampus:        'Informações finais',
   semPagamento:     'Sem pagamento',
   pagamentoParcial: 'Pagamento parcial',
   valorErrado:      'Valor errado',
@@ -2449,8 +2450,8 @@ const EMAIL_PANEL_TEMPLATES = [
     hint: 'Escreva assunto + corpo livres — sai com header/assinatura CFT.' },
   { kind: 'problema',    label: 'Problema pagamento', tpl: null,
     hint: 'Auto-deteta o template: sem pagamento, parcial, valor errado ou a devolver.' },
-  { kind: 'prePampus',   label: 'Pré-campus',   tpl: 'prePampus',
-    hint: 'Update a 1-2 semanas do início: equipamento, prazos, próximas comunicações.' }
+  { kind: 'prePampus',   label: 'Informações finais',   tpl: 'prePampus',
+    hint: 'Email logístico antes do início: datas, check-in, horários, o que trazer, contacto.' }
 ];
 
 function getEmailPanelState(id){
@@ -4439,8 +4440,8 @@ function _cftMarcos(){
       date: avisoPrazo,
       cta: { text: '✉ enviar aviso prazo', fn: 'enviarAvisoPrazoBulk' } },
     { key: 'prazo',    label: 'Final do prazo de pagamento', date: cfgPrazo },
-    { key: 'info',     label: 'Enviar info geral',        date: infoGeral,
-      cta: { text: '✉ enviar info geral',  fn: 'enviarInfoPraticasBulk' } },
+    { key: 'info',     label: 'Enviar informações finais', date: infoGeral,
+      cta: { text: '✉ enviar informações finais',  fn: 'enviarInfoFinaisBulk' } },
     { key: 'sem1',     label: 'Início CFT · semana 1',    date: cfgStart },
     { key: 'sem2',     label: 'Início CFT · semana 2',    date: cfgWeek2 },
     { key: 'pagar',    label: 'Realizar pagamentos',      date: new Date('2026-07-25') },
@@ -4718,11 +4719,22 @@ async function enviarAvisoPrazoBulk(){
   await _bulkCreateDrafts(elegiveis.map(r => r.id), 'avisoPrazo', 'Aviso prazo');
 }
 
-async function enviarInfoPraticasBulk(){
-  const elegiveis = data.filter(r => r.ativo && r.email_enc && !recentlySentKind(r.id, 'prePampus', 21));
-  if (elegiveis.length === 0) { toast('Ninguém para contactar — todos já receberam info recentemente'); return; }
-  if (!confirm(`Vai criar ${elegiveis.length} rascunho${elegiveis.length === 1 ? '' : 's'} "Info práticas" para todos os atletas ativos. Continuar?`)) return;
-  await _bulkCreateDrafts(elegiveis.map(r => r.id), 'infoPraticas', 'Info práticas');
+// Cria UM único rascunho "Informações finais" com todos os encarregados em
+// BCC (mesma mensagem para todos — sem personalização por atleta).
+async function enviarInfoFinaisBulk(){
+  const elegiveis = data.filter(r => r.ativo && r.email_enc);
+  if (elegiveis.length === 0) { toast('Nenhum atleta ativo com email', true); return; }
+  const nEmails = new Set(elegiveis.map(r => String(r.email_enc).trim().toLowerCase())).size;
+  if (!confirm(`Vai criar 1 único rascunho "Informações finais" com ${nEmails} email${nEmails === 1 ? '' : 's'} em BCC (${elegiveis.length} atletas ativos). Continuar?`)) return;
+  toast('A criar rascunho único (BCC)…');
+  try {
+    const res = await Api.createBulkEmailDraft(elegiveis.map(r => r.id), 'prePampus');
+    toast(`Rascunho criado · ${res.count} destinatário${res.count === 1 ? '' : 's'} em BCC`);
+    window.open(res.url, '_blank');
+    setTimeout(() => { try { refreshNow(); } catch(_) {} }, 700);
+  } catch (e) {
+    toast('Falha a criar rascunho: ' + e.message, true);
+  }
 }
 
 async function _bulkCreateDrafts(ids, template, label){
