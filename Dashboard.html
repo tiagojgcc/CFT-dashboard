@@ -1292,6 +1292,7 @@
         <button class="compose-btn" id="compose-btn" disabled onclick="openCompose()">Enviar email</button>
         <button class="quick-template" id="promo-desconto-btn" onclick="promoverDescontoClube()" title="Envia rascunho branded a atletas internos cujo clube tem 1-7 atletas (potencial desconto se chegarem a 8). Pode incluir já-pagos.">📢 Promover desconto de clube</button>
         <button class="quick-template" id="info-finais-btn" onclick="enviarInfoFinaisBulk()" title="Cria 1 único rascunho no Gmail com o email 'Informações finais' e todos os encarregados (atletas ativos com email) em BCC — mesma mensagem para todos, sem personalização.">✉ Informações finais · todos em BCC</button>
+        <button class="quick-template" id="seguro-btn" onclick="exportSeguro()" title="Descarrega a lista para a seguradora (abre no Excel): nome completo, cartão de cidadão, NIF e data de nascimento de todos os atletas ativos.">🛡 Lista p/ seguro</button>
       </div>
     </div>
 
@@ -4737,6 +4738,53 @@ async function enviarInfoFinaisBulk(){
   }
 }
 
+// ============ Entregável para o seguro (CSV → Excel) ============
+// Nome completo, nº do cartão de cidadão, NIF e data de nascimento de todos
+// os atletas ativos, deduplicados (atleta inscrito 2x só entra 1 vez).
+function fmtDataNasc(v){
+  if (!v) return '';
+  const s = String(v).trim();
+  // Já em formato PT (dd/mm/aaaa) — devolve tal e qual.
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) return s;
+  // ISO (o Sheets serializa datas como 2010-05-12T...) → dd/mm/aaaa.
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const p = n => String(n).padStart(2, '0');
+    return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear();
+  }
+  return s;
+}
+function exportSeguro(){
+  const rows = data.filter(r => r.ativo);
+  if (rows.length === 0) { toast('Sem atletas ativos para exportar', true); return; }
+  const seen = new Set(); const out = []; let semDados = 0;
+  rows.slice()
+    .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt'))
+    .forEach(r => {
+      const raw = r._raw || {};
+      const cc = String(raw.cc || '').trim();
+      const nif = String(raw.nif || '').trim();
+      const nasc = fmtDataNasc(r.data_nascimento);
+      // Dedupe pelo CC quando existe; senão nome+nascimento.
+      const key = cc || (String(r.nome || '').trim().toLowerCase() + '|' + nasc);
+      if (seen.has(key)) return;
+      seen.add(key);
+      if (!cc || !nif || !nasc) semDados++;
+      out.push([r.nome || '', cc, nif, nasc]);
+    });
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  // \ufeff = BOM para o Excel abrir o UTF-8 com acentos corretos.
+  const csv = '\ufeff' +
+    ['Nome completo', 'Cartão de Cidadão', 'NIF', 'Data de nascimento'].map(esc).join(';') + '\r\n' +
+    out.map(l => l.map(esc).join(';')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'cft-seguro-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+  toast(out.length + ' atletas exportados para o seguro' + (semDados ? ' · ⚠ ' + semDados + ' com CC/NIF/nascimento em falta' : ''));
+}
+
 async function _bulkCreateDrafts(ids, template, label){
   toast(`A criar ${ids.length} rascunho${ids.length === 1 ? '' : 's'}…`);
   let ok = 0, firstUrl = null, errs = [];
@@ -4991,6 +5039,14 @@ function finMetrics(){
     if (disc > 0) c.nDesc++;
   });
 
+  // Valores retidos de inscrições eliminadas (ex.: cancelamento tardio em que
+  // parte do pagamento fica connosco para cobrir custos já incorridos).
+  // Contam como receita/recebido, mas não entram na alocação por semana/clube
+  // nem no preço médio — o atleta já não ocupa vaga.
+  const inativos = (typeof dataAll !== 'undefined' && dataAll) ? dataAll.filter(r => !r.ativo) : [];
+  const retido = inativos.reduce((s, r) => s + (Number(r.val_pago) || 0), 0);
+  const nRetido = inativos.filter(r => (Number(r.val_pago) || 0) > 0).length;
+
   // Alocação de despesa por atleta-semana (atletas de 2 semanas "pesam" o dobro)
   const denom = atletaWeeksTotal || 1;
   const geral = ds.filter(d => !d.semana).reduce((s, d) => s + (Number(d.valor) || 0), 0);
@@ -5026,6 +5082,9 @@ function finMetrics(){
     c.margem = c.receita > 0 ? c.lucro / c.receita : 0;
   });
 
+  const receitaInscricoes = receita;
+  receita += retido;
+  recebido += retido;
   const lucro = receita - despesaTotal;
   const margem = receita > 0 ? lucro / receita : 0;
   const nAtl = ativos.length;
@@ -5033,11 +5092,12 @@ function finMetrics(){
   const valorVagasTotal = (weeksAg[1].valorVagas || 0) + (weeksAg[2].valorVagas || 0);
   return {
     despesaTotal, porCat, receita, recebido, descontoTotal, nComDesc, lucro, margem, nAtl,
+    retido, nRetido,
     clubes, weeksAg, fixTotal, varTotal, varPorAtletaSem, vagasSem,
     vagasLivresTotal, valorVagasTotal,
     custoPorAtleta: nAtl ? despesaTotal / nAtl : 0,
     lucroPorAtleta: nAtl ? lucro / nAtl : 0,
-    precoMedio: nAtl ? receita / nAtl : 0,
+    precoMedio: nAtl ? receitaInscricoes / nAtl : 0,
     nDespesas: ds.length
   };
 }
@@ -5219,7 +5279,8 @@ function renderFinancas(){
   // KPIs
   const lucroCor = m.lucro >= 0 ? 'var(--green-dark)' : '#c0392b';
   document.getElementById('fin-kpis').innerHTML = `
-    <div class="fin-kpi"><div class="fin-kpi-label">Receita (inscrições)</div><div class="fin-kpi-num" style="color:var(--green-dark)">${fmt(m.receita)}</div><div class="fin-kpi-sub">${fmt(m.recebido)} já recebidos</div></div>
+    <div class="fin-kpi"><div class="fin-kpi-label">Receita</div><div class="fin-kpi-num" style="color:var(--green-dark)">${fmt(m.receita)}</div><div class="fin-kpi-sub">${fmt(m.recebido)} já recebidos${m.retido ? ' · inclui ' + fmt(m.retido) + ' retidos' : ''}</div></div>
+    ${m.retido ? `<div class="fin-kpi"><div class="fin-kpi-label">Retido cancelamentos</div><div class="fin-kpi-num" style="color:var(--green-dark)">${fmt(m.retido)}</div><div class="fin-kpi-sub">${m.nRetido} inscrição${m.nRetido === 1 ? '' : 'ões'} eliminada${m.nRetido === 1 ? '' : 's'} com valor retido</div></div>` : ''}
     <div class="fin-kpi"><div class="fin-kpi-label">Despesas</div><div class="fin-kpi-num" style="color:#c0392b">${fmt(m.despesaTotal)}</div><div class="fin-kpi-sub">${m.nDespesas} registo${m.nDespesas === 1 ? '' : 's'}</div></div>
     <div class="fin-kpi"><div class="fin-kpi-label">Lucro</div><div class="fin-kpi-num" style="color:${lucroCor}">${fmt(m.lucro)}</div><div class="fin-kpi-sub">${fmt(m.lucroPorAtleta)} por atleta</div></div>
     <div class="fin-kpi"><div class="fin-kpi-label">Margem</div><div class="fin-kpi-num" style="color:${lucroCor}">${Math.round(m.margem * 100)}%</div><div class="fin-kpi-sub">alvo ${finState.margemAlvo}%</div></div>
