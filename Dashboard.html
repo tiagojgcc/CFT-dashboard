@@ -1293,7 +1293,6 @@
         <button class="compose-btn" id="compose-btn" disabled onclick="openCompose()">Enviar email</button>
         <button class="quick-template" id="promo-desconto-btn" onclick="promoverDescontoClube()" title="Envia rascunho branded a atletas internos cujo clube tem 1-7 atletas (potencial desconto se chegarem a 8). Pode incluir já-pagos.">📢 Promover desconto de clube</button>
         <button class="quick-template" id="info-finais-btn" onclick="enviarInfoFinaisBulk()" title="Cria 1 único rascunho no Gmail com o email 'Informações finais' e todos os encarregados (atletas ativos com email) em BCC — mesma mensagem para todos, sem personalização.">✉ Informações finais · todos em BCC</button>
-        <button class="quick-template" id="seguro-btn" onclick="exportSeguro()" title="Descarrega a lista para a seguradora (abre no Excel): nome completo, cartão de cidadão, NIF e data de nascimento de todos os atletas ativos.">🛡 Lista p/ seguro</button>
       </div>
     </div>
 
@@ -1361,6 +1360,11 @@
     <div style="margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--mid-gray);">Sérgio (treinador principal)</div>
     <div style="margin-bottom:16px;">
       <button class="btn-confirm" style="padding:14px;width:100%;" onclick="openListaSergio()">📋 Lista Sérgio · atletas por clube<br><small style="font-weight:normal;opacity:0.85;">todos os atletas inscritos · agrupados por clube</small></button>
+    </div>
+    <div style="margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--mid-gray);">Seguradora (nome, CC, NIF, nascimento)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+      <button class="btn-confirm" style="padding:14px;" onclick="openSeguro(1)">🛡 Seguro Sem 1<br><small style="font-weight:normal;opacity:0.85;">cobertura 12—18 jul</small></button>
+      <button class="btn-confirm" style="padding:14px;" onclick="openSeguro(2)">🛡 Seguro Sem 2<br><small style="font-weight:normal;opacity:0.85;">cobertura 19—25 jul</small></button>
     </div>
     <div class="card" style="padding:18px;">
       <div class="card-title" style="margin-bottom:10px;">Camisolas — pedido por tamanho</div>
@@ -4802,9 +4806,10 @@ async function enviarInfoFinaisBulk(){
   }
 }
 
-// ============ Entregável para o seguro (CSV → Excel) ============
-// Nome completo, nº do cartão de cidadão, NIF e data de nascimento de todos
-// os atletas ativos, deduplicados (atleta inscrito 2x só entra 1 vez).
+// ============ Entregável para o seguro (PDF por semana) ============
+// Nome completo, nº do cartão de cidadão, NIF e data de nascimento dos atletas
+// ativos da semana, deduplicados. O cabeçalho discrimina as datas do campus
+// para a seguradora saber o período de cobertura pedido.
 function fmtDataNasc(v){
   if (!v) return '';
   const s = String(v).trim();
@@ -4818,11 +4823,14 @@ function fmtDataNasc(v){
   }
   return s;
 }
-function exportSeguro(){
-  const rows = data.filter(r => r.ativo);
-  if (rows.length === 0) { toast('Sem atletas ativos para exportar', true); return; }
+function openSeguro(semana){
+  const COBERTURA = {
+    1: 'Domingo 12 a sábado 18 de julho de 2026',
+    2: 'Domingo 19 a sábado 25 de julho de 2026'
+  };
   const seen = new Set(); const out = []; let semDados = 0;
-  rows.slice()
+  (data || [])
+    .filter(r => r.ativo && parseSems(r.semana).includes(semana))
     .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt'))
     .forEach(r => {
       const raw = r._raw || {};
@@ -4834,19 +4842,73 @@ function exportSeguro(){
       if (seen.has(key)) return;
       seen.add(key);
       if (!cc || !nif || !nasc) semDados++;
-      out.push([r.nome || '', cc, nif, nasc]);
+      out.push({ nome: r.nome || '', cc, nif, nasc });
     });
-  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  // \ufeff = BOM para o Excel abrir o UTF-8 com acentos corretos.
-  const csv = '\ufeff' +
-    ['Nome completo', 'Cartão de Cidadão', 'NIF', 'Data de nascimento'].map(esc).join(';') + '\r\n' +
-    out.map(l => l.map(esc).join(';')).join('\r\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'cft-seguro-' + new Date().toISOString().slice(0, 10) + '.csv';
-  a.click(); URL.revokeObjectURL(url);
-  toast(out.length + ' atletas exportados para o seguro' + (semDados ? ' · ⚠ ' + semDados + ' com CC/NIF/nascimento em falta' : ''));
+  if (out.length === 0) { toast('Sem atletas ativos na semana ' + semana, true); return; }
+  const falta = v => v ? escHtml(v) : '<span class="falta">em falta</span>';
+  const rows = out.map((a, i) => `<tr>
+    <td class="num">${i + 1}</td>
+    <td><b>${escHtml(a.nome)}</b></td>
+    <td>${falta(a.cc)}</td>
+    <td>${falta(a.nif)}</td>
+    <td class="num">${falta(a.nasc)}</td>
+  </tr>`).join('');
+  const html = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
+<title>CFT 2026 — Seguro — Semana ${semana}</title>
+<style>
+  @page { size: A4 portrait; margin: 14mm; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 14px; }
+  header { border-bottom: 3px solid #1a1a1a; padding-bottom: 12px; margin-bottom: 6px; }
+  header .top { display: flex; justify-content: space-between; align-items: flex-end; }
+  header h1 { margin: 0; font-size: 26px; letter-spacing: 0.04em; text-transform: uppercase; }
+  header .sub { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7a3a; margin-top: 4px; }
+  header .right { text-align: right; font-size: 11px; color: #555; }
+  .cobertura { margin: 10px 0 14px 0; padding: 10px 14px; background: #f7f3eb; border-left: 4px solid #6b7a3a; font-size: 13px; }
+  .cobertura b { font-size: 15px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; }
+  th { background: #1a1a1a; color: #fff; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+  td.num, th.num { text-align: center; }
+  tr:nth-child(even) td { background: #f7f3eb; }
+  .falta { color: #c0392b; font-style: italic; font-size: 11px; }
+  footer { margin-top: 16px; font-size: 10px; color: #888; text-align: right; }
+  @media print { .no-print { display: none; } body { padding: 0; } }
+</style></head><body>
+<div class="no-print" style="background:#1a1a1a;color:#fff;padding:10px 14px;border-radius:6px;margin-bottom:14px;">
+  📄 Para guardar como PDF: <b>Ctrl+P</b> → escolhe "Guardar como PDF" → guardar.
+</div>
+<header>
+  <div class="top">
+    <div class="left">
+      <h1>Seguro · Semana ${semana}</h1>
+      <div class="sub">Campo de Formação Técnica · 4ª edição · 2026 · Ponte da Barca</div>
+    </div>
+    <div class="right">
+      <div><b>${out.length}</b> atletas a segurar</div>
+      <div>Gerado: ${new Date().toLocaleDateString('pt-PT')}</div>
+    </div>
+  </div>
+</header>
+<div class="cobertura">
+  Período de cobertura pretendido: <b>${COBERTURA[semana] || 'Semana ' + semana}</b><br>
+  Local: Escola Básica Integrada Diogo Bernardes, Ponte da Barca
+</div>
+<table>
+  <thead><tr>
+    <th class="num">Nº</th>
+    <th>Nome completo</th>
+    <th>Cartão de Cidadão</th>
+    <th>NIF</th>
+    <th class="num">Data de nascimento</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+${semDados ? `<div style="margin-top:10px;font-size:11px;color:#c0392b;">⚠ ${semDados} atleta${semDados === 1 ? ' tem' : 's têm'} CC, NIF ou data de nascimento em falta no formulário de inscrição.</div>` : ''}
+<footer>CFT 2026 · Campo de Formação Técnica · APDFE</footer>
+</body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) { toast('Bloqueador de popups impede abrir. Permite popups para este site.', true); return; }
+  w.document.open(); w.document.write(html); w.document.close();
 }
 
 async function _bulkCreateDrafts(ids, template, label){
