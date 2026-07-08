@@ -240,7 +240,8 @@
     display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
     background: var(--white); border: 1px solid var(--sand); border-radius: var(--radius-md);
     padding: 10px 12px;
-    position: sticky; top: 0; z-index: 20;
+    /* Cola logo abaixo da appbar (que também é sticky) — --appbar-h vem do JS. */
+    position: sticky; top: var(--appbar-h, 0px); z-index: 20;
     box-shadow: 0 2px 6px rgba(28,28,24,0.04);
   }
   .list-toolbar input, .list-toolbar select {
@@ -281,9 +282,10 @@
   .table-wrap { border: 1px solid var(--sand); border-radius: var(--radius-md); background: var(--white); }
   .table-scroll { /* desktop: sem scroll. Em mobile, overflow-x:auto via media-query */ }
   table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  /* thead sticky logo abaixo da toolbar. --toolbar-h é actualizado em JS via ResizeObserver.
-     Como table-wrap não tem overflow, o sticky funciona no contexto do scroll da página. */
-  thead { background: var(--charcoal); color: var(--off-white); position: sticky; top: var(--toolbar-h, 56px); z-index: 10; }
+  /* thead sticky logo abaixo da appbar + toolbar. --appbar-h e --toolbar-h são
+     actualizados em JS via ResizeObserver. Como table-wrap não tem overflow,
+     o sticky funciona no contexto do scroll da página. */
+  thead { background: var(--charcoal); color: var(--off-white); position: sticky; top: calc(var(--appbar-h, 0px) + var(--toolbar-h, 56px)); z-index: 10; }
   thead th { box-shadow: inset 0 -1px 0 0 var(--charcoal); }
   th {
     font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700;
@@ -1284,7 +1286,6 @@
       <select id="filt-tipo"><option value="">interno/externo</option><option value="Interno">Interno</option><option value="Externo">Externo</option></select>
       <select id="filt-pag"><option value="">estado pagamento</option><option value="pago">pago</option><option value="parcial">parcial</option><option value="pendente">sem pagamento</option><option value="problema">valor problemático</option></select>
       <button class="quick-template" onclick="quickFilter('problema')">⚠ só problemáticos</button>
-      <button class="quick-template" onclick="quickFilter('parcial')" title="Atletas que pagaram 1ª prestação e falta a 2ª — útil para identificar transferências">💸 2ª transferência</button>
       <button class="quick-template" onclick="quickFilter('clear')">limpar</button>
 
       <div class="list-actionbar">
@@ -1624,6 +1625,20 @@
     <div class="modal-sub" id="del-sub">—</div>
     <div class="field-label">Motivo (obrigatório, ≥10 caracteres)</div>
     <textarea id="del-motivo" placeholder="Ex: desistência por lesão; encarregado avisou por email a 3 maio." oninput="checkDelBtn()"></textarea>
+    <div id="del-retido-wrap">
+      <div class="field-label">Ficamos com algum dinheiro deste atleta?</div>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+          <input type="radio" name="del-retido-op" value="nao" checked onchange="toggleDelRetido()"> Não — devolvido / nada pago
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+          <input type="radio" name="del-retido-op" value="sim" onchange="toggleDelRetido()"> Sim, ficámos com
+        </label>
+        <input type="number" id="del-retido-val" min="0" step="0.01" placeholder="€" oninput="checkDelBtn()"
+               style="width:90px;padding:6px 8px;border:1px solid var(--sand);border-radius:4px;display:none;">
+      </div>
+      <div style="font-size:11.5px;color:var(--mid-gray);margin-bottom:10px;">O valor retido fica registado como "pago" nesta inscrição e entra nas Finanças como receita de cancelamento.</div>
+    </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeDel()">Cancelar</button>
       <button class="btn-confirm" id="del-confirm-btn" onclick="confirmDel()" disabled>Confirmar</button>
@@ -3076,7 +3091,7 @@ function renderEliminados(){
     <div class="card" style="padding:0;overflow:hidden;">
       <table class="elim-table">
         <thead><tr>
-          <th>Atleta</th><th>Clube</th><th>Eliminado em</th><th>Por</th><th>Motivo</th><th></th>
+          <th>Atleta</th><th>Clube</th><th>Eliminado em</th><th>Por</th><th>Motivo</th><th title="Dinheiro que ficou connosco neste cancelamento — conta como receita nas Finanças">€ retido</th><th></th>
         </tr></thead>
         <tbody>
           ${elim.map(r => `<tr>
@@ -3085,12 +3100,28 @@ function renderEliminados(){
             <td>${fmtTs(r.eliminado_em)}</td>
             <td>${escHtml(r.eliminado_por)}</td>
             <td class="elim-motivo">${escHtml(r.motivo_eliminacao)}</td>
+            <td><input type="number" min="0" step="0.01" value="${Number(r.val_pago) || 0}"
+                       title="Valor retido deste cancelamento (0 = devolvido/nada pago). Entra nas Finanças."
+                       style="width:72px;padding:4px 6px;border:1px solid var(--sand);border-radius:4px;font-size:12px;"
+                       onchange="elimSetRetido('${r.id}', this.value)"></td>
             <td><button class="row-act success" title="Reativar" onclick="openDel('${r.id}','reactivate')">↺</button></td>
           </tr>`).join('')}
         </tbody>
       </table>
     </div>
   `;
+}
+
+// Ajusta o valor retido de uma inscrição eliminada (grava em valor_pago).
+async function elimSetRetido(id, value){
+  const v = value === '' ? 0 : Number(value);
+  if (Number.isNaN(v) || v < 0) { toast('Valor inválido', true); return; }
+  toast('A guardar…');
+  try {
+    await Api.updatePagamento(id, v, true);
+    toast('Valor retido guardado: ' + v + '€');
+  } catch (e) { toast('Erro: ' + e.message, true); }
+  _bgRefresh();
 }
 
 // ============ MODAL: ALTERAR SEMANAS ============
@@ -3165,19 +3196,44 @@ async function confirmOpcao(){
 function openDel(id, action){
   const r = (dataAll || []).find(a => a.id === id);
   if (!r) return;
-  pendingDel = { id, action, nome: r.nome };
+  pendingDel = { id, action, nome: r.nome, valPago: Number(r.val_pago) || 0 };
   const isReact = action === 'reactivate';
   document.getElementById('del-title').textContent = isReact ? 'Reativar atleta' : 'Eliminar atleta';
   document.getElementById('del-sub').textContent = r.nome + ' · ' + r.clube;
   document.getElementById('del-motivo').value = '';
+  // Pergunta do dinheiro retido — só ao eliminar. Se o atleta tem pagamento
+  // registado, pré-seleciona "sim" com esse valor (o admin ajusta para o que
+  // realmente fica connosco, ex.: 120€ de um cancelamento tardio).
+  const wrap = document.getElementById('del-retido-wrap');
+  wrap.style.display = isReact ? 'none' : 'block';
+  if (!isReact) {
+    const temPago = pendingDel.valPago > 0;
+    document.querySelector('input[name="del-retido-op"][value="' + (temPago ? 'sim' : 'nao') + '"]').checked = true;
+    document.getElementById('del-retido-val').value = temPago ? pendingDel.valPago : '';
+    toggleDelRetido();
+  }
   document.getElementById('del-confirm-btn').disabled = true;
   document.getElementById('del-confirm-btn').textContent = isReact ? 'Reativar' : 'Eliminar';
   document.getElementById('del-overlay').classList.add('open');
 }
 function closeDel(){ document.getElementById('del-overlay').classList.remove('open'); pendingDel = null; }
+function toggleDelRetido(){
+  const op = (document.querySelector('input[name="del-retido-op"]:checked') || {}).value;
+  document.getElementById('del-retido-val').style.display = op === 'sim' ? 'inline-block' : 'none';
+  checkDelBtn();
+}
 function checkDelBtn(){
   const v = document.getElementById('del-motivo').value.trim();
-  document.getElementById('del-confirm-btn').disabled = v.length < 10;
+  let ok = v.length >= 10;
+  // Ao eliminar com "sim, ficámos com X" o valor tem de ser um número válido.
+  if (ok && pendingDel && pendingDel.action !== 'reactivate') {
+    const op = (document.querySelector('input[name="del-retido-op"]:checked') || {}).value;
+    if (op === 'sim') {
+      const n = Number(document.getElementById('del-retido-val').value);
+      ok = !Number.isNaN(n) && n >= 0 && document.getElementById('del-retido-val').value !== '';
+    }
+  }
+  document.getElementById('del-confirm-btn').disabled = !ok;
 }
 async function confirmDel(){
   if (!pendingDel) return;
@@ -3189,7 +3245,15 @@ async function confirmDel(){
       toast('Atleta reativado');
     } else {
       await Api.softDelete(pendingDel.id, motivo);
-      toast('Atleta eliminado');
+      // Regista o valor que fica connosco (0 se devolvido/nada pago) para as
+      // Finanças contarem o retido de cancelamentos corretamente.
+      const op = (document.querySelector('input[name="del-retido-op"]:checked') || {}).value;
+      const retido = op === 'sim' ? Number(document.getElementById('del-retido-val').value) : 0;
+      if (!Number.isNaN(retido) && retido !== pendingDel.valPago) {
+        try { await Api.updatePagamento(pendingDel.id, retido, true); }
+        catch (e) { toast('Atleta eliminado, mas falhou registar o valor retido: ' + e.message, true); }
+      }
+      toast('Atleta eliminado' + (retido > 0 ? ' · ' + retido + '€ retidos' : ''));
     }
     closeDel();
     await refreshNow();
@@ -4876,9 +4940,15 @@ function renderAll(){
   if (finPanel && finPanel.classList.contains('active')) renderFinancas();
 }
 
-// Mede a altura efectiva da toolbar (inclui margin-bottom) e expõe como CSS var
-// --toolbar-h. O thead sticky usa esta var para se posicionar logo abaixo da toolbar.
+// Mede a altura efectiva da appbar e da toolbar (inclui margin-bottom) e expõe
+// como CSS vars --appbar-h / --toolbar-h. A toolbar cola abaixo da appbar e o
+// thead cola abaixo das duas — ambas sticky no scroll da página.
 function updateToolbarHeight(){
+  const ab = document.querySelector('.appbar');
+  if (ab) {
+    const abH = Math.ceil(ab.getBoundingClientRect().height);
+    if (abH > 0) document.documentElement.style.setProperty('--appbar-h', abH + 'px');
+  }
   const tb = document.querySelector('#panel-list .list-toolbar');
   if (!tb) return;
   const rect = tb.getBoundingClientRect();
