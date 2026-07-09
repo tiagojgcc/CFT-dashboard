@@ -24,9 +24,10 @@ const ATL_COLS = {
   motivo_eliminacao: 36, eliminado_em: 37, eliminado_por: 38,
   notas_internas: 39, ultima_alteracao_em: 40, ultima_alteracao_por: 41,
   valor_confirmado: 42, valor_devido_override: 43, desconto_outro_motivo: 44,
-  num_inscricao: 45, bank_confirmed_em: 46, bank_confirmed_por: 47
+  num_inscricao: 45, bank_confirmed_em: 46, bank_confirmed_por: 47,
+  como_conheceu: 48, treinador_indicou: 49
 };
-const ATL_NCOLS = 47;
+const ATL_NCOLS = 49;
 
 const Inscricoes = {
   sheet() { return SpreadsheetApp.openById(SHEET_ID).getSheetByName('Atletas'); },

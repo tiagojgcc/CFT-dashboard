@@ -128,6 +128,8 @@
         telefone: a.telefone || '',
         data_nascimento: a.data_nascimento || '',
         semanas_originais: a.semanas_originais || '',
+        como_conheceu: a.como_conheceu || '',
+        treinador_indicou: a.treinador_indicou || '',
         pricing: a.pricing || null,
         // legacy fallbacks (já não usados — mantidos para evitar undefined)
         custom_total: 0,

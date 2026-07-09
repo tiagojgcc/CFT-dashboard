@@ -1525,6 +1525,26 @@
       </div>
     </div>
 
+    <div class="fin-grid3" style="margin-top:14px;">
+      <div class="card" style="grid-column:1/-1;">
+        <div class="card-head">
+          <div class="card-title">Angariação por treinador · €2 por inscrição</div>
+          <div class="card-meta" id="fin-ref-meta">—</div>
+        </div>
+        <div id="fin-ref-treinadores"></div>
+      </div>
+    </div>
+
+    <div class="fin-grid3" style="margin-top:14px;">
+      <div class="card" style="grid-column:1/-1;">
+        <div class="card-head">
+          <div class="card-title">Como tomaram conhecimento do campo</div>
+          <div class="card-meta" id="fin-origem-meta">—</div>
+        </div>
+        <div id="fin-origem"></div>
+      </div>
+    </div>
+
     <div class="card fin-sim-card" style="margin-top:14px;">
       <div class="card-head">
         <div class="card-title">Simulador — e se…?</div>
@@ -5236,6 +5256,37 @@ function finMetrics(){
   };
 }
 
+// Angariação por treinador + origem ("como tomou conhecimento").
+// Prémio: €2 por INSCRIÇÃO (atleta em 2 semanas conta 2). Só atletas ativos.
+const FIN_PREMIO_ANGARIACAO = 2;
+function finReferral(){
+  const ativos = (typeof data !== 'undefined' && data) ? data : [];
+  const treinadores = {};   // key -> { nome, atletas, inscricoes }
+  const origem = {};        // key -> { label, n }
+  ativos.forEach(r => {
+    const insc = parseSems(r.semana).length || 1;
+    const traw = String(r.treinador_indicou || '').trim().replace(/\s+/g, ' ');
+    if (traw) {
+      const key = traw.toLowerCase();
+      const t = treinadores[key] || (treinadores[key] = { nome: traw, atletas: 0, inscricoes: 0 });
+      t.atletas++; t.inscricoes += insc;
+    }
+    const oraw = String(r.como_conheceu || '').trim().replace(/\s+/g, ' ') || 'Não indicado';
+    const o = origem[oraw.toLowerCase()] || (origem[oraw.toLowerCase()] = { label: oraw, n: 0 });
+    o.n++;
+  });
+  const tList = Object.values(treinadores)
+    .map(t => ({ ...t, pagar: t.inscricoes * FIN_PREMIO_ANGARIACAO }))
+    .sort((a, b) => b.pagar - a.pagar || a.nome.localeCompare(b.nome));
+  const oList = Object.values(origem).sort((a, b) => b.n - a.n);
+  return {
+    tList, oList, nAtivos: ativos.length,
+    totalPagar:      tList.reduce((s, t) => s + t.pagar, 0),
+    totalInscricoes: tList.reduce((s, t) => s + t.inscricoes, 0),
+    totalAtletas:    tList.reduce((s, t) => s + t.atletas, 0)
+  };
+}
+
 // ---- componentes de gráfico (barras em div, donut em SVG) ----
 function finBars(rows){
   const max = Math.max(1, ...rows.map(r => Math.abs(r.value || 0)));
@@ -5450,6 +5501,55 @@ function renderFinancas(){
   document.getElementById('fin-be-meta').textContent = m.despesaTotal
     ? `${m.vagasLivresTotal} vagas livres · valem ${fmt(m.valorVagasTotal)}`
     : 'adiciona despesas para ver o break-even';
+
+  // Angariação por treinador (€2 por inscrição) + origem
+  const ref = finReferral();
+  const refMeta = document.getElementById('fin-ref-meta');
+  const refBox = document.getElementById('fin-ref-treinadores');
+  if (refBox) {
+    if (ref.tList.length) {
+      refMeta.textContent = `${fmt(ref.totalPagar)} a pagar · ${ref.tList.length} treinador${ref.tList.length === 1 ? '' : 'es'} · ${ref.totalInscricoes} inscriç${ref.totalInscricoes === 1 ? 'ão' : 'ões'}`;
+      const maxPagar = Math.max(1, ...ref.tList.map(t => t.pagar));
+      refBox.innerHTML = `
+        <table class="fin-tbl">
+          <thead><tr><th>Treinador</th><th style="text-align:right">Atletas</th><th style="text-align:right">Inscrições</th><th style="width:34%"></th><th style="text-align:right">A pagar</th></tr></thead>
+          <tbody>${ref.tList.map(t => `<tr>
+            <td><b>${escHtml(t.nome)}</b></td>
+            <td style="text-align:right;font-variant-numeric:tabular-nums">${t.atletas}</td>
+            <td style="text-align:right;font-variant-numeric:tabular-nums">${t.inscricoes}</td>
+            <td><div class="fin-bar-track" style="height:14px"><div class="fin-bar-fill" style="width:${Math.round(t.pagar / maxPagar * 100)}%;background:#4a78a8"></div></div></td>
+            <td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">${fmt(t.pagar)}</td>
+          </tr>`).join('')}</tbody>
+          <tfoot><tr>
+            <td style="font-weight:700;border-top:2px solid var(--sand);padding-top:8px">Total</td>
+            <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);padding-top:8px;font-variant-numeric:tabular-nums">${ref.totalAtletas}</td>
+            <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);padding-top:8px;font-variant-numeric:tabular-nums">${ref.totalInscricoes}</td>
+            <td style="border-top:2px solid var(--sand)"></td>
+            <td style="text-align:right;font-weight:800;border-top:2px solid var(--sand);padding-top:8px;color:#c0392b;font-variant-numeric:tabular-nums">${fmt(ref.totalPagar)}</td>
+          </tr></tfoot>
+        </table>
+        <div style="font-size:11.5px;color:var(--mid-gray);margin-top:10px;font-style:italic">€2 por inscrição — atletas inscritos em 2 semanas contam 2. Apenas atletas ativos que indicaram um treinador.</div>`;
+    } else {
+      refMeta.textContent = '—';
+      refBox.innerHTML = '<div class="fin-empty">Nenhum atleta ativo indicou um treinador (ou o campo ainda não foi preenchido no backend — corre <b>fillOrigem()</b> no Apps Script).</div>';
+    }
+  }
+
+  const origemBox = document.getElementById('fin-origem');
+  const origemMeta = document.getElementById('fin-origem-meta');
+  if (origemBox) {
+    if (ref.oList.length && ref.nAtivos) {
+      origemMeta.textContent = `${ref.oList.length} resposta${ref.oList.length === 1 ? '' : 's'} · ${ref.nAtivos} atletas`;
+      const palette = ['#2e7d32', '#4a78a8', '#e0a83f', '#c0392b', '#7b5ea7', '#3f9e8c', '#d17a3f', '#8a8f98'];
+      origemBox.innerHTML = finBars(ref.oList.map((o, i) => ({
+        label: o.label, value: o.n, color: palette[i % palette.length],
+        valText: `${o.n} · ${Math.round(o.n / ref.nAtivos * 100)}%`
+      })));
+    } else {
+      origemMeta.textContent = '—';
+      origemBox.innerHTML = '<div class="fin-empty">Sem dados de origem ainda.</div>';
+    }
+  }
 
   // Simulador
   const simLivres = document.getElementById('fin-sim-livres');

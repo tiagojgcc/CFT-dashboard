@@ -270,9 +270,10 @@ const ATL_COLS = {
   motivo_eliminacao: 36, eliminado_em: 37, eliminado_por: 38,
   notas_internas: 39, ultima_alteracao_em: 40, ultima_alteracao_por: 41,
   valor_confirmado: 42, valor_devido_override: 43, desconto_outro_motivo: 44,
-  num_inscricao: 45, bank_confirmed_em: 46, bank_confirmed_por: 47
+  num_inscricao: 45, bank_confirmed_em: 46, bank_confirmed_por: 47,
+  como_conheceu: 48, treinador_indicou: 49
 };
-const ATL_NCOLS = 47;
+const ATL_NCOLS = 49;
 
 const Inscricoes = {
   sheet() { return SpreadsheetApp.openById(SHEET_ID).getSheetByName('Atletas'); },
@@ -1748,6 +1749,8 @@ const Backfill = {
     const m = {
       timestamp:        findExact('Carimbo de data/hora'),
       semanas:          findExact('Semana de inscrição'),
+      como_conheceu:    findContains('como tomou conhecimento'),
+      treinador_indicou:findContains('treinador'),
       opcao:            findExact('Opção de inscrição'),
       atleta:           findExact('Nome completo do atleta'),
       cc:               findExact('Nº Cartão de Cidadão'),
@@ -1799,7 +1802,8 @@ const Backfill = {
         'motivo_eliminacao','eliminado_em','eliminado_por','notas_internas',
         'ultima_alteracao_em','ultima_alteracao_por',
         'valor_confirmado','valor_devido_override','desconto_outro_motivo',
-        'num_inscricao','bank_confirmed_em','bank_confirmed_por'
+        'num_inscricao','bank_confirmed_em','bank_confirmed_por',
+        'como_conheceu','treinador_indicou'
       ];
       sh.appendRow(headers);
       sh.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
@@ -1979,9 +1983,58 @@ const Backfill = {
       '',        // 44 desconto_outro_motivo
       '',        // 45 num_inscricao
       '',        // 46 bank_confirmed_em
-      ''         // 47 bank_confirmed_por
+      '',        // 47 bank_confirmed_por
+      v('como_conheceu'),     // 48 como_conheceu
+      v('treinador_indicou')  // 49 treinador_indicou
     ];
     atletas.appendRow(atletaRow);
+  },
+
+  // One-off / idempotente: preenche as colunas como_conheceu (48) e treinador_indicou (49)
+  // nos atletas já migrados, lendo essas respostas do Forms por id_inscricao. As inscrições
+  // antigas já estão marcadas como migradas, por isso run() não lhes toca — usa isto para as
+  // preencher retroativamente. Também garante que os headers dessas colunas existem.
+  fillOrigem() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const formSheet = ss.getSheetByName('Respostas do Formulário 1');
+    const atletas = ss.getSheetByName('Atletas');
+    if (!formSheet || !atletas) throw new Error('Abas em falta (Forms / Atletas)');
+    // Garante os headers nas colunas 48/49 (setupSheets só os cria em aba vazia)
+    if (!atletas.getRange(1, ATL_COLS.como_conheceu).getValue()) {
+      atletas.getRange(1, ATL_COLS.como_conheceu).setValue('como_conheceu');
+    }
+    if (!atletas.getRange(1, ATL_COLS.treinador_indicou).getValue()) {
+      atletas.getRange(1, ATL_COLS.treinador_indicou).setValue('treinador_indicou');
+    }
+    const idCol = this._idCol(formSheet);
+    if (idCol === -1) throw new Error('id_inscricao em falta no Forms — corre setupSheets primeiro');
+    const formLast = formSheet.getLastRow();
+    if (formLast < 2) return { updated: 0, notFound: 0 };
+    const h = this._buildHeaderMap(formSheet);
+    const formData = formSheet.getRange(2, 1, formLast - 1, formSheet.getLastColumn()).getValues();
+    const map = {};
+    formData.forEach(row => {
+      const fid = row[idCol - 1];
+      if (!fid) return;
+      map[fid] = {
+        como:      h.como_conheceu     >= 0 ? row[h.como_conheceu]     : '',
+        treinador: h.treinador_indicou >= 0 ? row[h.treinador_indicou] : ''
+      };
+    });
+    const atLast = atletas.getLastRow();
+    if (atLast < 2) return { updated: 0, notFound: 0 };
+    const ids = atletas.getRange(2, ATL_COLS.id_inscricao, atLast - 1, 1).getValues().flat();
+    let updated = 0, notFound = 0;
+    const out = ids.map(id => {
+      const src = map[id];
+      if (!src) { notFound++; return ['', '']; }
+      updated++;
+      return [src.como || '', src.treinador || ''];
+    });
+    // como_conheceu (48) e treinador_indicou (49) são adjacentes → escreve de uma vez
+    atletas.getRange(2, ATL_COLS.como_conheceu, out.length, 2).setValues(out);
+    Logger.log('fillOrigem: ' + updated + ' atualizados, ' + notFound + ' sem match no Forms');
+    return { updated, notFound };
   },
 
   // Remapeia os id_inscricao em Atletas para baterem com os do Forms.
@@ -3500,6 +3553,7 @@ const EmailDraft = {
 // ============ TOP-LEVEL ENTRY POINTS ============
 function setupSheets()         { return Backfill.setupSheets(); }
 function backfillRun()         { return Backfill.run(); }
+function fillOrigem()          { return Backfill.fillOrigem(); }
 function upgradeAtletas()      { return Backfill.upgradeAtletas(); }
 function fixComprovativoUrls() { return Backfill.fixComprovativoUrls(); }
 function assignNumeros()       { return Backfill.assignNumeros(); }
