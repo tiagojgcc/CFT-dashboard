@@ -1290,6 +1290,7 @@
       <select id="filt-pag"><option value="">estado pagamento</option><option value="pago">pago</option><option value="parcial">parcial</option><option value="pendente">sem pagamento</option><option value="problema">valor problemático</option></select>
       <button class="quick-template" onclick="quickFilter('problema')">⚠ só problemáticos</button>
       <button class="quick-template" onclick="quickFilter('clear')">limpar</button>
+      <button class="quick-template" onclick="downloadNomesCsv()" title="Descarrega um CSV só com o nome de todos os atletas ativos (ordenados A→Z).">⬇ Nomes (CSV)</button>
 
       <div class="list-actionbar">
         <span class="sel-info" id="sel-info">0 selecionados</span>
@@ -5170,6 +5171,19 @@ function finSetAlvo(v){
     try { await Api.fin_setMargem(finState.margemAlvo); }
     catch (e) { toast('Erro a guardar margem-alvo: ' + e.message, true); }
   }, 700);
+}
+function downloadNomesCsv(){
+  const nomes = [...new Set(data.map(a => String(a.nome || '').trim()).filter(Boolean))]
+    .sort((x, y) => x.localeCompare(y, 'pt', { sensitivity: 'base' }));
+  if (!nomes.length) { toast('Sem atletas para exportar.', true); return; }
+  // CSV: cabeçalho + 1 nome por linha; aspas para nomes com vírgula; BOM p/ acentos no Excel
+  const linhas = ['Nome', ...nomes.map(n => '"' + n.replace(/"/g, '""') + '"')];
+  const blob = new Blob(['﻿' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'cft-atletas-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+  toast(nomes.length + ' nomes exportados.');
 }
 function finExport(){
   const blob = new Blob([JSON.stringify(finState, null, 2)], { type: 'application/json' });
