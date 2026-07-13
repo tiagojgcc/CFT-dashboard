@@ -59,6 +59,10 @@ function handle_(e, method) {
       case 'tarefa_delete':    result = Tarefas.remove(params.id); break;
       case 'createEmailDraft':     result = EmailDraft.createForAtleta(params.atletaId, params.template, user, params.overrides); break;
       case 'createBulkEmailDraft': result = EmailDraft.createBulk(params.atletaIds, params.template, user, params.overrides); break;
+      case 'despesa_add':      result = Despesas.add(params, user); break;
+      case 'despesa_delete':   result = Despesas.remove(params.id); break;
+      case 'despesa_import':   result = Despesas.importBulk(params.items, user); break;
+      case 'fin_setMargem':    result = Despesas.setMargem(params.valor, user); break;
       default: throw new Error('Unknown action: ' + action);
     }
     return json_({ ok: true, user: user, data: result });

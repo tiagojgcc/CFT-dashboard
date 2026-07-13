@@ -1449,7 +1449,27 @@
       #panel-financas .fin-be-week { margin:16px 0; }
       #panel-financas .fin-be-track { position:relative; height:26px; background:var(--beige-light); border-radius:5px; overflow:hidden; }
       #panel-financas .fin-be-note { font-size:12px; color:var(--mid-gray); margin-top:6px; }
-      @media (max-width:560px){ #panel-financas .fin-sim { grid-template-columns:1fr; } }
+      #panel-financas .fin-cloud-tag { font-size:11px; color:var(--green-dark); font-weight:600; margin-right:8px; }
+      #panel-financas .fin-migrate { margin:10px 0 2px; padding:9px 12px; background:#fff7e6; border:1px solid #e0a83f; border-radius:6px; font-size:12.5px; color:var(--charcoal); display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+      /* A tabela de despesas pode ser larga — deixa fazer scroll horizontal
+         em vez de espremer/cortar colunas (no telemóvel só se via o valor). */
+      #panel-financas #fin-list { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+      #panel-financas #fin-list .fin-tbl { min-width:520px; }
+      @media (max-width:560px){
+        #panel-financas .fin-sim { grid-template-columns:1fr; }
+        /* KPIs em 2 colunas fixas (auto-fit espremia-os numa só coluna gigante) */
+        #panel-financas .fin-kpis { grid-template-columns:1fr 1fr; gap:8px; }
+        #panel-financas .fin-kpi { padding:10px 12px; }
+        #panel-financas .fin-kpi-num { font-size:21px; }
+        /* Formulário de adicionar despesa empilhado, cada campo à largura toda */
+        #panel-financas .fin-form { flex-direction:column; align-items:stretch; gap:8px; }
+        #panel-financas .fin-form select,
+        #panel-financas .fin-form input,
+        #panel-financas .fin-form input#fin-desc,
+        #panel-financas .fin-form input#fin-val { width:100%; min-width:0; flex:none; }
+        #panel-financas .fin-form .fin-add-btn { width:100%; }
+        #panel-financas .fin-sim-out { gap:14px; }
+      }
     </style>
 
     <div class="panel-head">
@@ -1463,11 +1483,11 @@
       <div class="card-head">
         <div class="card-title">Adicionar despesa</div>
         <div class="card-meta">
+          <span class="fin-cloud-tag" title="As despesas são guardadas na nuvem (aba Despesas) e aparecem em todos os dispositivos">☁ na nuvem</span>
           <button class="fin-mini-btn" onclick="finExport()" title="Descarregar cópia de segurança (JSON)">↓ Backup</button>
-          <button class="fin-mini-btn" onclick="document.getElementById('fin-import').click()" title="Restaurar de um backup">↑ Restaurar</button>
-          <input type="file" id="fin-import" accept="application/json" style="display:none" onchange="finImport(this)">
         </div>
       </div>
+      <div id="fin-migrate-banner"></div>
       <div class="fin-form">
         <select id="fin-cat">
           <option>Refeições</option>
@@ -1734,6 +1754,7 @@ let historicoBackend = [];
 let emailsBackend = [];
 let configBackend = {};
 let tarefasBackend = [];
+let financasBackend = { despesas: [], margemAlvo: 35 };  // vem do backend (aba Despesas)
 let pendingSem = null;
 let pendingDel = null;      // { id, action: 'delete'|'reactivate', nome }
 
@@ -4482,6 +4503,8 @@ async function refreshNow(){
     emailsBackend = all.emails;
     configBackend = all.config;
     tarefasBackend = all.tarefas || [];
+    financasBackend = all.financas || { despesas: [], margemAlvo: 35 };
+    finState = financasBackend;
     renderAll();
   } catch (e) {
     toast('Erro a atualizar: ' + e.message, true);
@@ -5063,6 +5086,7 @@ Auth.onChange((token, email) => {
     historicoBackend = cached.historico;
     emailsBackend = cached.emails;
     configBackend = cached.config;
+    if (cached.financas) { financasBackend = cached.financas; finState = financasBackend; }
     renderAll();
     const meta = document.getElementById('live-meta');
     if (meta) meta.innerHTML = '<span class="live-dot" style="background:#ffc857;"></span>cache · a sincronizar…';
@@ -5076,8 +5100,9 @@ Auth.onChange((token, email) => {
 // ============================================================
 // ============ FINANÇAS (despesas + análise + gráficos) ======
 // ============================================================
-// Dados guardados localmente no browser (chave abaixo). Backup/Restauro em JSON.
-// Quando quisermos mover para o Sheet, só muda a camada finLoad/finSave/finAdd/finDelete.
+// Despesas + margem-alvo vivem no backend (aba Despesas), partilhadas entre
+// dispositivos e admins. FIN_KEY é só o localStorage antigo, mantido para a
+// migração única (finLocalPending / finMigrateLocal).
 const FIN_KEY = 'cft_financas_v1';
 const FIN_CAT_COLORS = {
   'Refeições': '#2e7d32',
@@ -5094,42 +5119,57 @@ function finCatColor(c){ return FIN_CAT_COLORS[c] || '#b0b0b0'; }
 const FIN_VAR_CATS = new Set(['Refeições', 'Medalhas/Prémios']);
 function finIsVar(d){ return FIN_VAR_CATS.has(d.categoria); }
 
-function finLoad(){
-  try {
-    const s = JSON.parse(localStorage.getItem(FIN_KEY));
-    if (s && Array.isArray(s.despesas)) return { despesas: s.despesas, margemAlvo: Number(s.margemAlvo) || 35 };
-  } catch (e) {}
-  return { despesas: [], margemAlvo: 35 };
-}
-let finState = finLoad();
-function finSaveState(){ try { localStorage.setItem(FIN_KEY, JSON.stringify(finState)); } catch (e) { alert('Não foi possível guardar (armazenamento cheio?).'); } }
+// Estado das finanças — agora vem do backend (aba Despesas), partilhado entre
+// dispositivos e admins. financasBackend é populado no refresh; finState é um
+// alias para os renders/métricas existentes lerem despesas + margemAlvo.
+let finState = financasBackend;
 
-function finAdd(){
+async function finAdd(){
   const cat = document.getElementById('fin-cat').value;
   const desc = document.getElementById('fin-desc').value.trim();
   const val = Number(document.getElementById('fin-val').value);
   const sem = document.getElementById('fin-sem').value;
-  if (!val || val <= 0) { alert('Indica um valor maior que zero.'); return; }
-  finState.despesas.push({
-    id: 'd' + Date.now() + Math.random().toString(36).slice(2, 6),
-    data: new Date().toISOString().slice(0, 10),
-    categoria: cat, descricao: desc, valor: val, semana: sem
-  });
-  finSaveState();
-  document.getElementById('fin-desc').value = '';
-  document.getElementById('fin-val').value = '';
-  renderFinancas();
+  if (!val || val <= 0) { toast('Indica um valor maior que zero.', true); return; }
+  const btn = document.querySelector('#panel-financas .fin-add-btn');
+  if (btn) btn.disabled = true;
+  toast('A guardar despesa…');
+  try {
+    const res = await Api.despesa_add(cat, desc, val, sem);
+    finState.despesas.push({ id: res.id, data: res.data, categoria: res.categoria, descricao: res.descricao, valor: res.valor, semana: res.semana });
+    document.getElementById('fin-desc').value = '';
+    document.getElementById('fin-val').value = '';
+    renderFinancas();
+    toast('Despesa adicionada · ' + fmt(val));
+  } catch (e) {
+    toast('Erro a guardar: ' + e.message, true);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
-function finDelete(id){
+async function finDelete(id){
+  const before = finState.despesas;
   finState.despesas = finState.despesas.filter(d => d.id !== id);
-  finSaveState();
   renderFinancas();
+  try {
+    await Api.despesa_delete(id);
+    toast('Despesa eliminada');
+  } catch (e) {
+    finState.despesas = before;  // rollback
+    renderFinancas();
+    toast('Erro a eliminar: ' + e.message, true);
+  }
 }
+let _finAlvoTimer = null;
 function finSetAlvo(v){
   const n = Number(v);
   finState.margemAlvo = (n >= 0 && n <= 90) ? n : 35;
-  finSaveState();
   renderFinancas();
+  // Debounce: só grava no backend quando o admin pára de escrever.
+  clearTimeout(_finAlvoTimer);
+  _finAlvoTimer = setTimeout(async () => {
+    try { await Api.fin_setMargem(finState.margemAlvo); }
+    catch (e) { toast('Erro a guardar margem-alvo: ' + e.message, true); }
+  }, 700);
 }
 function finExport(){
   const blob = new Blob([JSON.stringify(finState, null, 2)], { type: 'application/json' });
@@ -5138,22 +5178,34 @@ function finExport(){
   a.href = url; a.download = 'cft-financas-' + new Date().toISOString().slice(0, 10) + '.json';
   a.click(); URL.revokeObjectURL(url);
 }
-function finImport(input){
-  const file = input.files && input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
+
+// ---- Migração das despesas antigas (localStorage → backend) ----
+// Enquanto houver despesas guardadas no browser antigo, mostra um aviso com
+// botão para as enviar para a nuvem (aba Despesas). Depois limpa o localStorage.
+function finLocalPending(){
+  try {
+    const s = JSON.parse(localStorage.getItem(FIN_KEY));
+    return (s && Array.isArray(s.despesas)) ? s.despesas : [];
+  } catch (e) { return []; }
+}
+async function finMigrateLocal(){
+  const locais = finLocalPending();
+  if (locais.length === 0) { toast('Nada para migrar'); return; }
+  if (!confirm('Enviar ' + locais.length + ' despesa(s) guardada(s) neste browser para a nuvem (partilhadas em todos os dispositivos)?')) return;
+  toast('A migrar ' + locais.length + ' despesa(s)…');
+  try {
+    const res = await Api.despesa_import(locais);
+    // Guarda a margem-alvo local também, se diferir.
     try {
-      const obj = JSON.parse(reader.result);
-      if (!obj || !Array.isArray(obj.despesas)) throw new Error('Ficheiro inválido');
-      if (!confirm('Substituir as despesas atuais (' + finState.despesas.length + ') pelas do ficheiro (' + obj.despesas.length + ')?')) return;
-      finState = { despesas: obj.despesas, margemAlvo: Number(obj.margemAlvo) || 35 };
-      finSaveState();
-      renderFinancas();
-    } catch (e) { alert('Não foi possível ler o ficheiro: ' + e.message); }
-    input.value = '';
-  };
-  reader.readAsText(file);
+      const s = JSON.parse(localStorage.getItem(FIN_KEY));
+      if (s && Number(s.margemAlvo) >= 0) await Api.fin_setMargem(Number(s.margemAlvo));
+    } catch (e) {}
+    localStorage.removeItem(FIN_KEY);  // migrado — já não é a fonte de verdade
+    toast((res.imported || 0) + ' despesa(s) migradas para a nuvem');
+    await refreshNow();
+  } catch (e) {
+    toast('Erro na migração: ' + e.message, true);
+  }
 }
 
 // Desconto estimado dado a um atleta (irmão / clube≥8 / ≥2 semanas).
@@ -5456,6 +5508,16 @@ function finAdvice(m){
 function renderFinancas(){
   if (!document.getElementById('panel-financas')) return;
   const m = finMetrics();
+
+  // Banner de migração: despesas antigas ainda no localStorage deste browser.
+  const mig = document.getElementById('fin-migrate-banner');
+  if (mig) {
+    const locais = finLocalPending();
+    mig.innerHTML = locais.length
+      ? `<div class="fin-migrate">⚠ Tens <b>${locais.length}</b> despesa(s) guardada(s) só neste browser (versão antiga).
+           <button class="fin-add-btn" style="padding:6px 14px;margin-left:8px;" onclick="finMigrateLocal()">☁ Migrar para a nuvem</button></div>`
+      : '';
+  }
 
   // alvo input
   const alvoInp = document.getElementById('fin-alvo');

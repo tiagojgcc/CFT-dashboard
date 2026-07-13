@@ -92,6 +92,7 @@ const Inscricoes = {
       },
       banco_files: this._getBancoFiles(),
       tarefas: Tarefas.list(),
+      financas: Despesas.state(),
       lastUpdate: new Date().toISOString()
     };
   },

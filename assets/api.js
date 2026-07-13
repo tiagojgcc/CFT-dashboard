@@ -63,6 +63,7 @@
         counts: data.counts || { inscricoes_ativas: 0, atletas_unicos: 0, vagas_por_semana: {}, total_vagas_ocupadas: 0 },
         banco_files: data.banco_files || [],
         tarefas: data.tarefas || [],
+        financas: data.financas || { despesas: [], margemAlvo: 35 },
         lastUpdate: this.lastUpdate
       };
     },
@@ -172,7 +173,11 @@
     banco_listForAtleta(atletaId) { return this._call('banco_listForAtleta', { atletaId }); },
     banco_confirm(movId, atletaId)   { return this._call('banco_confirm',   { movId, atletaId }); },
     banco_unconfirm(movId)           { return this._call('banco_unconfirm', { movId }); },
-    banco_reassign(movId, atletaId)  { return this._call('banco_reassign',  { movId, atletaId }); }
+    banco_reassign(movId, atletaId)  { return this._call('banco_reassign',  { movId, atletaId }); },
+    despesa_add(categoria, descricao, valor, semana) { return this._call('despesa_add', { categoria, descricao, valor, semana }); },
+    despesa_delete(id)               { return this._call('despesa_delete', { id }); },
+    despesa_import(items)            { return this._call('despesa_import', { items }); },
+    fin_setMargem(valor)             { return this._call('fin_setMargem',  { valor }); }
   };
 
   window.Api = Api;
