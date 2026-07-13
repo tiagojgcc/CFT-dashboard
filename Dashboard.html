@@ -4597,6 +4597,15 @@ function renderTimeline(){
   // Helper: clamp nos extremos para alinhar label sem overflow
   const edgeCls = p => p < 3 ? 'edge-left' : (p > 97 ? 'edge-right' : '');
 
+  // Lado vertical do "hoje": oposto ao marco horizontalmente mais próximo.
+  // Evita a sobreposição quando hoje cai colado a um marco (ex.: 13/07 vs 12/07).
+  let nearestIdx = 0, nearestDist = Infinity;
+  marcos.forEach((_, idx) => {
+    const d = Math.abs(pctOrdinal(idx) - todayPct);
+    if (d < nearestDist) { nearestDist = d; nearestIdx = idx; }
+  });
+  const todayWhere = nearestIdx % 2 === 0 ? 'below' : 'above';
+
   // Composição: gera marcos + today num só array ordenado cronologicamente
   // (importante para o stepper vertical em mobile fluir na ordem certa via DOM).
   const items = marcos.map((m, idx) => ({ kind: 'marco', date: m.date, m, idx }));
@@ -4605,7 +4614,6 @@ function renderTimeline(){
 
   const html = items.map(it => {
     if (it.kind === 'today') {
-      const todayWhere = next && nextIdx % 2 === 0 ? 'below' : 'above';
       return `<div class="tl-point today ${todayWhere} ${edgeCls(todayPct)}" style="left:${todayPct.toFixed(2)}%;">
         <div class="tl-point-dot"></div>
         <div class="tl-point-content">
