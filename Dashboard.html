@@ -1428,19 +1428,11 @@
       #panel-financas .fin-bar-fill { height:100%; border-radius:4px; transition:width .3s; min-width:2px; }
       #panel-financas .fin-bar-val { font-weight:700; white-space:nowrap; font-variant-numeric:tabular-nums; }
       #panel-financas .fin-bar-sub { grid-column:1/-1; font-size:11px; color:var(--mid-gray); margin-top:-4px; }
-      #panel-financas .fin-advice-item { display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--sand); font-size:13.5px; line-height:1.5; }
-      #panel-financas .fin-advice-item:last-child { border-bottom:none; }
-      #panel-financas .fin-advice-ico { flex-shrink:0; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; }
-      #panel-financas .fin-t-good .fin-advice-ico { background:#2e7d32; } #panel-financas .fin-t-good { }
-      #panel-financas .fin-t-warn .fin-advice-ico { background:#e07a3f; }
-      #panel-financas .fin-t-bad  .fin-advice-ico { background:#c0392b; }
-      #panel-financas .fin-t-info .fin-advice-ico { background:#4a78a8; }
       #panel-financas .fin-tbl { width:100%; border-collapse:collapse; font-size:13px; }
       #panel-financas .fin-tbl th { text-align:left; font-family:var(--font-condensed); font-size:10.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--mid-gray); padding:6px 8px; border-bottom:1px solid var(--sand); }
       #panel-financas .fin-tbl td { padding:8px; border-bottom:1px solid var(--beige-light); }
       #panel-financas .fin-tbl .fin-del { color:#c0392b; cursor:pointer; font-weight:700; border:none; background:none; font-size:14px; }
       #panel-financas .fin-cat-pill { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:600; color:#fff; }
-      #panel-financas .fin-alvo-input { width:48px; padding:3px 6px; border:1px solid var(--sand); border-radius:4px; font-size:12px; text-align:center; }
       #panel-financas .fin-empty { color:var(--mid-gray); font-size:13px; padding:14px 4px; font-style:italic; }
       /* Grelha de 2 colunas (staff semana a semana, análise/despesas) */
       #panel-financas .fin-grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:14px; }
@@ -1579,13 +1571,6 @@
     </div>
 
     <div class="fin-grid3" style="margin-top:14px;">
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title">Análise e recomendações</div>
-          <div class="card-meta">alvo <input type="number" class="fin-alvo-input" id="fin-alvo" min="0" max="90" onchange="finSetAlvo(this.value)">%</div>
-        </div>
-        <div id="fin-advice"></div>
-      </div>
       <div class="card">
         <div class="card-head"><div class="card-title">Despesas registadas</div><div class="card-meta" id="fin-list-meta">—</div></div>
         <div id="fin-list"></div>
@@ -5179,18 +5164,6 @@ async function finDelete(id){
     toast('Erro a eliminar: ' + e.message, true);
   }
 }
-let _finAlvoTimer = null;
-function finSetAlvo(v){
-  const n = Number(v);
-  finState.margemAlvo = (n >= 0 && n <= 90) ? n : 35;
-  renderFinancas();
-  // Debounce: só grava no backend quando o admin pára de escrever.
-  clearTimeout(_finAlvoTimer);
-  _finAlvoTimer = setTimeout(async () => {
-    try { await Api.fin_setMargem(finState.margemAlvo); }
-    catch (e) { toast('Erro a guardar margem-alvo: ' + e.message, true); }
-  }, 700);
-}
 function downloadNomesCsv(){
   const nomes = [...new Set(data.map(a => String(a.nome || '').trim()).filter(Boolean))]
     .sort((x, y) => x.localeCompare(y, 'pt', { sensitivity: 'base' }));
@@ -5512,60 +5485,6 @@ function finRenderDonut(porCat, total){
       <span style="flex:1">${c}</span><b>${fmt(porCat[c])}</b></div>`).join('');
 }
 
-function finAdvice(m){
-  const out = [];
-  const alvo = finState.margemAlvo / 100;
-  const pct = v => Math.round(v * 100) + '%';
-  if (m.nDespesas === 0) {
-    out.push({ t: 'info', text: 'Ainda não registaste despesas. Adiciona-as acima (staff, refeições, equipamentos…) para veres lucro e margem reais.' });
-  }
-  if (m.nAtl === 0) {
-    out.push({ t: 'info', text: 'Sem atletas carregados ainda — a receita aparece quando os dados do dashboard sincronizarem.' });
-    return out;
-  }
-  // Margem global
-  if (m.despesaTotal > 0) {
-    if (m.margem >= alvo) {
-      out.push({ t: 'good', text: `Margem de <b>${pct(m.margem)}</b>, acima do teu alvo de ${finState.margemAlvo}%. Lucro de <b>${fmt(m.lucro)}</b> (${fmt(m.lucroPorAtleta)}/atleta). Tens folga — mantém preços e controla custos.` });
-    } else if (m.margem > 0) {
-      const precoIdeal = m.custoPorAtleta / (1 - alvo);
-      const subida = Math.max(0, precoIdeal - m.precoMedio);
-      out.push({ t: 'warn', text: `Margem de <b>${pct(m.margem)}</b>, abaixo do alvo de ${finState.margemAlvo}%. Custas em média <b>${fmt(m.custoPorAtleta)}</b>/atleta e cobras <b>${fmt(m.precoMedio)}</b>. Para o alvo, o preço médio devia ser ~<b>${fmt(precoIdeal)}</b> → considera subir ~${fmt(subida)}/atleta em 2027.` });
-    } else {
-      out.push({ t: 'bad', text: `Estás a ter <b>prejuízo</b> de ${fmt(-m.lucro)}: as despesas (${fmt(m.despesaTotal)}) superam a receita (${fmt(m.receita)}). Urgente rever custos ou preços.` });
-    }
-  }
-  // Impacto dos descontos
-  if (m.descontoTotal > 0) {
-    const pctRec = m.receita + m.descontoTotal > 0 ? m.descontoTotal / (m.receita + m.descontoTotal) : 0;
-    const piorClube = Object.values(m.clubes).filter(c => c.desconto > 0).sort((a, b) => b.desconto - a.desconto)[0];
-    let txt = `Os descontos custaram-te <b>${fmt(m.descontoTotal)}</b> (~${pct(pctRec)} da receita potencial), em ${m.nComDesc} atletas. Sem eles terias recebido <b>${fmt(m.receita + m.descontoTotal)}</b>.`;
-    if (piorClube) txt += ` A maior fatia foi no <b>${piorClube.nome}</b> (${fmt(piorClube.desconto)} em ${piorClube.nDesc} atletas).`;
-    out.push({ t: 'warn', text: txt });
-  }
-  // Semana menos rentável
-  const w1 = m.weeksAg[1], w2 = m.weeksAg[2];
-  if (m.despesaTotal > 0 && w1.atl > 0 && w2.atl > 0) {
-    const pior = w1.lpa <= w2.lpa ? 1 : 2; const bom = pior === 1 ? 2 : 1;
-    const pw = m.weeksAg[pior], bw = m.weeksAg[bom];
-    if (pw.lpa < bw.lpa) {
-      out.push({ t: 'info', text: `A <b>Semana ${pior}</b> rende menos por atleta (${fmt(pw.lpa)} vs ${fmt(bw.lpa)} na Semana ${bom}): tem ${pw.atl} atletas contra ${bw.atl}. Custos fixos (treinadores) diluem-se pior com menos inscritos — vale a pena um mínimo de inscrições por semana ou juntar semanas fracas.` });
-    }
-  }
-  // Maior categoria de despesa
-  const catArr = Object.entries(m.porCat).sort((a, b) => b[1] - a[1]);
-  if (catArr.length > 0 && m.despesaTotal > 0) {
-    const [topCat, topVal] = catArr[0];
-    out.push({ t: 'info', text: `<b>${topCat}</b> é a tua maior despesa: ${fmt(topVal)} (${pct(topVal / m.despesaTotal)} do total). É aí que cortar custo tem mais impacto na margem.` });
-  }
-  // Receita por cobrar
-  const porCobrar = m.receita - m.recebido;
-  if (porCobrar > 0.5) {
-    out.push({ t: 'info', text: `Nota de tesouraria: ainda há <b>${fmt(porCobrar)}</b> por receber dos atletas. O lucro acima é o esperado quando todos pagarem; em caixa tens ${fmt(m.recebido - m.despesaTotal)} até agora.` });
-  }
-  return out;
-}
-
 // O Diário do Campo — análise editorial gerada a partir de todos os números,
 // para ler de uma ponta à outra e tirar conclusões. Termina com notas livres.
 function finJornal(m, st, ref){
@@ -5651,10 +5570,6 @@ function renderFinancas(){
            <button class="fin-add-btn" style="padding:6px 14px;margin-left:8px;" onclick="finMigrateLocal()">☁ Migrar para a nuvem</button></div>`
       : '';
   }
-
-  // alvo input
-  const alvoInp = document.getElementById('fin-alvo');
-  if (alvoInp && document.activeElement !== alvoInp) alvoInp.value = finState.margemAlvo;
 
   // KPIs
   const lucroCor = m.lucro >= 0 ? 'var(--green-dark)' : '#c0392b';
@@ -5780,13 +5695,6 @@ function renderFinancas(){
       if (origemConc) origemConc.innerHTML = '';
     }
   }
-
-  // Conselhos
-  const adv = finAdvice(m);
-  const icoMap = { good: '✓', warn: '!', bad: '✕', info: 'i' };
-  document.getElementById('fin-advice').innerHTML = adv.length
-    ? adv.map(a => `<div class="fin-advice-item fin-t-${a.t}"><div class="fin-advice-ico">${icoMap[a.t]}</div><div>${a.text}</div></div>`).join('')
-    : '<div class="fin-empty">Sem recomendações.</div>';
 
   // Tabela de despesas
   const ds = finState.despesas.slice().sort((a, b) => (b.data || '').localeCompare(a.data || ''));
