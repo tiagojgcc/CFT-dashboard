@@ -1442,19 +1442,38 @@
       #panel-financas .fin-cat-pill { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:600; color:#fff; }
       #panel-financas .fin-alvo-input { width:48px; padding:3px 6px; border:1px solid var(--sand); border-radius:4px; font-size:12px; text-align:center; }
       #panel-financas .fin-empty { color:var(--mid-gray); font-size:13px; padding:14px 4px; font-style:italic; }
-      /* Staff & refeições — tabela editável (nomes/salários) guardada no browser */
-      #panel-financas .fin-staff-input { padding:5px 8px; border:1px solid var(--sand); background:var(--beige-light); border-radius:4px; font-size:12.5px; font-family:var(--font-body); }
-      #panel-financas .fin-staff-nome { width:100%; min-width:110px; font-weight:600; }
-      #panel-financas .fin-staff-num { width:74px; text-align:right; font-variant-numeric:tabular-nums; }
-      #panel-financas .fin-staff-ctrl { display:flex; gap:14px; flex-wrap:wrap; align-items:center; font-size:12.5px; color:var(--charcoal); margin-bottom:12px; }
-      #panel-financas .fin-staff-ctrl input { width:58px; padding:5px 8px; border:1px solid var(--sand); background:var(--beige-light); border-radius:4px; font-size:13px; text-align:center; font-weight:600; }
-      #panel-financas .fin-staff-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin:12px 0 4px; }
-      #panel-financas .fin-staff-kpi { background:var(--beige-light); border-radius:6px; padding:10px 12px; }
-      #panel-financas .fin-staff-kpi b { font-family:var(--font-display); font-size:19px; display:block; line-height:1.15; }
-      #panel-financas .fin-staff-kpi span { font-size:11px; color:var(--mid-gray); letter-spacing:.08em; text-transform:uppercase; font-weight:700; }
-      #panel-financas .fin-staff-week { overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:14px; }
-      #panel-financas .fin-staff-week .fin-tbl { min-width:520px; }
+      /* Grelha de 2 colunas (staff semana a semana, análise/despesas) */
+      #panel-financas .fin-grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:14px; }
+      /* Staff & refeições — tabelas compactas editáveis, guardadas no browser */
+      #panel-financas .fin-staff-input { padding:4px 7px; border:1px solid var(--sand); background:var(--beige-light); border-radius:4px; font-size:12px; font-family:var(--font-body); }
+      #panel-financas .fin-staff-nome { width:100%; min-width:96px; font-weight:600; }
+      #panel-financas .fin-staff-num { width:62px; text-align:right; font-variant-numeric:tabular-nums; }
+      #panel-financas .fin-refstrip { display:flex; gap:8px 24px; flex-wrap:wrap; align-items:center; font-size:12.5px; color:var(--charcoal); }
+      #panel-financas .fin-refstrip input { width:52px; padding:4px 6px; border:1px solid var(--sand); background:var(--beige-light); border-radius:4px; font-size:13px; text-align:center; font-weight:600; }
+      #panel-financas .fin-refstrip .fin-refstrip-fact b { font-family:var(--font-display); font-size:17px; }
+      #panel-financas .fin-refstrip .fin-refstrip-fact span { font-size:10.5px; color:var(--mid-gray); letter-spacing:.08em; text-transform:uppercase; font-weight:700; display:block; }
+      #panel-financas .fin-staff-week { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+      #panel-financas .fin-tbl--sm th { padding:5px 6px; font-size:10px; }
+      #panel-financas .fin-tbl--sm td { padding:5px 6px; font-size:12px; }
+      #panel-financas .fin-staff-foot { font-size:11.5px; color:var(--mid-gray); margin-top:8px; line-height:1.5; }
       #panel-financas .fin-origem-conclusao { margin-top:12px; padding:10px 12px; background:var(--beige-light); border-radius:6px; font-size:12.5px; line-height:1.5; color:var(--charcoal); }
+      /* Despesas registadas em meia coluna — tabela compacta com scroll próprio */
+      #panel-financas #fin-list .fin-tbl { min-width:440px; }
+      /* ---- O Jornal do Campo — análise editorial gerada dos dados ---- */
+      #panel-financas .fin-jornal { background:var(--white); }
+      #panel-financas .fin-jornal-mast { text-align:center; border-bottom:3px double var(--charcoal); padding-bottom:10px; margin-bottom:4px; }
+      #panel-financas .fin-jornal-mast .fin-jm-title { font-family:var(--font-display); font-size:30px; line-height:1.05; letter-spacing:.01em; }
+      #panel-financas .fin-jornal-mast .fin-jm-strap { font-family:var(--font-condensed); font-size:10.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--mid-gray); margin-top:5px; display:flex; justify-content:space-between; border-top:1px solid var(--sand); padding-top:6px; }
+      #panel-financas .fin-j-head { font-family:var(--font-display); font-size:23px; line-height:1.2; margin:12px 0 2px; }
+      #panel-financas .fin-j-by { font-size:11px; color:var(--mid-gray); font-style:italic; margin-bottom:12px; }
+      #panel-financas .fin-jornal-cols { column-count:3; column-gap:28px; column-rule:1px solid var(--sand); font-size:13px; line-height:1.65; text-align:justify; hyphens:auto; }
+      #panel-financas .fin-jornal-cols p { margin:0 0 10px; }
+      #panel-financas .fin-jornal-cols .fin-j-lead::first-letter { font-family:var(--font-display); font-size:42px; line-height:.85; float:left; padding:4px 6px 0 0; }
+      #panel-financas .fin-j-sub { display:block; font-family:var(--font-condensed); font-size:10.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--mid-gray); border-top:1px solid var(--sand); padding-top:8px; margin:6px 0 6px; }
+      #panel-financas .fin-jornal-notas { margin-top:16px; border-top:1px dashed var(--sand); padding-top:12px; }
+      #panel-financas .fin-jornal-notas textarea { width:100%; min-height:88px; border:1px solid var(--sand); background:var(--beige-light); padding:10px 12px; font-family:var(--font-body); font-size:13px; line-height:1.55; border-radius:4px; resize:vertical; }
+      @media (max-width:1000px){ #panel-financas .fin-jornal-cols { column-count:2; } }
+      @media (max-width:640px){ #panel-financas .fin-jornal-cols { column-count:1; } }
       #panel-financas .fin-cloud-tag { font-size:11px; color:var(--green-dark); font-weight:600; margin-right:8px; }
       #panel-financas .fin-migrate { margin:10px 0 2px; padding:9px 12px; background:#fff7e6; border:1px solid #e0a83f; border-radius:6px; font-size:12.5px; color:var(--charcoal); display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
       /* A tabela de despesas pode ser larga — deixa fazer scroll horizontal
@@ -1534,17 +1553,43 @@
       </div>
     </div>
 
-    <div class="fin-grid3" style="margin-top:14px;">
-      <div class="card" style="grid-column:1/-1;">
+    <div class="card" style="margin-top:14px;">
+      <div class="card-head">
+        <div class="card-title">Refeições e jantares — custo por cabeça</div>
+        <div class="card-meta" id="fin-refstrip-meta">—</div>
+      </div>
+      <div class="fin-refstrip" id="fin-refstrip"></div>
+    </div>
+
+    <div class="fin-grid2" style="margin-top:14px;">
+      <div class="card">
         <div class="card-head">
-          <div class="card-title">Staff e refeições — quanto custou cada elemento</div>
-          <div class="card-meta" id="fin-staff-meta">—</div>
+          <div class="card-title">Staff — Semana 1</div>
+          <div class="card-meta" id="fin-staff-meta-1">—</div>
         </div>
-        <div id="fin-staff"></div>
+        <div id="fin-staff-1"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Staff — Semana 2</div>
+          <div class="card-meta" id="fin-staff-meta-2">—</div>
+        </div>
+        <div id="fin-staff-2"></div>
       </div>
     </div>
 
     <div class="fin-grid3" style="margin-top:14px;">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Análise e recomendações</div>
+          <div class="card-meta">alvo <input type="number" class="fin-alvo-input" id="fin-alvo" min="0" max="90" onchange="finSetAlvo(this.value)">%</div>
+        </div>
+        <div id="fin-advice"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Despesas registadas</div><div class="card-meta" id="fin-list-meta">—</div></div>
+        <div id="fin-list"></div>
+      </div>
       <div class="card">
         <div class="card-head">
           <div class="card-title">Origem das inscrições</div>
@@ -1555,17 +1600,12 @@
       </div>
     </div>
 
-    <div class="card" style="margin-top:14px;">
-      <div class="card-head">
-        <div class="card-title">Análise e recomendações</div>
-        <div class="card-meta">margem-alvo <input type="number" class="fin-alvo-input" id="fin-alvo" min="0" max="90" onchange="finSetAlvo(this.value)">% · gerado dos teus números</div>
+    <div class="card fin-jornal" style="margin-top:14px;">
+      <div class="fin-jornal-mast">
+        <div class="fin-jm-title">O Diário do Campo</div>
+        <div class="fin-jm-strap"><span>Edição financeira</span><span id="fin-jornal-data">—</span><span>CFT · 4ª edição</span></div>
       </div>
-      <div id="fin-advice"></div>
-    </div>
-
-    <div class="card" style="margin-top:14px;">
-      <div class="card-head"><div class="card-title">Despesas registadas</div><div class="card-meta" id="fin-list-meta">—</div></div>
-      <div id="fin-list"></div>
+      <div id="fin-jornal"></div>
     </div>
   </div>
 
@@ -5375,21 +5415,38 @@ function staffReset(){
   staffState = JSON.parse(JSON.stringify(STAFF_DEFAULT));
   staffSave(); renderFinancas();
 }
-// Totais por semana: refeições dos atletas (nº ativos na semana), refeições e
-// salários do staff, e custo total (o que cada elemento "ficou" realmente).
+// Jantares pagos ao staff (categoria "Jantares equipa" das Despesas registadas).
+// Com semana marcada vão para essa semana; "Geral" divide-se meio a meio.
+function staffJantares(){
+  const j = { 1: 0, 2: 0 };
+  (finState.despesas || []).filter(d => d.categoria === 'Jantares equipa').forEach(d => {
+    const v = Number(d.valor) || 0;
+    if (String(d.semana) === '1') j[1] += v;
+    else if (String(d.semana) === '2') j[2] += v;
+    else { j[1] += v / 2; j[2] += v / 2; }
+  });
+  return j;
+}
+// Totais por semana: refeições dos atletas (nº ativos na semana), refeições,
+// jantares e salários do staff — o que cada elemento "ficou" realmente.
 function staffMetrics(m){
   const dias = staffState.dias || 0;
   const refAtlDia = staffState.precoAtletaDia || 0;
   const refStaffDia = staffState.precoStaffDia || 0;
   const refPorElemento = refStaffDia * dias;
+  const jant = staffJantares();
   const semanas = {};
   [1, 2].forEach(w => {
-    const rows = (staffState.semanas[w] || []).map(r => ({
-      ...r, refeicoes: refPorElemento, total: (Number(r.salario) || 0) + refPorElemento
+    const base = staffState.semanas[w] || [];
+    const jantarPorElemento = base.length ? jant[w] / base.length : 0;
+    const rows = base.map(r => ({
+      ...r, refeicoes: refPorElemento, jantar: jantarPorElemento,
+      total: (Number(r.salario) || 0) + refPorElemento + jantarPorElemento
     }));
     const nAtl = (m.weeksAg[w] && m.weeksAg[w].atl) || 0;
     semanas[w] = {
       rows, nAtl,
+      jantar:    jant[w],
       salarios:  rows.reduce((s, r) => s + (Number(r.salario) || 0), 0),
       refStaff:  rows.length * refPorElemento,
       refAtl:    nAtl * refAtlDia * dias,
@@ -5399,11 +5456,21 @@ function staffMetrics(m){
   return {
     semanas, dias, refAtlDia, refStaffDia, refPorElemento,
     refAtlSemana: refAtlDia * dias,
+    jantares: jant[1] + jant[2],
     salarios: semanas[1].salarios + semanas[2].salarios,
     refStaff: semanas[1].refStaff + semanas[2].refStaff,
     refAtl:   semanas[1].refAtl + semanas[2].refAtl,
     total:    semanas[1].total + semanas[2].total
   };
+}
+
+// ---- Notas da direção (comentários livres no Jornal do Campo) ----
+const FIN_NOTAS_KEY = 'cft_fin_notas_v1';
+function finNotasLoad(){ try { return localStorage.getItem(FIN_NOTAS_KEY) || ''; } catch (e) { return ''; } }
+let _finNotasTimer = null;
+function finNotasSave(v){
+  clearTimeout(_finNotasTimer);
+  _finNotasTimer = setTimeout(() => { try { localStorage.setItem(FIN_NOTAS_KEY, v); } catch (e) {} }, 400);
 }
 
 // ---- componentes de gráfico (barras em div, donut em SVG) ----
@@ -5499,6 +5566,78 @@ function finAdvice(m){
   return out;
 }
 
+// O Diário do Campo — análise editorial gerada a partir de todos os números,
+// para ler de uma ponta à outra e tirar conclusões. Termina com notas livres.
+function finJornal(m, st, ref){
+  if (!m.nAtl) return '<div class="fin-empty">Sem atletas carregados — o jornal escreve-se sozinho quando os dados sincronizarem.</div>';
+  const pct = v => Math.round(v * 100) + '%';
+  const alvo = finState.margemAlvo;
+  let head;
+  if (m.lucro < 0) head = `Campo fecha no vermelho: ${fmt(-m.lucro)} de prejuízo`;
+  else if (m.margem >= alvo / 100) head = `Campo fecha com margem de ${pct(m.margem)} e ${fmt(m.lucro)} de lucro`;
+  else head = `Lucro de ${fmt(m.lucro)}, mas margem de ${pct(m.margem)} fica abaixo do alvo de ${alvo}%`;
+  const ps = [];
+  // O resultado
+  ps.push(`<p class="fin-j-lead">Com <b>${m.nAtl} atletas</b> nas duas semanas, o campo gerou <b>${fmt(m.receita)}</b> de receita contra <b>${fmt(m.despesaTotal)}</b> de despesas — um lucro de <b>${fmt(m.lucro)}</b>, com margem de ${pct(m.margem)} para um alvo de ${alvo}%. Cada atleta pagou em média ${fmt(m.precoMedio)}, custou ${fmt(m.custoPorAtleta)} e deixou ${fmt(m.lucroPorAtleta)} de lucro.${m.retido ? ` A conta inclui ${fmt(m.retido)} retidos de cancelamentos.` : ''}</p>`);
+  // Os custos
+  const catArr = Object.entries(m.porCat).sort((a, b) => b[1] - a[1]);
+  if (m.despesaTotal > 0 && catArr.length) {
+    const [c1, v1] = catArr[0];
+    const refCat = m.porCat['Refeições'] || 0;
+    let t = `<span class="fin-j-sub">Os custos</span><p><b>${c1}</b> dominou a despesa: ${fmt(v1)}, ou ${pct(v1 / m.despesaTotal)} de tudo o que se gastou.`;
+    if (c1 !== 'Refeições' && refCat > 0) t += ` As refeições somaram ${fmt(refCat)} (${pct(refCat / m.despesaTotal)}).`;
+    t += ` É nesta rubrica que qualquer corte ou renegociação tem mais impacto na margem do próximo ano.</p>`;
+    ps.push(t);
+  }
+  // O staff e a comida
+  if (st.total > 0) {
+    ps.push(`<span class="fin-j-sub">O staff</span><p>Segundo a tabela de staff, a equipa custou <b>${fmt(st.total)}</b> — ${fmt(st.salarios)} em salários, ${fmt(st.refStaff)} em refeições${st.jantares ? ` e ${fmt(st.jantares)} em jantares de equipa` : ''} — o equivalente a ${pct(m.receita ? st.total / m.receita : 0)} da receita. A Semana 1, com ${st.semanas[1].rows.length} elementos, ficou em ${fmt(st.semanas[1].total)}; a Semana 2, com ${st.semanas[2].rows.length}, em ${fmt(st.semanas[2].total)}.</p>`);
+    ps.push(`<span class="fin-j-sub">A comida</span><p>Alimentar um atleta custou <b>${fmt(st.refAtlSemana)}</b> por semana (${st.refAtlDia}€ × ${st.dias} dias) e um membro do staff <b>${fmt(st.refPorElemento)}</b> (${st.refStaffDia}€/dia). No total teórico: ${fmt(st.refAtl)} para os atletas (${st.semanas[1].nAtl} na S1, ${st.semanas[2].nAtl} na S2) e ${fmt(st.refStaff + st.jantares)} para o staff com jantares incluídos.</p>`);
+  }
+  // As semanas
+  const w1 = m.weeksAg[1], w2 = m.weeksAg[2];
+  if (m.despesaTotal > 0 && w1.atl > 0 && w2.atl > 0) {
+    const b = (w2.lucro || 0) >= (w1.lucro || 0) ? 2 : 1, p = b === 1 ? 2 : 1;
+    const bw = m.weeksAg[b], pw = m.weeksAg[p];
+    ps.push(`<span class="fin-j-sub">As semanas</span><p>A <b>Semana ${b}</b> foi a mais rentável: ${fmt(bw.lucro)} de lucro (${fmt(bw.lpa)}/atleta, ${bw.atl} atletas) contra ${fmt(pw.lucro)} da Semana ${p} (${fmt(pw.lpa)}/atleta, ${pw.atl} atletas).${Math.abs((bw.lpa || 0) - (pw.lpa || 0)) > 5 ? ' A diferença por atleta mostra onde os custos fixos se diluíram melhor.' : ' As duas semanas ficaram praticamente empatadas por atleta — bom sinal de equilíbrio.'}</p>`);
+  }
+  // Os descontos
+  if (m.descontoTotal > 0) {
+    ps.push(`<span class="fin-j-sub">Os descontos</span><p>Os descontos (irmãos, clube, duas semanas) custaram <b>${fmt(m.descontoTotal)}</b> em ${m.nComDesc} atletas — sem eles a receita teria chegado a ${fmt(m.receita + m.descontoTotal)}. São o preço de encher o campo e fidelizar; a pergunta para 2027 é se estão a trazer inscrições que não viriam de outra forma.</p>`);
+  }
+  // A angariação
+  const known = (ref.oList || []).filter(o => o.label !== 'Não indicado');
+  if (known.length) {
+    const t = known[0];
+    ps.push(`<span class="fin-j-sub">A angariação</span><p><b>${escHtml(t.label)}</b> foi o canal que mais atletas trouxe (${pct(t.n / ref.nAtivos)} das inscrições). Marketing pago noutros canais só se justifica se ficar abaixo de ${fmt(m.lucroPorAtleta)} por inscrição — o lucro que cada atleta deixa.</p>`);
+  }
+  // Tesouraria
+  const porCobrar = m.receita - m.recebido;
+  if (porCobrar > 0.5) {
+    ps.push(`<span class="fin-j-sub">A tesouraria</span><p>Ainda há <b>${fmt(porCobrar)}</b> por receber. Em caixa, o campo tem hoje ${fmt(m.recebido - m.despesaTotal)}.</p>`);
+  }
+  // Para 2027
+  let t27 = `<span class="fin-j-sub">Para 2027</span><p>`;
+  if (m.despesaTotal > 0 && m.margem < alvo / 100 && m.margem >= 0) {
+    const precoIdeal = m.custoPorAtleta / (1 - alvo / 100);
+    t27 += `Para atingir a margem-alvo de ${alvo}%, o preço médio teria de subir de ${fmt(m.precoMedio)} para ~<b>${fmt(precoIdeal)}</b>. `;
+  } else if (m.margem >= alvo / 100) {
+    t27 += `A margem está acima do alvo — há espaço para investir em qualidade (staff, material, comida) sem pôr o resultado em causa, ou para segurar o preço e ganhar inscrições. `;
+  }
+  if (catArr.length && m.despesaTotal > 0) t27 += `A rubrica a atacar primeiro é <b>${catArr[0][0]}</b> (${pct(catArr[0][1] / m.despesaTotal)} da despesa): renegociar cedo, com números deste ano na mão. `;
+  if (known.length) t27 += `Na divulgação, começar por <b>${escHtml(known[0].label)}</b>, que já provou trazer gente.`;
+  t27 += `</p>`;
+  ps.push(t27);
+  return `
+    <div class="fin-j-head">${head}</div>
+    <div class="fin-j-by">Análise gerada automaticamente a partir dos dados do dashboard — atualiza a cada sincronização.</div>
+    <div class="fin-jornal-cols">${ps.join('')}</div>
+    <div class="fin-jornal-notas">
+      <span class="fin-j-sub" style="border-top:none;padding-top:0">Comentários da direção — as tuas conclusões (ficam guardadas neste browser)</span>
+      <textarea oninput="finNotasSave(this.value)" placeholder="Ex: Fechar preço das refeições com o restaurante até março; confirmar fisio mais cedo; subir preço externo 10€…">${escHtml(finNotasLoad())}</textarea>
+    </div>`;
+}
+
 function renderFinancas(){
   if (!document.getElementById('panel-financas')) return;
   const m = finMetrics();
@@ -5551,56 +5690,57 @@ function renderFinancas(){
   document.getElementById('fin-week-meta').textContent = m.despesaTotal ? '' : 'adiciona despesas';
   document.getElementById('fin-chart-week').innerHTML = m.nAtl ? finBars(wRows) : '<div class="fin-empty">Sem atletas carregados.</div>';
 
-  // Staff e refeições — custo real por elemento (editável)
-  const staffBox = document.getElementById('fin-staff');
-  if (staffBox) {
-    const st = staffMetrics(m);
-    document.getElementById('fin-staff-meta').textContent =
-      `staff ${fmt(st.total)} · refeições atletas ${fmt(st.refAtl)}`;
-    const weekTbl = w => {
-      const s = st.semanas[w];
-      return `<div class="fin-staff-week">
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:6px">
-          <b>Semana ${w}</b>
-          <span style="color:var(--mid-gray)">${s.rows.length} elementos · salários ${fmt(s.salarios)} · refeições ${fmt(s.refStaff)}</span>
-        </div>
-        <table class="fin-tbl">
-          <thead><tr><th>Nome</th><th style="text-align:right">Salário</th><th style="text-align:right">Refeições (${st.refStaffDia}€ × ${st.dias}d)</th><th style="text-align:right">Custo total</th><th></th></tr></thead>
-          <tbody>${s.rows.map((r, i) => `<tr>
-            <td><input type="text" class="fin-staff-input fin-staff-nome" value="${escHtml(r.nome)}" onchange="staffEdit(${w},${i},'nome',this.value)"></td>
-            <td style="text-align:right"><input type="number" class="fin-staff-input fin-staff-num" value="${Number(r.salario) || 0}" min="0" step="5" onchange="staffEdit(${w},${i},'salario',this.value)"></td>
-            <td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(r.refeicoes)}</td>
-            <td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">${fmt(r.total)}</td>
-            <td style="text-align:right"><button class="fin-del" title="Remover" onclick="staffDel(${w},${i})">✕</button></td>
-          </tr>`).join('')}</tbody>
-          <tfoot><tr>
-            <td style="font-weight:700;border-top:2px solid var(--sand);padding-top:8px">Total semana ${w}</td>
-            <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);padding-top:8px;font-variant-numeric:tabular-nums">${fmt(s.salarios)}</td>
-            <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);padding-top:8px;font-variant-numeric:tabular-nums">${fmt(s.refStaff)}</td>
-            <td style="text-align:right;font-weight:800;border-top:2px solid var(--sand);padding-top:8px;color:#c0392b;font-variant-numeric:tabular-nums">${fmt(s.total)}</td>
-            <td style="border-top:2px solid var(--sand)"></td>
-          </tr></tfoot>
-        </table>
-        <button class="fin-mini-btn" style="margin:8px 0 0" onclick="staffAdd(${w})">+ Adicionar elemento</button>
-      </div>`;
-    };
-    staffBox.innerHTML = `
-      <div class="fin-staff-ctrl">
-        <label>Refeição atleta <input type="number" value="${st.refAtlDia}" min="0" step="1" onchange="staffSet('precoAtletaDia',this.value)"> €/dia</label>
-        <label>Refeição staff <input type="number" value="${st.refStaffDia}" min="0" step="1" onchange="staffSet('precoStaffDia',this.value)"> €/dia</label>
-        <label>Dias por semana <input type="number" value="${st.dias}" min="1" max="7" step="1" onchange="staffSet('dias',this.value)"></label>
-        <button class="fin-mini-btn" onclick="staffReset()" title="Repor nomes e valores iniciais">↺ Repor</button>
-      </div>
-      <div class="fin-staff-kpis">
-        <div class="fin-staff-kpi"><span>Refeições por atleta</span><b>${fmt(st.refAtlSemana)}/sem</b>${st.refAtlDia}€ × ${st.dias} dias</div>
-        <div class="fin-staff-kpi"><span>Refeições atletas</span><b>${fmt(st.refAtl)}</b>S1: ${st.semanas[1].nAtl} atl · ${fmt(st.semanas[1].refAtl)} — S2: ${st.semanas[2].nAtl} atl · ${fmt(st.semanas[2].refAtl)}</div>
-        <div class="fin-staff-kpi"><span>Refeições staff</span><b>${fmt(st.refStaff)}</b>${fmt(st.refPorElemento)} por elemento/semana</div>
-        <div class="fin-staff-kpi"><span>Salários staff</span><b>${fmt(st.salarios)}</b>2 semanas</div>
-        <div class="fin-staff-kpi"><span>Staff total (c/ refeições)</span><b>${fmt(st.total)}</b>S1 ${fmt(st.semanas[1].total)} · S2 ${fmt(st.semanas[2].total)}</div>
-      </div>
-      ${weekTbl(1)}${weekTbl(2)}
-      <div style="font-size:11.5px;color:var(--mid-gray);margin-top:10px;font-style:italic">Valores de referência editáveis (guardados neste browser) — não entram nas Despesas registadas acima; regista lá os pagamentos reais para contarem no lucro.</div>`;
+  // Refeições e jantares — custo por cabeça (strip de controlos + factos)
+  const st = staffMetrics(m);
+  const strip = document.getElementById('fin-refstrip');
+  if (strip) {
+    document.getElementById('fin-refstrip-meta').textContent =
+      `atletas ${fmt(st.refAtl)} · staff ${fmt(st.refStaff + st.jantares)}`;
+    strip.innerHTML = `
+      <label>Atleta <input type="number" value="${st.refAtlDia}" min="0" step="1" onchange="staffSet('precoAtletaDia',this.value)"> €/dia</label>
+      <label>Staff <input type="number" value="${st.refStaffDia}" min="0" step="1" onchange="staffSet('precoStaffDia',this.value)"> €/dia</label>
+      <label>Dias <input type="number" value="${st.dias}" min="1" max="7" step="1" onchange="staffSet('dias',this.value)"></label>
+      <div class="fin-refstrip-fact"><span>Por atleta</span><b>${fmt(st.refAtlSemana)}</b>/semana</div>
+      <div class="fin-refstrip-fact"><span>Por staff</span><b>${fmt(st.refPorElemento)}</b>/semana</div>
+      <div class="fin-refstrip-fact"><span>Atletas total</span><b>${fmt(st.refAtl)}</b> S1 ${st.semanas[1].nAtl} · S2 ${st.semanas[2].nAtl}</div>
+      <div class="fin-refstrip-fact"><span>Jantares equipa</span><b>${fmt(st.jantares)}</b> das despesas</div>
+      <button class="fin-mini-btn" onclick="staffReset()" title="Repor nomes e valores iniciais">↺ Repor</button>
+      <div style="flex-basis:100%;font-size:11px;color:var(--mid-gray);font-style:italic">Valores de referência editáveis (guardados neste browser) — não entram no lucro; os pagamentos reais registam-se nas Despesas.</div>`;
   }
+
+  // Staff — Semana 1 e Semana 2, lado a lado (salário + refeições + jantar)
+  const hasJ = st.jantares > 0;
+  [1, 2].forEach(w => {
+    const box = document.getElementById('fin-staff-' + w);
+    if (!box) return;
+    const s = st.semanas[w];
+    document.getElementById('fin-staff-meta-' + w).textContent =
+      `${s.rows.length} pessoas · total ${fmt(s.total)}`;
+    box.innerHTML = `
+      <div class="fin-staff-week"><table class="fin-tbl fin-tbl--sm">
+        <thead><tr><th>Nome</th><th style="text-align:right">Salário</th><th style="text-align:right">Refeições</th>${hasJ ? '<th style="text-align:right">Jantar</th>' : ''}<th style="text-align:right">Total</th><th></th></tr></thead>
+        <tbody>${s.rows.map((r, i) => `<tr>
+          <td><input type="text" class="fin-staff-input fin-staff-nome" value="${escHtml(r.nome)}" onchange="staffEdit(${w},${i},'nome',this.value)"></td>
+          <td style="text-align:right"><input type="number" class="fin-staff-input fin-staff-num" value="${Number(r.salario) || 0}" min="0" step="5" onchange="staffEdit(${w},${i},'salario',this.value)"></td>
+          <td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(r.refeicoes)}</td>
+          ${hasJ ? `<td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(r.jantar)}</td>` : ''}
+          <td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">${fmt(r.total)}</td>
+          <td style="text-align:right"><button class="fin-del" title="Remover" onclick="staffDel(${w},${i})">✕</button></td>
+        </tr>`).join('')}</tbody>
+        <tfoot><tr>
+          <td style="font-weight:700;border-top:2px solid var(--sand)">Total</td>
+          <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);font-variant-numeric:tabular-nums">${fmt(s.salarios)}</td>
+          <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);font-variant-numeric:tabular-nums">${fmt(s.refStaff)}</td>
+          ${hasJ ? `<td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);font-variant-numeric:tabular-nums">${fmt(s.jantar)}</td>` : ''}
+          <td style="text-align:right;font-weight:800;border-top:2px solid var(--sand);color:#c0392b;font-variant-numeric:tabular-nums">${fmt(s.total)}</td>
+          <td style="border-top:2px solid var(--sand)"></td>
+        </tr></tfoot>
+      </table></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="fin-mini-btn" style="margin-left:0" onclick="staffAdd(${w})">+ Adicionar</button>
+        <div class="fin-staff-foot" style="margin-top:0">Refeições dos ${s.nAtl} atletas: <b>${fmt(s.refAtl)}</b>${hasJ ? ` · jantar ${fmt(s.jantar)} ÷ ${s.rows.length}` : ''}</div>
+      </div>`;
+  });
 
   // Origem das inscrições — compacto (top 5 + Outras) com conclusão para 2027
   const ref = finReferral();
@@ -5663,6 +5803,14 @@ function renderFinancas(){
         <td style="text-align:right"><button class="fin-del" title="Eliminar" onclick="finDelete('${d.id}')">✕</button></td>
       </tr>`).join('')}</tbody>
     </table>` : '<div class="fin-empty">Ainda não há despesas. Adiciona a primeira acima.</div>';
+
+  // O Diário do Campo — não re-renderiza enquanto escreves nos comentários
+  const jbox = document.getElementById('fin-jornal');
+  if (jbox && !(document.activeElement && jbox.contains(document.activeElement))) {
+    jbox.innerHTML = finJornal(m, st, ref);
+    const jd = document.getElementById('fin-jornal-data');
+    if (jd) jd.textContent = new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
