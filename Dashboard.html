@@ -1442,14 +1442,19 @@
       #panel-financas .fin-cat-pill { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:600; color:#fff; }
       #panel-financas .fin-alvo-input { width:48px; padding:3px 6px; border:1px solid var(--sand); border-radius:4px; font-size:12px; text-align:center; }
       #panel-financas .fin-empty { color:var(--mid-gray); font-size:13px; padding:14px 4px; font-style:italic; }
-      #panel-financas .fin-sim { display:grid; grid-template-columns:1fr 1fr; gap:14px 22px; align-items:end; }
-      #panel-financas .fin-sim-ctrl label { display:block; font-size:12.5px; color:var(--charcoal); margin-bottom:6px; }
-      #panel-financas .fin-sim-ctrl input { width:90px; padding:8px 10px; border:1px solid var(--sand); background:var(--beige-light); font-size:15px; border-radius:4px; font-weight:600; }
-      #panel-financas .fin-sim-out { grid-column:1/-1; border-top:1px solid var(--sand); padding-top:12px; display:flex; gap:26px; flex-wrap:wrap; font-size:14px; }
-      #panel-financas .fin-sim-out b { font-family:var(--font-display); font-size:22px; display:block; line-height:1.1; }
-      #panel-financas .fin-be-week { margin:16px 0; }
-      #panel-financas .fin-be-track { position:relative; height:26px; background:var(--beige-light); border-radius:5px; overflow:hidden; }
-      #panel-financas .fin-be-note { font-size:12px; color:var(--mid-gray); margin-top:6px; }
+      /* Staff & refeições — tabela editável (nomes/salários) guardada no browser */
+      #panel-financas .fin-staff-input { padding:5px 8px; border:1px solid var(--sand); background:var(--beige-light); border-radius:4px; font-size:12.5px; font-family:var(--font-body); }
+      #panel-financas .fin-staff-nome { width:100%; min-width:110px; font-weight:600; }
+      #panel-financas .fin-staff-num { width:74px; text-align:right; font-variant-numeric:tabular-nums; }
+      #panel-financas .fin-staff-ctrl { display:flex; gap:14px; flex-wrap:wrap; align-items:center; font-size:12.5px; color:var(--charcoal); margin-bottom:12px; }
+      #panel-financas .fin-staff-ctrl input { width:58px; padding:5px 8px; border:1px solid var(--sand); background:var(--beige-light); border-radius:4px; font-size:13px; text-align:center; font-weight:600; }
+      #panel-financas .fin-staff-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin:12px 0 4px; }
+      #panel-financas .fin-staff-kpi { background:var(--beige-light); border-radius:6px; padding:10px 12px; }
+      #panel-financas .fin-staff-kpi b { font-family:var(--font-display); font-size:19px; display:block; line-height:1.15; }
+      #panel-financas .fin-staff-kpi span { font-size:11px; color:var(--mid-gray); letter-spacing:.08em; text-transform:uppercase; font-weight:700; }
+      #panel-financas .fin-staff-week { overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:14px; }
+      #panel-financas .fin-staff-week .fin-tbl { min-width:520px; }
+      #panel-financas .fin-origem-conclusao { margin-top:12px; padding:10px 12px; background:var(--beige-light); border-radius:6px; font-size:12.5px; line-height:1.5; color:var(--charcoal); }
       #panel-financas .fin-cloud-tag { font-size:11px; color:var(--green-dark); font-weight:600; margin-right:8px; }
       #panel-financas .fin-migrate { margin:10px 0 2px; padding:9px 12px; background:#fff7e6; border:1px solid #e0a83f; border-radius:6px; font-size:12.5px; color:var(--charcoal); display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
       /* A tabela de despesas pode ser larga — deixa fazer scroll horizontal
@@ -1457,7 +1462,6 @@
       #panel-financas #fin-list { overflow-x:auto; -webkit-overflow-scrolling:touch; }
       #panel-financas #fin-list .fin-tbl { min-width:520px; }
       @media (max-width:560px){
-        #panel-financas .fin-sim { grid-template-columns:1fr; }
         /* KPIs em 2 colunas fixas (auto-fit espremia-os numa só coluna gigante) */
         #panel-financas .fin-kpis { grid-template-columns:1fr 1fr; gap:8px; }
         #panel-financas .fin-kpi { padding:10px 12px; }
@@ -1469,7 +1473,6 @@
         #panel-financas .fin-form input#fin-desc,
         #panel-financas .fin-form input#fin-val { width:100%; min-width:0; flex:none; }
         #panel-financas .fin-form .fin-add-btn { width:100%; }
-        #panel-financas .fin-sim-out { gap:14px; }
       }
     </style>
 
@@ -1534,53 +1537,21 @@
     <div class="fin-grid3" style="margin-top:14px;">
       <div class="card" style="grid-column:1/-1;">
         <div class="card-head">
-          <div class="card-title">Ocupação e ponto de equilíbrio</div>
-          <div class="card-meta" id="fin-be-meta">quantos atletas cobrem os custos</div>
+          <div class="card-title">Staff e refeições — quanto custou cada elemento</div>
+          <div class="card-meta" id="fin-staff-meta">—</div>
         </div>
-        <div id="fin-breakeven"></div>
-        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:var(--mid-gray)">
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e0a83f;vertical-align:middle"></span> cobre custos</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2e7d32;vertical-align:middle"></span> lucro</span>
-          <span>┊ ponto de equilíbrio · cinza = vagas livres</span>
-        </div>
+        <div id="fin-staff"></div>
       </div>
     </div>
 
     <div class="fin-grid3" style="margin-top:14px;">
-      <div class="card" style="grid-column:1/-1;">
+      <div class="card">
         <div class="card-head">
-          <div class="card-title">Angariação por treinador · €2 por inscrição</div>
-          <div class="card-meta" id="fin-ref-meta">—</div>
-        </div>
-        <div id="fin-ref-treinadores"></div>
-      </div>
-    </div>
-
-    <div class="fin-grid3" style="margin-top:14px;">
-      <div class="card" style="grid-column:1/-1;">
-        <div class="card-head">
-          <div class="card-title">Como tomaram conhecimento do campo</div>
+          <div class="card-title">Origem das inscrições</div>
           <div class="card-meta" id="fin-origem-meta">—</div>
         </div>
         <div id="fin-origem"></div>
-      </div>
-    </div>
-
-    <div class="card fin-sim-card" style="margin-top:14px;">
-      <div class="card-head">
-        <div class="card-title">Simulador — e se…?</div>
-        <div class="card-meta">arrasta os números e vê o impacto no lucro</div>
-      </div>
-      <div class="fin-sim">
-        <div class="fin-sim-ctrl">
-          <label>Subir o preço por atleta em</label>
-          <div><input type="number" id="fin-sim-preco" value="0" min="0" step="5" oninput="finSim()"> €</div>
-        </div>
-        <div class="fin-sim-ctrl">
-          <label>Encher vagas livres (<span id="fin-sim-livres">0</span> disponíveis)</label>
-          <div><input type="number" id="fin-sim-vagas" value="0" min="0" step="1" oninput="finSim()"> atletas</div>
-        </div>
-        <div class="fin-sim-out" id="fin-sim-out"></div>
+        <div id="fin-origem-conclusao"></div>
       </div>
     </div>
 
@@ -5330,34 +5301,108 @@ function finMetrics(){
   };
 }
 
-// Angariação por treinador + origem ("como tomou conhecimento").
-// Prémio: €2 por INSCRIÇÃO (atleta em 2 semanas conta 2). Só atletas ativos.
-const FIN_PREMIO_ANGARIACAO = 2;
+// Origem das inscrições ("como tomou conhecimento"). Só atletas ativos.
 function finReferral(){
   const ativos = (typeof data !== 'undefined' && data) ? data : [];
-  const treinadores = {};   // key -> { nome, atletas, inscricoes }
   const origem = {};        // key -> { label, n }
   ativos.forEach(r => {
-    const insc = parseSems(r.semana).length || 1;
-    const traw = String(r.treinador_indicou || '').trim().replace(/\s+/g, ' ');
-    if (traw) {
-      const key = traw.toLowerCase();
-      const t = treinadores[key] || (treinadores[key] = { nome: traw, atletas: 0, inscricoes: 0 });
-      t.atletas++; t.inscricoes += insc;
-    }
     const oraw = String(r.como_conheceu || '').trim().replace(/\s+/g, ' ') || 'Não indicado';
     const o = origem[oraw.toLowerCase()] || (origem[oraw.toLowerCase()] = { label: oraw, n: 0 });
     o.n++;
   });
-  const tList = Object.values(treinadores)
-    .map(t => ({ ...t, pagar: t.inscricoes * FIN_PREMIO_ANGARIACAO }))
-    .sort((a, b) => b.pagar - a.pagar || a.nome.localeCompare(b.nome));
   const oList = Object.values(origem).sort((a, b) => b.n - a.n);
+  return { oList, nAtivos: ativos.length };
+}
+
+// ============================================================
+// Staff e refeições — custo real por elemento (salário + comida).
+// Refeições: €/dia por atleta e por elemento do staff × nº de dias.
+// Nomes/salários editáveis; guardado no localStorage deste browser.
+// ============================================================
+const STAFF_KEY = 'cft_staff_v1';
+const STAFF_DEFAULT = {
+  precoAtletaDia: 17, precoStaffDia: 20, dias: 5,
+  semanas: {
+    1: [
+      { nome: 'Jusse',                salario: 350 },
+      { nome: 'Tiago Resende',        salario: 350 },
+      { nome: 'Francisco',            salario: 350 },
+      { nome: 'Treinador 4',          salario: 350 },
+      { nome: 'Sérgio (meio tempo)',  salario: 175 },
+      { nome: 'Estagiário',           salario: 0 },
+      { nome: 'Fisioterapeuta',       salario: 350 }
+    ],
+    2: [
+      { nome: 'Sérgio',               salario: 350 },
+      { nome: 'Jusse',                salario: 350 },
+      { nome: 'Francisco',            salario: 350 },
+      { nome: 'Treinador 4',          salario: 350 },
+      { nome: 'Araújo',               salario: 0 },
+      { nome: 'Fisioterapeuta',       salario: 350 }
+    ]
+  }
+};
+function staffLoad(){
+  try {
+    const s = JSON.parse(localStorage.getItem(STAFF_KEY));
+    if (s && s.semanas && s.semanas[1] && s.semanas[2]) return s;
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(STAFF_DEFAULT));
+}
+let staffState = staffLoad();
+function staffSave(){ try { localStorage.setItem(STAFF_KEY, JSON.stringify(staffState)); } catch (e) {} }
+function staffSet(field, v){
+  staffState[field] = Math.max(0, Number(v) || 0);
+  staffSave(); renderFinancas();
+}
+function staffEdit(w, i, field, v){
+  const r = (staffState.semanas[w] || [])[i];
+  if (!r) return;
+  if (field === 'nome') r.nome = String(v).trim() || '—';
+  else r[field] = Math.max(0, Number(v) || 0);
+  staffSave(); renderFinancas();
+}
+function staffAdd(w){
+  staffState.semanas[w].push({ nome: 'Novo elemento', salario: 350 });
+  staffSave(); renderFinancas();
+}
+function staffDel(w, i){
+  staffState.semanas[w].splice(i, 1);
+  staffSave(); renderFinancas();
+}
+function staffReset(){
+  if (!confirm('Repor os nomes e valores iniciais do staff? Perdes as edições feitas neste browser.')) return;
+  staffState = JSON.parse(JSON.stringify(STAFF_DEFAULT));
+  staffSave(); renderFinancas();
+}
+// Totais por semana: refeições dos atletas (nº ativos na semana), refeições e
+// salários do staff, e custo total (o que cada elemento "ficou" realmente).
+function staffMetrics(m){
+  const dias = staffState.dias || 0;
+  const refAtlDia = staffState.precoAtletaDia || 0;
+  const refStaffDia = staffState.precoStaffDia || 0;
+  const refPorElemento = refStaffDia * dias;
+  const semanas = {};
+  [1, 2].forEach(w => {
+    const rows = (staffState.semanas[w] || []).map(r => ({
+      ...r, refeicoes: refPorElemento, total: (Number(r.salario) || 0) + refPorElemento
+    }));
+    const nAtl = (m.weeksAg[w] && m.weeksAg[w].atl) || 0;
+    semanas[w] = {
+      rows, nAtl,
+      salarios:  rows.reduce((s, r) => s + (Number(r.salario) || 0), 0),
+      refStaff:  rows.length * refPorElemento,
+      refAtl:    nAtl * refAtlDia * dias,
+      total:     rows.reduce((s, r) => s + r.total, 0)
+    };
+  });
   return {
-    tList, oList, nAtivos: ativos.length,
-    totalPagar:      tList.reduce((s, t) => s + t.pagar, 0),
-    totalInscricoes: tList.reduce((s, t) => s + t.inscricoes, 0),
-    totalAtletas:    tList.reduce((s, t) => s + t.atletas, 0)
+    semanas, dias, refAtlDia, refStaffDia, refPorElemento,
+    refAtlSemana: refAtlDia * dias,
+    salarios: semanas[1].salarios + semanas[2].salarios,
+    refStaff: semanas[1].refStaff + semanas[2].refStaff,
+    refAtl:   semanas[1].refAtl + semanas[2].refAtl,
+    total:    semanas[1].total + semanas[2].total
   };
 }
 
@@ -5400,66 +5445,6 @@ function finRenderDonut(porCat, total){
       <span style="flex:1">${c}</span><b>${fmt(porCat[c])}</b></div>`).join('');
 }
 
-function finBreakEven(m){
-  const vag = m.vagasSem || 60;
-  return [1, 2].map(w => {
-    const a = m.weeksAg[w];
-    if (!a.atl) return '';
-    const atlP = Math.min(100, a.atl / vag * 100);
-    const beP = (a.breakEven != null) ? Math.min(100, a.breakEven / vag * 100) : 0;
-    const coverW = Math.min(atlP, beP);
-    const profitW = Math.max(0, atlP - beP);
-    let note;
-    if (!m.despesaTotal) {
-      note = `${a.atl}/${vag} vagas ocupadas. Adiciona despesas para veres o ponto de equilíbrio.`;
-    } else if (a.breakEven == null) {
-      note = `⚠ Cada atleta custa mais do que paga (preço ${fmt(a.preco)} vs custo variável ${fmt(m.varPorAtletaSem)}). Revê o preço ou o custo da comida.`;
-    } else if (a.atl >= a.breakEven) {
-      note = `✓ Cobres os custos com <b>${a.breakEven}</b> atletas — estás <b>${a.atl - a.breakEven}</b> acima. Cada uma das <b>${a.vagasLivres}</b> vagas livres valia +${fmt(a.contrib)} de lucro → <b>${fmt(a.valorVagas)}</b> em cima da mesa.`;
-    } else {
-      note = `Faltam <b>${a.breakEven - a.atl}</b> atletas para cobrir custos (precisas de ${a.breakEven}). Estás a ${fmt(-a.lucro)} de prejuízo nesta semana.`;
-    }
-    const beMarker = (m.despesaTotal && a.breakEven != null && a.breakEven <= vag)
-      ? `<div style="position:absolute;left:${beP}%;top:-2px;height:30px;border-left:2px dashed #333"></div>` : '';
-    return `<div class="fin-be-week">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
-        <b>Semana ${w}</b>
-        <span style="color:var(--mid-gray)">${a.atl}/${vag} atletas · ${Math.round(a.ocup * 100)}% cheio · lucro ${fmt(a.lucro)}</span>
-      </div>
-      <div class="fin-be-track">
-        <div style="position:absolute;left:0;top:0;height:100%;width:${coverW}%;background:#e0a83f"></div>
-        <div style="position:absolute;left:${beP}%;top:0;height:100%;width:${profitW}%;background:#2e7d32"></div>
-        ${beMarker}
-      </div>
-      <div class="fin-be-note">${note}</div>
-    </div>`;
-  }).join('');
-}
-
-// Recalcula lucro/margem com as alavancas do simulador, sem re-render do painel todo.
-function finSim(){
-  const out = document.getElementById('fin-sim-out');
-  if (!out) return;
-  const m = finMetrics();
-  if (!m.nAtl) { out.innerHTML = '<span style="color:var(--mid-gray)">Sem atletas carregados.</span>'; return; }
-  const subida = Math.max(0, Number((document.getElementById('fin-sim-preco') || {}).value) || 0);
-  let novosAtl = Math.max(0, Math.round(Number((document.getElementById('fin-sim-vagas') || {}).value) || 0));
-  novosAtl = Math.min(novosAtl, m.vagasLivresTotal);
-  // preço sobe para todos; novos atletas pagam o preço médio (já com a subida) e custam o variável
-  const precoNovo = m.precoMedio + subida;
-  const receitaNova = (m.receita + subida * m.nAtl) + novosAtl * precoNovo;
-  const despesaNova = m.despesaTotal + novosAtl * m.varPorAtletaSem;
-  const lucroNovo = receitaNova - despesaNova;
-  const margemNova = receitaNova > 0 ? lucroNovo / receitaNova : 0;
-  const dLucro = lucroNovo - m.lucro;
-  const cor = lucroNovo >= 0 ? 'var(--green-dark)' : '#c0392b';
-  const dCor = dLucro >= 0 ? 'var(--green-dark)' : '#c0392b';
-  out.innerHTML = `
-    <div><span style="font-size:11px;color:var(--mid-gray);letter-spacing:.1em;text-transform:uppercase">Novo lucro</span><b style="color:${cor}">${fmt(lucroNovo)}</b></div>
-    <div><span style="font-size:11px;color:var(--mid-gray);letter-spacing:.1em;text-transform:uppercase">Variação</span><b style="color:${dCor}">${dLucro >= 0 ? '+' : ''}${fmt(dLucro)}</b></div>
-    <div><span style="font-size:11px;color:var(--mid-gray);letter-spacing:.1em;text-transform:uppercase">Nova margem</span><b style="color:${cor}">${Math.round(margemNova * 100)}%</b></div>`;
-}
-
 function finAdvice(m){
   const out = [];
   const alvo = finState.margemAlvo / 100;
@@ -5491,19 +5476,6 @@ function finAdvice(m){
     if (piorClube) txt += ` A maior fatia foi no <b>${piorClube.nome}</b> (${fmt(piorClube.desconto)} em ${piorClube.nDesc} atletas).`;
     out.push({ t: 'warn', text: txt });
   }
-  // Vagas livres — a alavanca mais forte (custos quase fixos)
-  if (m.despesaTotal > 0 && m.vagasLivresTotal > 0 && m.valorVagasTotal > 0) {
-    out.push({ t: 'warn', text: `Tens <b>${m.vagasLivresTotal} vagas por preencher</b>. Como os treinadores já estão pagos, cada atleta extra é quase tudo lucro (~${fmt(m.varPorAtletaSem ? m.precoMedio - m.varPorAtletaSem : m.precoMedio)} cada). Enchê-las valia <b>${fmt(m.valorVagasTotal)}</b> — mais do que cortar despesas. Foca o marketing em encher o campo.` });
-  } else if (m.despesaTotal > 0 && m.vagasLivresTotal === 0) {
-    out.push({ t: 'good', text: 'Campo esgotado nas duas semanas — ocupação a 100%. Aqui a alavanca já não é volume, é <b>preço</b>: testa subir para 2027 sem medo de perder procura.' });
-  }
-  // Semana abaixo do break-even
-  [1, 2].forEach(w => {
-    const a = m.weeksAg[w];
-    if (m.despesaTotal > 0 && a.atl > 0 && a.breakEven != null && a.atl < a.breakEven) {
-      out.push({ t: 'bad', text: `A <b>Semana ${w}</b> está abaixo do ponto de equilíbrio: tens ${a.atl} atletas e precisavas de ${a.breakEven} só para cobrir custos. Considera juntá-la a outra semana ou reduzir treinadores se ficar com poucos inscritos.` });
-    }
-  });
   // Semana menos rentável
   const w1 = m.weeksAg[1], w2 = m.weeksAg[2];
   if (m.despesaTotal > 0 && w1.atl > 0 && w2.atl > 0) {
@@ -5579,68 +5551,95 @@ function renderFinancas(){
   document.getElementById('fin-week-meta').textContent = m.despesaTotal ? '' : 'adiciona despesas';
   document.getElementById('fin-chart-week').innerHTML = m.nAtl ? finBars(wRows) : '<div class="fin-empty">Sem atletas carregados.</div>';
 
-  // Ocupação e ponto de equilíbrio
-  document.getElementById('fin-breakeven').innerHTML = m.nAtl ? finBreakEven(m)
-    : '<div class="fin-empty">Sem atletas carregados ainda.</div>';
-  document.getElementById('fin-be-meta').textContent = m.despesaTotal
-    ? `${m.vagasLivresTotal} vagas livres · valem ${fmt(m.valorVagasTotal)}`
-    : 'adiciona despesas para ver o break-even';
-
-  // Angariação por treinador (€2 por inscrição) + origem
-  const ref = finReferral();
-  const refMeta = document.getElementById('fin-ref-meta');
-  const refBox = document.getElementById('fin-ref-treinadores');
-  if (refBox) {
-    if (ref.tList.length) {
-      refMeta.textContent = `${fmt(ref.totalPagar)} a pagar · ${ref.tList.length} treinador${ref.tList.length === 1 ? '' : 'es'} · ${ref.totalInscricoes} inscriç${ref.totalInscricoes === 1 ? 'ão' : 'ões'}`;
-      const maxPagar = Math.max(1, ...ref.tList.map(t => t.pagar));
-      refBox.innerHTML = `
+  // Staff e refeições — custo real por elemento (editável)
+  const staffBox = document.getElementById('fin-staff');
+  if (staffBox) {
+    const st = staffMetrics(m);
+    document.getElementById('fin-staff-meta').textContent =
+      `staff ${fmt(st.total)} · refeições atletas ${fmt(st.refAtl)}`;
+    const weekTbl = w => {
+      const s = st.semanas[w];
+      return `<div class="fin-staff-week">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:6px">
+          <b>Semana ${w}</b>
+          <span style="color:var(--mid-gray)">${s.rows.length} elementos · salários ${fmt(s.salarios)} · refeições ${fmt(s.refStaff)}</span>
+        </div>
         <table class="fin-tbl">
-          <thead><tr><th>Treinador</th><th style="text-align:right">Atletas</th><th style="text-align:right">Inscrições</th><th style="width:34%"></th><th style="text-align:right">A pagar</th></tr></thead>
-          <tbody>${ref.tList.map(t => `<tr>
-            <td><b>${escHtml(t.nome)}</b></td>
-            <td style="text-align:right;font-variant-numeric:tabular-nums">${t.atletas}</td>
-            <td style="text-align:right;font-variant-numeric:tabular-nums">${t.inscricoes}</td>
-            <td><div class="fin-bar-track" style="height:14px"><div class="fin-bar-fill" style="width:${Math.round(t.pagar / maxPagar * 100)}%;background:#4a78a8"></div></div></td>
-            <td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">${fmt(t.pagar)}</td>
+          <thead><tr><th>Nome</th><th style="text-align:right">Salário</th><th style="text-align:right">Refeições (${st.refStaffDia}€ × ${st.dias}d)</th><th style="text-align:right">Custo total</th><th></th></tr></thead>
+          <tbody>${s.rows.map((r, i) => `<tr>
+            <td><input type="text" class="fin-staff-input fin-staff-nome" value="${escHtml(r.nome)}" onchange="staffEdit(${w},${i},'nome',this.value)"></td>
+            <td style="text-align:right"><input type="number" class="fin-staff-input fin-staff-num" value="${Number(r.salario) || 0}" min="0" step="5" onchange="staffEdit(${w},${i},'salario',this.value)"></td>
+            <td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(r.refeicoes)}</td>
+            <td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">${fmt(r.total)}</td>
+            <td style="text-align:right"><button class="fin-del" title="Remover" onclick="staffDel(${w},${i})">✕</button></td>
           </tr>`).join('')}</tbody>
           <tfoot><tr>
-            <td style="font-weight:700;border-top:2px solid var(--sand);padding-top:8px">Total</td>
-            <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);padding-top:8px;font-variant-numeric:tabular-nums">${ref.totalAtletas}</td>
-            <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);padding-top:8px;font-variant-numeric:tabular-nums">${ref.totalInscricoes}</td>
+            <td style="font-weight:700;border-top:2px solid var(--sand);padding-top:8px">Total semana ${w}</td>
+            <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);padding-top:8px;font-variant-numeric:tabular-nums">${fmt(s.salarios)}</td>
+            <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);padding-top:8px;font-variant-numeric:tabular-nums">${fmt(s.refStaff)}</td>
+            <td style="text-align:right;font-weight:800;border-top:2px solid var(--sand);padding-top:8px;color:#c0392b;font-variant-numeric:tabular-nums">${fmt(s.total)}</td>
             <td style="border-top:2px solid var(--sand)"></td>
-            <td style="text-align:right;font-weight:800;border-top:2px solid var(--sand);padding-top:8px;color:#c0392b;font-variant-numeric:tabular-nums">${fmt(ref.totalPagar)}</td>
           </tr></tfoot>
         </table>
-        <div style="font-size:11.5px;color:var(--mid-gray);margin-top:10px;font-style:italic">€2 por inscrição — atletas inscritos em 2 semanas contam 2. Apenas atletas ativos que indicaram um treinador.</div>`;
-    } else {
-      refMeta.textContent = '—';
-      refBox.innerHTML = '<div class="fin-empty">Nenhum atleta ativo indicou um treinador (ou o campo ainda não foi preenchido no backend — corre <b>fillOrigem()</b> no Apps Script).</div>';
-    }
+        <button class="fin-mini-btn" style="margin:8px 0 0" onclick="staffAdd(${w})">+ Adicionar elemento</button>
+      </div>`;
+    };
+    staffBox.innerHTML = `
+      <div class="fin-staff-ctrl">
+        <label>Refeição atleta <input type="number" value="${st.refAtlDia}" min="0" step="1" onchange="staffSet('precoAtletaDia',this.value)"> €/dia</label>
+        <label>Refeição staff <input type="number" value="${st.refStaffDia}" min="0" step="1" onchange="staffSet('precoStaffDia',this.value)"> €/dia</label>
+        <label>Dias por semana <input type="number" value="${st.dias}" min="1" max="7" step="1" onchange="staffSet('dias',this.value)"></label>
+        <button class="fin-mini-btn" onclick="staffReset()" title="Repor nomes e valores iniciais">↺ Repor</button>
+      </div>
+      <div class="fin-staff-kpis">
+        <div class="fin-staff-kpi"><span>Refeições por atleta</span><b>${fmt(st.refAtlSemana)}/sem</b>${st.refAtlDia}€ × ${st.dias} dias</div>
+        <div class="fin-staff-kpi"><span>Refeições atletas</span><b>${fmt(st.refAtl)}</b>S1: ${st.semanas[1].nAtl} atl · ${fmt(st.semanas[1].refAtl)} — S2: ${st.semanas[2].nAtl} atl · ${fmt(st.semanas[2].refAtl)}</div>
+        <div class="fin-staff-kpi"><span>Refeições staff</span><b>${fmt(st.refStaff)}</b>${fmt(st.refPorElemento)} por elemento/semana</div>
+        <div class="fin-staff-kpi"><span>Salários staff</span><b>${fmt(st.salarios)}</b>2 semanas</div>
+        <div class="fin-staff-kpi"><span>Staff total (c/ refeições)</span><b>${fmt(st.total)}</b>S1 ${fmt(st.semanas[1].total)} · S2 ${fmt(st.semanas[2].total)}</div>
+      </div>
+      ${weekTbl(1)}${weekTbl(2)}
+      <div style="font-size:11.5px;color:var(--mid-gray);margin-top:10px;font-style:italic">Valores de referência editáveis (guardados neste browser) — não entram nas Despesas registadas acima; regista lá os pagamentos reais para contarem no lucro.</div>`;
   }
 
+  // Origem das inscrições — compacto (top 5 + Outras) com conclusão para 2027
+  const ref = finReferral();
   const origemBox = document.getElementById('fin-origem');
   const origemMeta = document.getElementById('fin-origem-meta');
+  const origemConc = document.getElementById('fin-origem-conclusao');
   if (origemBox) {
     if (ref.oList.length && ref.nAtivos) {
-      origemMeta.textContent = `${ref.oList.length} resposta${ref.oList.length === 1 ? '' : 's'} · ${ref.nAtivos} atletas`;
-      const palette = ['#2e7d32', '#4a78a8', '#e0a83f', '#c0392b', '#7b5ea7', '#3f9e8c', '#d17a3f', '#8a8f98'];
-      origemBox.innerHTML = finBars(ref.oList.map((o, i) => ({
+      origemMeta.textContent = `${ref.nAtivos} atletas`;
+      const palette = ['#2e7d32', '#4a78a8', '#e0a83f', '#c0392b', '#7b5ea7', '#8a8f98'];
+      const top = ref.oList.slice(0, 5);
+      const resto = ref.oList.slice(5);
+      const rows = top.map((o, i) => ({
         label: o.label, value: o.n, color: palette[i % palette.length],
         valText: `${o.n} · ${Math.round(o.n / ref.nAtivos * 100)}%`
-      })));
+      }));
+      if (resto.length) {
+        const n = resto.reduce((s, o) => s + o.n, 0);
+        rows.push({ label: `Outras (${resto.length})`, value: n, color: '#b0b0b0', valText: `${n} · ${Math.round(n / ref.nAtivos * 100)}%` });
+      }
+      origemBox.innerHTML = finBars(rows);
+      // Conclusão automática: canal mais forte vs canais fracos
+      const known = ref.oList.filter(o => o.label !== 'Não indicado');
+      if (origemConc && known.length) {
+        const t = known[0];
+        const pctTop = Math.round(t.n / ref.nAtivos * 100);
+        const fracos = known.filter(o => o !== t && o.n <= Math.max(2, ref.nAtivos * 0.05)).map(o => o.label);
+        let txt = `<b>Para 2027:</b> <b>${escHtml(t.label)}</b> foi o canal que mais trouxe (${pctTop}% das inscrições) — reforça-o e começa a divulgação por aí.`;
+        if (fracos.length) txt += ` ${fracos.slice(0, 3).map(escHtml).join(', ')} quase não trouxe${fracos.length === 1 ? '' : 'ram'} ninguém: ou se investe a sério nesses canais, ou não vale a pena o esforço.`;
+        const semResposta = ref.oList.find(o => o.label === 'Não indicado');
+        if (semResposta && semResposta.n / ref.nAtivos > 0.2) txt += ` E ${Math.round(semResposta.n / ref.nAtivos * 100)}% não respondeu — para o ano, torna a pergunta obrigatória no formulário.`;
+        origemConc.innerHTML = `<div class="fin-origem-conclusao">${txt}</div>`;
+      } else if (origemConc) origemConc.innerHTML = '';
     } else {
       origemMeta.textContent = '—';
       origemBox.innerHTML = '<div class="fin-empty">Sem dados de origem ainda.</div>';
+      if (origemConc) origemConc.innerHTML = '';
     }
   }
-
-  // Simulador
-  const simLivres = document.getElementById('fin-sim-livres');
-  if (simLivres) simLivres.textContent = m.vagasLivresTotal;
-  const simVagas = document.getElementById('fin-sim-vagas');
-  if (simVagas) simVagas.max = m.vagasLivresTotal;
-  finSim();
 
   // Conselhos
   const adv = finAdvice(m);
