@@ -5452,6 +5452,22 @@ function finPie(items, size){
 const FIN_FIXOS_MES = { contabilidade: 98.40, workspace: 16.20, banco: 8.32 };
 const FIN_RESERVA = 1500;  // o que deixar na conta para aguentar o ano
 
+// Saldo real da conta (introduzido à mão) — é este que manda no fecho de
+// contas; as contas do dashboard (recebidos − despesas) servem de verificação.
+const FIN_SALDO_KEY = 'cft_fin_saldo_v1';
+function finSaldoLoad(){
+  try {
+    const s = JSON.parse(localStorage.getItem(FIN_SALDO_KEY));
+    if (s && isFinite(Number(s.valor))) return s;
+  } catch (e) {}
+  return { valor: 9059.62, data: '2026-07-28' };  // saldo após todos os pagamentos do CFT 2026
+}
+function finSaldoSet(v){
+  const valor = Math.max(0, Number(v) || 0);
+  try { localStorage.setItem(FIN_SALDO_KEY, JSON.stringify({ valor, data: new Date().toISOString().slice(0, 10) })); } catch (e) {}
+  renderFinancas();
+}
+
 // Previsão CFT 2027 — fecho de contas, cenários de preço e melhorias.
 function finPrevisao(m, st){
   if (!m.nAtl) return '<div class="fin-empty">Sem atletas carregados — sincroniza primeiro.</div>';
@@ -5462,9 +5478,12 @@ function finPrevisao(m, st){
     banco: FIN_FIXOS_MES.banco * 12
   };
   const fixosAno = anual.contabilidade + anual.workspace + anual.banco;
-  const caixa = m.recebido - m.despesaTotal;
+  const saldo = finSaldoLoad();
+  const caixaTeorica = m.recebido - m.despesaTotal;
   const porReceber = m.receita - m.recebido;
-  const paraCada = (caixa - FIN_RESERVA) / 2;
+  const levantar = saldo.valor - FIN_RESERVA;
+  const paraCada = levantar / 2;
+  const delta = saldo.valor - caixaTeorica;
 
   // Cenários de preço: aumento por atleta-semana, mesmo nº de inscrições
   const atlSem = (m.weeksAg[1].atl || 0) + (m.weeksAg[2].atl || 0);
@@ -5483,8 +5502,8 @@ function finPrevisao(m, st){
       <div class="fin-prev-block">
         <h4>Fecho 2026 — quanto levantar</h4>
         <div class="fin-prev-big" style="color:var(--green-dark)">${fmt(paraCada)} <span style="font-size:13px;font-family:var(--font-body)">para cada</span></div>
-        <p>Em caixa: <b>${fmt(caixa)}</b> (${fmt(m.recebido)} recebidos − ${fmt(m.despesaTotal)} despesas).${porReceber > 0.5 ? ` Faltam <b>${fmt(porReceber)}</b> por receber — cobra antes de fechar.` : ''}</p>
-        <p>Deixar na conta: <b>${fmt(FIN_RESERVA)}</b> para o ano sem campo. Em 2025 deixámos 1.137€ e chegou; agora há mais 8,32€/mês do banco.</p>
+        <p>Saldo da conta <input type="number" class="fin-staff-input fin-staff-num" style="width:88px" value="${saldo.valor}" min="0" step="0.01" onchange="finSaldoSet(this.value)"> € (${saldo.data}) − <b>${fmt(FIN_RESERVA)}</b> de reserva = <b>${fmt(levantar)}</b> a dividir pelos dois.</p>
+        <p>A reserva cobre o ano sem campo — em 2025 deixámos 1.137€ e chegou; agora há mais 8,32€/mês do banco.${porReceber > 0.5 ? ` Faltam <b>${fmt(porReceber)}</b> por receber — cobra antes de fechar.` : ''}${Math.abs(delta) > 50 ? ` O dashboard dá ${fmt(caixaTeorica)} (recebidos − despesas); a diferença de ${fmt(delta)} são movimentos fora das despesas registadas.` : ''}</p>
       </div>
       <div class="fin-prev-block">
         <h4>Custos fixos até ao CFT 2027</h4>
