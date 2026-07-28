@@ -1420,14 +1420,32 @@
       #panel-financas .fin-add-btn { padding:9px 18px; border:none; background:var(--green-dark); color:#fff; font-weight:600; font-size:13px; border-radius:4px; cursor:pointer; }
       #panel-financas .fin-add-btn:hover { background:var(--green-bright,#1a7a3a); }
       #panel-financas .fin-mini-btn { padding:5px 10px; border:1px solid var(--sand); background:var(--white); font-size:11px; border-radius:4px; cursor:pointer; margin-left:6px; color:var(--charcoal); }
-      #panel-financas .fin-grid3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; }
-      #panel-financas .fin-bars { display:flex; flex-direction:column; gap:9px; margin-top:8px; }
-      #panel-financas .fin-bar-row { display:grid; grid-template-columns:minmax(86px,auto) 1fr auto; gap:10px; align-items:center; font-size:12.5px; }
-      #panel-financas .fin-bar-label { color:var(--charcoal); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-      #panel-financas .fin-bar-track { background:var(--beige-light); border-radius:4px; height:20px; overflow:hidden; position:relative; }
-      #panel-financas .fin-bar-fill { height:100%; border-radius:4px; transition:width .3s; min-width:2px; }
-      #panel-financas .fin-bar-val { font-weight:700; white-space:nowrap; font-variant-numeric:tabular-nums; }
-      #panel-financas .fin-bar-sub { grid-column:1/-1; font-size:11px; color:var(--mid-gray); margin-top:-4px; }
+      /* Previsão CFT 2027 — painel colapsável */
+      #panel-financas .fin-prev { padding:0; overflow:hidden; }
+      #panel-financas .fin-prev-toggle { width:100%; border:none; background:var(--green-dark); color:#fff; font-family:var(--font-display); font-size:18px; letter-spacing:.01em; padding:15px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:10px; text-align:left; }
+      #panel-financas .fin-prev-toggle:hover { background:#1a6330; }
+      #panel-financas .fin-prev-toggle .arr { transition:transform .2s; font-size:14px; flex-shrink:0; }
+      #panel-financas .fin-prev.open .fin-prev-toggle .arr { transform:rotate(180deg); }
+      #panel-financas .fin-prev-body { display:none; padding:16px 18px 18px; }
+      #panel-financas .fin-prev.open .fin-prev-body { display:block; }
+      #panel-financas .fin-prev-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:14px; }
+      #panel-financas .fin-prev-block { background:var(--beige-light); border-radius:6px; padding:12px 14px; }
+      #panel-financas .fin-prev-block h4 { font-family:var(--font-condensed); font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--mid-gray); margin:0 0 8px; }
+      #panel-financas .fin-prev-big { font-family:var(--font-display); font-size:24px; line-height:1.1; margin:2px 0; }
+      #panel-financas .fin-prev-block p { font-size:12.5px; line-height:1.5; margin:6px 0 0; color:var(--charcoal); }
+      #panel-financas .fin-prev-tbl { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:6px; }
+      #panel-financas .fin-prev-tbl th { text-align:right; font-family:var(--font-condensed); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--mid-gray); padding:4px 6px; border-bottom:1px solid var(--sand); }
+      #panel-financas .fin-prev-tbl th:first-child, #panel-financas .fin-prev-tbl td:first-child { text-align:left; }
+      #panel-financas .fin-prev-tbl td { padding:5px 6px; text-align:right; font-variant-numeric:tabular-nums; border-bottom:1px solid rgba(0,0,0,.05); }
+      #panel-financas .fin-prev-tbl tr.rec td { font-weight:700; color:var(--green-dark); }
+      /* Despesas agrupadas por categoria */
+      #panel-financas .fin-group-head td { background:var(--beige-light); padding:7px 8px; border-bottom:1px solid var(--sand); }
+      #panel-financas .fin-group-total td { font-weight:700; font-size:12px; padding:6px 8px; border-bottom:2px solid var(--sand); }
+      /* Origem — gráfico circular */
+      #panel-financas .fin-pie-row { display:flex; gap:28px; align-items:center; flex-wrap:wrap; }
+      #panel-financas .fin-pie-svg { width:170px; height:170px; flex-shrink:0; }
+      #panel-financas .fin-pie-legend { display:flex; flex-direction:column; gap:6px; font-size:12.5px; min-width:200px; flex:1; }
+      #panel-financas .fin-staff-title { font-family:var(--font-condensed); font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--mid-gray); margin-bottom:6px; }
       #panel-financas .fin-tbl { width:100%; border-collapse:collapse; font-size:13px; }
       #panel-financas .fin-tbl th { text-align:left; font-family:var(--font-condensed); font-size:10.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--mid-gray); padding:6px 8px; border-bottom:1px solid var(--sand); }
       #panel-financas .fin-tbl td { padding:8px; border-bottom:1px solid var(--beige-light); }
@@ -1452,20 +1470,6 @@
       /* Despesas registadas em meia coluna — tabela compacta com scroll próprio */
       #panel-financas #fin-list .fin-tbl { min-width:440px; }
       /* ---- O Jornal do Campo — análise editorial gerada dos dados ---- */
-      #panel-financas .fin-jornal { background:var(--white); }
-      #panel-financas .fin-jornal-mast { text-align:center; border-bottom:3px double var(--charcoal); padding-bottom:10px; margin-bottom:4px; }
-      #panel-financas .fin-jornal-mast .fin-jm-title { font-family:var(--font-display); font-size:30px; line-height:1.05; letter-spacing:.01em; }
-      #panel-financas .fin-jornal-mast .fin-jm-strap { font-family:var(--font-condensed); font-size:10.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--mid-gray); margin-top:5px; display:flex; justify-content:space-between; border-top:1px solid var(--sand); padding-top:6px; }
-      #panel-financas .fin-j-head { font-family:var(--font-display); font-size:23px; line-height:1.2; margin:12px 0 2px; }
-      #panel-financas .fin-j-by { font-size:11px; color:var(--mid-gray); font-style:italic; margin-bottom:12px; }
-      #panel-financas .fin-jornal-cols { column-count:3; column-gap:28px; column-rule:1px solid var(--sand); font-size:13px; line-height:1.65; text-align:justify; hyphens:auto; }
-      #panel-financas .fin-jornal-cols p { margin:0 0 10px; }
-      #panel-financas .fin-jornal-cols .fin-j-lead::first-letter { font-family:var(--font-display); font-size:42px; line-height:.85; float:left; padding:4px 6px 0 0; }
-      #panel-financas .fin-j-sub { display:block; font-family:var(--font-condensed); font-size:10.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--mid-gray); border-top:1px solid var(--sand); padding-top:8px; margin:6px 0 6px; }
-      #panel-financas .fin-jornal-notas { margin-top:16px; border-top:1px dashed var(--sand); padding-top:12px; }
-      #panel-financas .fin-jornal-notas textarea { width:100%; min-height:88px; border:1px solid var(--sand); background:var(--beige-light); padding:10px 12px; font-family:var(--font-body); font-size:13px; line-height:1.55; border-radius:4px; resize:vertical; }
-      @media (max-width:1000px){ #panel-financas .fin-jornal-cols { column-count:2; } }
-      @media (max-width:640px){ #panel-financas .fin-jornal-cols { column-count:1; } }
       #panel-financas .fin-cloud-tag { font-size:11px; color:var(--green-dark); font-weight:600; margin-right:8px; }
       #panel-financas .fin-migrate { margin:10px 0 2px; padding:9px 12px; background:#fff7e6; border:1px solid #e0a83f; border-radius:6px; font-size:12.5px; color:var(--charcoal); display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
       /* A tabela de despesas pode ser larga — deixa fazer scroll horizontal
@@ -1489,12 +1493,19 @@
 
     <div class="panel-head">
       <div class="panel-title">Finanças</div>
-      <div class="panel-sub" id="fin-sub">— receitas, despesas, margem e recomendações</div>
+      <div class="panel-sub" id="fin-sub">— receitas, despesas e fecho do campo</div>
     </div>
 
     <div class="fin-kpis" id="fin-kpis"></div>
 
-    <div class="card">
+    <div class="card fin-prev" id="fin-prev">
+      <button class="fin-prev-toggle" onclick="document.getElementById('fin-prev').classList.toggle('open')">
+        <span>📈 Previsão CFT 2027 — fecho de contas, preços e melhorias</span><span class="arr">▼</span>
+      </button>
+      <div class="fin-prev-body" id="fin-prev-body"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
       <div class="card-head">
         <div class="card-title">Adicionar despesa</div>
         <div class="card-meta">
@@ -1524,73 +1535,36 @@
       </div>
     </div>
 
-    <div class="fin-grid3" style="margin-top:14px;">
-      <div class="card">
-        <div class="card-head"><div class="card-title">Receita · Despesa · Lucro</div><div class="card-meta" id="fin-rdl-meta">—</div></div>
-        <div id="fin-chart-rdl"></div>
+    <div class="card" style="margin-top:14px;">
+      <div class="card-head"><div class="card-title">Despesas registadas</div><div class="card-meta" id="fin-list-meta">—</div></div>
+      <div id="fin-list"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="card-head">
+        <div class="card-title">Staff e refeições</div>
+        <div class="card-meta" id="fin-staff-meta">—</div>
       </div>
-      <div class="card">
-        <div class="card-head"><div class="card-title">Despesas por categoria</div><div class="card-meta" id="fin-cat-meta">—</div></div>
-        <div class="donut-row">
-          <div class="donut-wrap">
-            <svg class="donut-svg" id="fin-donut" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg" aria-label="Despesas por categoria"></svg>
-            <div class="donut-center" id="fin-donut-center"></div>
-          </div>
-          <div class="donut-legend" id="fin-donut-legend"></div>
+      <div class="fin-refstrip" id="fin-refstrip"></div>
+      <div class="fin-grid2" style="margin-top:12px;">
+        <div>
+          <div class="fin-staff-title">Semana 1 · <span id="fin-staff-meta-1"></span></div>
+          <div id="fin-staff-1"></div>
         </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><div class="card-title">Lucro por semana</div><div class="card-meta" id="fin-week-meta">—</div></div>
-        <div id="fin-chart-week"></div>
+        <div>
+          <div class="fin-staff-title">Semana 2 · <span id="fin-staff-meta-2"></span></div>
+          <div id="fin-staff-2"></div>
+        </div>
       </div>
     </div>
 
     <div class="card" style="margin-top:14px;">
       <div class="card-head">
-        <div class="card-title">Refeições e jantares — custo por cabeça</div>
-        <div class="card-meta" id="fin-refstrip-meta">—</div>
+        <div class="card-title">Origem das inscrições</div>
+        <div class="card-meta" id="fin-origem-meta">—</div>
       </div>
-      <div class="fin-refstrip" id="fin-refstrip"></div>
-    </div>
-
-    <div class="fin-grid2" style="margin-top:14px;">
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title">Staff — Semana 1</div>
-          <div class="card-meta" id="fin-staff-meta-1">—</div>
-        </div>
-        <div id="fin-staff-1"></div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title">Staff — Semana 2</div>
-          <div class="card-meta" id="fin-staff-meta-2">—</div>
-        </div>
-        <div id="fin-staff-2"></div>
-      </div>
-    </div>
-
-    <div class="fin-grid3" style="margin-top:14px;">
-      <div class="card">
-        <div class="card-head"><div class="card-title">Despesas registadas</div><div class="card-meta" id="fin-list-meta">—</div></div>
-        <div id="fin-list"></div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title">Origem das inscrições</div>
-          <div class="card-meta" id="fin-origem-meta">—</div>
-        </div>
-        <div id="fin-origem"></div>
-        <div id="fin-origem-conclusao"></div>
-      </div>
-    </div>
-
-    <div class="card fin-jornal" style="margin-top:14px;">
-      <div class="fin-jornal-mast">
-        <div class="fin-jm-title">O Diário do Campo</div>
-        <div class="fin-jm-strap"><span>Edição financeira</span><span id="fin-jornal-data">—</span><span>CFT · 4ª edição</span></div>
-      </div>
-      <div id="fin-jornal"></div>
+      <div id="fin-origem"></div>
+      <div id="fin-origem-conclusao"></div>
     </div>
   </div>
 
@@ -5335,6 +5309,12 @@ function finReferral(){
 const STAFF_KEY = 'cft_staff_v1';
 const STAFF_DEFAULT = {
   precoAtletaDia: 17, precoStaffDia: 20, dias: 5,
+  // Extras por semana: jantar/lanches da equipa (divididos pelos treinadores)
+  // e gastos do Tiago e do Miga (ficam fora das contas dos treinadores).
+  extras: {
+    1: { jantar: 147, lanches: 0, tm: 54 },
+    2: { jantar: 113, lanches: 0, tm: 0 }
+  },
   semanas: {
     1: [
       { nome: 'Jusse',                salario: 350 },
@@ -5358,7 +5338,13 @@ const STAFF_DEFAULT = {
 function staffLoad(){
   try {
     const s = JSON.parse(localStorage.getItem(STAFF_KEY));
-    if (s && s.semanas && s.semanas[1] && s.semanas[2]) return s;
+    if (s && s.semanas && s.semanas[1] && s.semanas[2]) {
+      // Migração: estados antigos não têm 'extras' — junta os valores por defeito
+      // sem tocar nos nomes/salários já editados.
+      if (!s.extras) s.extras = JSON.parse(JSON.stringify(STAFF_DEFAULT.extras));
+      [1, 2].forEach(w => { s.extras[w] = Object.assign({ jantar: 0, lanches: 0, tm: 0 }, s.extras[w] || {}); });
+      return s;
+    }
   } catch (e) {}
   return JSON.parse(JSON.stringify(STAFF_DEFAULT));
 }
@@ -5375,6 +5361,11 @@ function staffEdit(w, i, field, v){
   else r[field] = Math.max(0, Number(v) || 0);
   staffSave(); renderFinancas();
 }
+function staffExtra(w, field, v){
+  if (!staffState.extras) staffState.extras = { 1: { jantar: 0, lanches: 0, tm: 0 }, 2: { jantar: 0, lanches: 0, tm: 0 } };
+  staffState.extras[w][field] = Math.max(0, Number(v) || 0);
+  staffSave(); renderFinancas();
+}
 function staffAdd(w){
   staffState.semanas[w].push({ nome: 'Novo elemento', salario: 350 });
   staffSave(); renderFinancas();
@@ -5388,38 +5379,31 @@ function staffReset(){
   staffState = JSON.parse(JSON.stringify(STAFF_DEFAULT));
   staffSave(); renderFinancas();
 }
-// Jantares pagos ao staff (categoria "Jantares equipa" das Despesas registadas).
-// Com semana marcada vão para essa semana; "Geral" divide-se meio a meio.
-function staffJantares(){
-  const j = { 1: 0, 2: 0 };
-  (finState.despesas || []).filter(d => d.categoria === 'Jantares equipa').forEach(d => {
-    const v = Number(d.valor) || 0;
-    if (String(d.semana) === '1') j[1] += v;
-    else if (String(d.semana) === '2') j[2] += v;
-    else { j[1] += v / 2; j[2] += v / 2; }
-  });
-  return j;
-}
 // Totais por semana: refeições dos atletas (nº ativos na semana), refeições,
-// jantares e salários do staff — o que cada elemento "ficou" realmente.
+// jantar + lanches da equipa (divididos pelos treinadores) e salários.
+// Os gastos do Tiago e do Miga (tm) mostram-se à parte — não entram nas
+// contas dos treinadores.
 function staffMetrics(m){
   const dias = staffState.dias || 0;
   const refAtlDia = staffState.precoAtletaDia || 0;
   const refStaffDia = staffState.precoStaffDia || 0;
   const refPorElemento = refStaffDia * dias;
-  const jant = staffJantares();
   const semanas = {};
   [1, 2].forEach(w => {
     const base = staffState.semanas[w] || [];
-    const jantarPorElemento = base.length ? jant[w] / base.length : 0;
+    const ex = (staffState.extras && staffState.extras[w]) || { jantar: 0, lanches: 0, tm: 0 };
+    const extraEquipa = (Number(ex.jantar) || 0) + (Number(ex.lanches) || 0);
+    const extraPorElemento = base.length ? extraEquipa / base.length : 0;
     const rows = base.map(r => ({
-      ...r, refeicoes: refPorElemento, jantar: jantarPorElemento,
-      total: (Number(r.salario) || 0) + refPorElemento + jantarPorElemento
+      ...r, refeicoes: refPorElemento, jantar: extraPorElemento,
+      total: (Number(r.salario) || 0) + refPorElemento + extraPorElemento
     }));
     const nAtl = (m.weeksAg[w] && m.weeksAg[w].atl) || 0;
     semanas[w] = {
       rows, nAtl,
-      jantar:    jant[w],
+      jantar:    Number(ex.jantar) || 0,
+      lanches:   Number(ex.lanches) || 0,
+      tm:        Number(ex.tm) || 0,
       salarios:  rows.reduce((s, r) => s + (Number(r.salario) || 0), 0),
       refStaff:  rows.length * refPorElemento,
       refAtl:    nAtl * refAtlDia * dias,
@@ -5429,7 +5413,9 @@ function staffMetrics(m){
   return {
     semanas, dias, refAtlDia, refStaffDia, refPorElemento,
     refAtlSemana: refAtlDia * dias,
-    jantares: jant[1] + jant[2],
+    jantares: semanas[1].jantar + semanas[2].jantar,
+    lanches:  semanas[1].lanches + semanas[2].lanches,
+    tm:       semanas[1].tm + semanas[2].tm,
     salarios: semanas[1].salarios + semanas[2].salarios,
     refStaff: semanas[1].refStaff + semanas[2].refStaff,
     refAtl:   semanas[1].refAtl + semanas[2].refAtl,
@@ -5437,123 +5423,92 @@ function staffMetrics(m){
   };
 }
 
-// ---- Notas da direção (comentários livres no Jornal do Campo) ----
-const FIN_NOTAS_KEY = 'cft_fin_notas_v1';
-function finNotasLoad(){ try { return localStorage.getItem(FIN_NOTAS_KEY) || ''; } catch (e) { return ''; } }
-let _finNotasTimer = null;
-function finNotasSave(v){
-  clearTimeout(_finNotasTimer);
-  _finNotasTimer = setTimeout(() => { try { localStorage.setItem(FIN_NOTAS_KEY, v); } catch (e) {} }, 400);
-}
-
-// ---- componentes de gráfico (barras em div, donut em SVG) ----
-function finBars(rows){
-  const max = Math.max(1, ...rows.map(r => Math.abs(r.value || 0)));
-  return '<div class="fin-bars">' + rows.map(r => {
-    const w = Math.round(Math.abs(r.value || 0) / max * 100);
-    return `<div class="fin-bar-row">
-      <div class="fin-bar-label" title="${(r.label || '').replace(/"/g,'')}">${r.label}</div>
-      <div class="fin-bar-track"><div class="fin-bar-fill" style="width:${w}%;background:${r.color}"></div></div>
-      <div class="fin-bar-val" style="color:${r.valColor || 'var(--charcoal)'}">${r.valText}</div>
-      ${r.sub ? `<div class="fin-bar-sub">${r.sub}</div>` : ''}
-    </div>`;
-  }).join('') + '</div>';
-}
-
-function finRenderDonut(porCat, total){
-  const svg = document.getElementById('fin-donut');
-  const center = document.getElementById('fin-donut-center');
-  const legend = document.getElementById('fin-donut-legend');
-  const cats = Object.keys(porCat).filter(c => porCat[c] > 0).sort((a, b) => porCat[b] - porCat[a]);
-  if (!total || cats.length === 0) {
-    svg.innerHTML = `<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--beige-light)" stroke-width="6"></circle>`;
-    center.innerHTML = `<div style="font-size:12px;color:var(--mid-gray)">sem<br>despesas</div>`;
-    legend.innerHTML = '';
-    return;
+// ---- Gráfico circular (queijo) em SVG — usado na origem das inscrições ----
+function finPie(items, size){
+  const total = items.reduce((s, i) => s + (Number(i.value) || 0), 0);
+  if (!total) return '';
+  const cx = 50, cy = 50, r = 48;
+  if (items.length === 1) {
+    return `<svg class="fin-pie-svg" viewBox="0 0 100 100"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${items[0].color}"><title>${escHtml(items[0].label)}</title></circle></svg>`;
   }
-  let offset = 25; // começa no topo
-  const parts = cats.map(c => {
-    const pct = porCat[c] / total * 100;
-    const seg = `<circle cx="21" cy="21" r="15.915" fill="none" stroke="${finCatColor(c)}" stroke-width="6" stroke-dasharray="${pct.toFixed(2)} ${(100 - pct).toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"><title>${c}: ${fmt(porCat[c])}</title></circle>`;
-    offset -= pct;
-    return seg;
-  });
-  svg.innerHTML = parts.join('');
-  center.innerHTML = `<div style="font-family:var(--font-display);font-size:18px;line-height:1">${fmt(total).replace('€','').trim()}<span style="font-size:11px"> €</span></div>`;
-  legend.innerHTML = cats.map(c => `<div class="donut-legend-item" style="display:flex;align-items:center;gap:7px;font-size:12px;margin:3px 0">
-      <span style="width:10px;height:10px;border-radius:2px;background:${finCatColor(c)};flex-shrink:0"></span>
-      <span style="flex:1">${c}</span><b>${fmt(porCat[c])}</b></div>`).join('');
+  let ang = -Math.PI / 2;
+  const slices = items.map(it => {
+    const frac = (Number(it.value) || 0) / total;
+    const a2 = ang + frac * 2 * Math.PI;
+    const x1 = cx + r * Math.cos(ang), y1 = cy + r * Math.sin(ang);
+    const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
+    const large = frac > 0.5 ? 1 : 0;
+    const d = `M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${large} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z`;
+    ang = a2;
+    return `<path d="${d}" fill="${it.color}" stroke="var(--white)" stroke-width="1"><title>${escHtml(it.label)}: ${it.value}</title></path>`;
+  }).join('');
+  return `<svg class="fin-pie-svg" viewBox="0 0 100 100">${slices}</svg>`;
 }
 
-// O Diário do Campo — análise editorial gerada a partir de todos os números,
-// para ler de uma ponta à outra e tirar conclusões. Termina com notas livres.
-function finJornal(m, st, ref){
-  if (!m.nAtl) return '<div class="fin-empty">Sem atletas carregados — o jornal escreve-se sozinho quando os dados sincronizarem.</div>';
+// ---- Custos fixos anuais da empresa (fora do campo) ----
+// Contabilidade 98,40€/mês; Google Workspace 16,20€/mês (nov 2025 foi 28,20€ —
+// acerto pontual; desde dez cobra estável); manutenção de conta 8,32€/mês
+// desde abril 2026 (fim da isenção de 2 anos).
+const FIN_FIXOS_MES = { contabilidade: 98.40, workspace: 16.20, banco: 8.32 };
+const FIN_RESERVA = 1500;  // o que deixar na conta para aguentar o ano
+
+// Previsão CFT 2027 — fecho de contas, cenários de preço e melhorias.
+function finPrevisao(m, st){
+  if (!m.nAtl) return '<div class="fin-empty">Sem atletas carregados — sincroniza primeiro.</div>';
   const pct = v => Math.round(v * 100) + '%';
-  const alvo = finState.margemAlvo;
-  let head;
-  if (m.lucro < 0) head = `Campo fecha no vermelho: ${fmt(-m.lucro)} de prejuízo`;
-  else if (m.margem >= alvo / 100) head = `Campo fecha com margem de ${pct(m.margem)} e ${fmt(m.lucro)} de lucro`;
-  else head = `Lucro de ${fmt(m.lucro)}, mas margem de ${pct(m.margem)} fica abaixo do alvo de ${alvo}%`;
-  const ps = [];
-  // O resultado
-  ps.push(`<p class="fin-j-lead">Com <b>${m.nAtl} atletas</b> nas duas semanas, o campo gerou <b>${fmt(m.receita)}</b> de receita contra <b>${fmt(m.despesaTotal)}</b> de despesas — um lucro de <b>${fmt(m.lucro)}</b>, com margem de ${pct(m.margem)} para um alvo de ${alvo}%. Cada atleta pagou em média ${fmt(m.precoMedio)}, custou ${fmt(m.custoPorAtleta)} e deixou ${fmt(m.lucroPorAtleta)} de lucro.${m.retido ? ` A conta inclui ${fmt(m.retido)} retidos de cancelamentos.` : ''}</p>`);
-  // Os custos
-  const catArr = Object.entries(m.porCat).sort((a, b) => b[1] - a[1]);
-  if (m.despesaTotal > 0 && catArr.length) {
-    const [c1, v1] = catArr[0];
-    const refCat = m.porCat['Refeições'] || 0;
-    let t = `<span class="fin-j-sub">Os custos</span><p><b>${c1}</b> dominou a despesa: ${fmt(v1)}, ou ${pct(v1 / m.despesaTotal)} de tudo o que se gastou.`;
-    if (c1 !== 'Refeições' && refCat > 0) t += ` As refeições somaram ${fmt(refCat)} (${pct(refCat / m.despesaTotal)}).`;
-    t += ` É nesta rubrica que qualquer corte ou renegociação tem mais impacto na margem do próximo ano.</p>`;
-    ps.push(t);
-  }
-  // O staff e a comida
-  if (st.total > 0) {
-    ps.push(`<span class="fin-j-sub">O staff</span><p>Segundo a tabela de staff, a equipa custou <b>${fmt(st.total)}</b> — ${fmt(st.salarios)} em salários, ${fmt(st.refStaff)} em refeições${st.jantares ? ` e ${fmt(st.jantares)} em jantares de equipa` : ''} — o equivalente a ${pct(m.receita ? st.total / m.receita : 0)} da receita. A Semana 1, com ${st.semanas[1].rows.length} elementos, ficou em ${fmt(st.semanas[1].total)}; a Semana 2, com ${st.semanas[2].rows.length}, em ${fmt(st.semanas[2].total)}.</p>`);
-    ps.push(`<span class="fin-j-sub">A comida</span><p>Alimentar um atleta custou <b>${fmt(st.refAtlSemana)}</b> por semana (${st.refAtlDia}€ × ${st.dias} dias) e um membro do staff <b>${fmt(st.refPorElemento)}</b> (${st.refStaffDia}€/dia). No total teórico: ${fmt(st.refAtl)} para os atletas (${st.semanas[1].nAtl} na S1, ${st.semanas[2].nAtl} na S2) e ${fmt(st.refStaff + st.jantares)} para o staff com jantares incluídos.</p>`);
-  }
-  // As semanas
-  const w1 = m.weeksAg[1], w2 = m.weeksAg[2];
-  if (m.despesaTotal > 0 && w1.atl > 0 && w2.atl > 0) {
-    const b = (w2.lucro || 0) >= (w1.lucro || 0) ? 2 : 1, p = b === 1 ? 2 : 1;
-    const bw = m.weeksAg[b], pw = m.weeksAg[p];
-    ps.push(`<span class="fin-j-sub">As semanas</span><p>A <b>Semana ${b}</b> foi a mais rentável: ${fmt(bw.lucro)} de lucro (${fmt(bw.lpa)}/atleta, ${bw.atl} atletas) contra ${fmt(pw.lucro)} da Semana ${p} (${fmt(pw.lpa)}/atleta, ${pw.atl} atletas).${Math.abs((bw.lpa || 0) - (pw.lpa || 0)) > 5 ? ' A diferença por atleta mostra onde os custos fixos se diluíram melhor.' : ' As duas semanas ficaram praticamente empatadas por atleta — bom sinal de equilíbrio.'}</p>`);
-  }
-  // Os descontos
-  if (m.descontoTotal > 0) {
-    ps.push(`<span class="fin-j-sub">Os descontos</span><p>Os descontos (irmãos, clube, duas semanas) custaram <b>${fmt(m.descontoTotal)}</b> em ${m.nComDesc} atletas — sem eles a receita teria chegado a ${fmt(m.receita + m.descontoTotal)}. São o preço de encher o campo e fidelizar; a pergunta para 2027 é se estão a trazer inscrições que não viriam de outra forma.</p>`);
-  }
-  // A angariação
-  const known = (ref.oList || []).filter(o => o.label !== 'Não indicado');
-  if (known.length) {
-    const t = known[0];
-    ps.push(`<span class="fin-j-sub">A angariação</span><p><b>${escHtml(t.label)}</b> foi o canal que mais atletas trouxe (${pct(t.n / ref.nAtivos)} das inscrições). Marketing pago noutros canais só se justifica se ficar abaixo de ${fmt(m.lucroPorAtleta)} por inscrição — o lucro que cada atleta deixa.</p>`);
-  }
-  // Tesouraria
-  const porCobrar = m.receita - m.recebido;
-  if (porCobrar > 0.5) {
-    ps.push(`<span class="fin-j-sub">A tesouraria</span><p>Ainda há <b>${fmt(porCobrar)}</b> por receber. Em caixa, o campo tem hoje ${fmt(m.recebido - m.despesaTotal)}.</p>`);
-  }
-  // Para 2027
-  let t27 = `<span class="fin-j-sub">Para 2027</span><p>`;
-  if (m.despesaTotal > 0 && m.margem < alvo / 100 && m.margem >= 0) {
-    const precoIdeal = m.custoPorAtleta / (1 - alvo / 100);
-    t27 += `Para atingir a margem-alvo de ${alvo}%, o preço médio teria de subir de ${fmt(m.precoMedio)} para ~<b>${fmt(precoIdeal)}</b>. `;
-  } else if (m.margem >= alvo / 100) {
-    t27 += `A margem está acima do alvo — há espaço para investir em qualidade (staff, material, comida) sem pôr o resultado em causa, ou para segurar o preço e ganhar inscrições. `;
-  }
-  if (catArr.length && m.despesaTotal > 0) t27 += `A rubrica a atacar primeiro é <b>${catArr[0][0]}</b> (${pct(catArr[0][1] / m.despesaTotal)} da despesa): renegociar cedo, com números deste ano na mão. `;
-  if (known.length) t27 += `Na divulgação, começar por <b>${escHtml(known[0].label)}</b>, que já provou trazer gente.`;
-  t27 += `</p>`;
-  ps.push(t27);
+  const anual = {
+    contabilidade: FIN_FIXOS_MES.contabilidade * 12,
+    workspace: FIN_FIXOS_MES.workspace * 12,
+    banco: FIN_FIXOS_MES.banco * 12
+  };
+  const fixosAno = anual.contabilidade + anual.workspace + anual.banco;
+  const caixa = m.recebido - m.despesaTotal;
+  const porReceber = m.receita - m.recebido;
+  const paraCada = (caixa - FIN_RESERVA) / 2;
+
+  // Cenários de preço: aumento por atleta-semana, mesmo nº de inscrições
+  const atlSem = (m.weeksAg[1].atl || 0) + (m.weeksAg[2].atl || 0);
+  const cen = [0, 10, 20].map(up => {
+    const rec = m.receita + up * atlSem;
+    const luc = rec - m.despesaTotal;
+    return { up, rec, luc, marg: rec ? luc / rec : 0 };
+  });
+
+  // Patrocínios: estimativa conservadora de 3–5 locais a 100–250€
+  const patro = 500;
+  const margPatro = (m.lucro + patro) / (m.receita + patro);
+
   return `
-    <div class="fin-j-head">${head}</div>
-    <div class="fin-j-by">Análise gerada automaticamente a partir dos dados do dashboard — atualiza a cada sincronização.</div>
-    <div class="fin-jornal-cols">${ps.join('')}</div>
-    <div class="fin-jornal-notas">
-      <span class="fin-j-sub" style="border-top:none;padding-top:0">Comentários da direção — as tuas conclusões (ficam guardadas neste browser)</span>
-      <textarea oninput="finNotasSave(this.value)" placeholder="Ex: Fechar preço das refeições com o restaurante até março; confirmar fisio mais cedo; subir preço externo 10€…">${escHtml(finNotasLoad())}</textarea>
+    <div class="fin-prev-grid">
+      <div class="fin-prev-block">
+        <h4>Fecho 2026 — quanto levantar</h4>
+        <div class="fin-prev-big" style="color:var(--green-dark)">${fmt(paraCada)} <span style="font-size:13px;font-family:var(--font-body)">para cada</span></div>
+        <p>Em caixa: <b>${fmt(caixa)}</b> (${fmt(m.recebido)} recebidos − ${fmt(m.despesaTotal)} despesas).${porReceber > 0.5 ? ` Faltam <b>${fmt(porReceber)}</b> por receber — cobra antes de fechar.` : ''}</p>
+        <p>Deixar na conta: <b>${fmt(FIN_RESERVA)}</b> para o ano sem campo. Em 2025 deixámos 1.137€ e chegou; agora há mais 8,32€/mês do banco.</p>
+      </div>
+      <div class="fin-prev-block">
+        <h4>Custos fixos até ao CFT 2027</h4>
+        <div class="fin-prev-big">${fmt(fixosAno)}<span style="font-size:13px;font-family:var(--font-body)">/ano</span></div>
+        <p>Contabilidade <b>${fmt(anual.contabilidade)}</b> (98,40€/mês) · Workspace <b>${fmt(anual.workspace)}</b> (16,20€/mês) · banco <b>${fmt(anual.banco)}</b> (8,32€/mês desde abril).</p>
+        <p>A contabilidade é ${pct(fixosAno ? anual.contabilidade / fixosAno : 0)} disto — renegociar ou pedir 2 orçamentos vale ~200–400€/ano. No Workspace, nov 2025 cobrou 28,20€ (acerto pontual); confirma que só há 1 utilizador pago.</p>
+      </div>
+      <div class="fin-prev-block">
+        <h4>Preços 2027 — recomendação</h4>
+        <table class="fin-prev-tbl">
+          <thead><tr><th>Cenário</th><th>Receita</th><th>Lucro</th><th>Margem</th></tr></thead>
+          <tbody>${cen.map(c => `<tr${c.up === 10 ? ' class="rec"' : ''}>
+            <td>${c.up === 0 ? 'Manter' : '+' + c.up + '€/semana'}</td>
+            <td>${fmt(c.rec)}</td><td>${fmt(c.luc)}</td><td>${pct(c.marg)}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+        <p>Recomendo <b>+10€/semana</b>: com ${atlSem} inscrições-semana rende mais <b>${fmt(10 * atlSem)}</b> de lucro e é um aumento pequeno demais para perder inscrições. +20€ só se 2026 esgotar cedo.</p>
+      </div>
+      <div class="fin-prev-block">
+        <h4>Patrocínios — o que falta tentar</h4>
+        <div class="fin-prev-big">300–1.000€</div>
+        <p>3–5 patrocínios locais a 100–250€ (lojas de desporto, clínicas de fisio, supermercados, junta/câmara). Com ~${fmt(patro)}, a margem sobe de ${pct(m.margem)} para <b>${pct(margPatro)}</b>.</p>
+        <p>Pedir em março–abril com 1 página: nº de atletas, clubes e fotos — em troca, logo nas camisolas e nas redes.</p>
+      </div>
     </div>`;
 }
 
@@ -5571,74 +5526,54 @@ function renderFinancas(){
       : '';
   }
 
-  // KPIs
+  // KPIs — só as contas que interessam
   const lucroCor = m.lucro >= 0 ? 'var(--green-dark)' : '#c0392b';
   document.getElementById('fin-kpis').innerHTML = `
-    <div class="fin-kpi"><div class="fin-kpi-label">Receita</div><div class="fin-kpi-num" style="color:var(--green-dark)">${fmt(m.receita)}</div><div class="fin-kpi-sub">${fmt(m.recebido)} já recebidos${m.retido ? ' · inclui ' + fmt(m.retido) + ' retidos' : ''}</div></div>
-    ${m.retido ? `<div class="fin-kpi"><div class="fin-kpi-label">Retido cancelamentos</div><div class="fin-kpi-num" style="color:var(--green-dark)">${fmt(m.retido)}</div><div class="fin-kpi-sub">${m.nRetido} inscrição${m.nRetido === 1 ? '' : 'ões'} eliminada${m.nRetido === 1 ? '' : 's'} com valor retido</div></div>` : ''}
-    <div class="fin-kpi"><div class="fin-kpi-label">Despesas</div><div class="fin-kpi-num" style="color:#c0392b">${fmt(m.despesaTotal)}</div><div class="fin-kpi-sub">${m.nDespesas} registo${m.nDespesas === 1 ? '' : 's'}</div></div>
+    <div class="fin-kpi"><div class="fin-kpi-label">Receita total</div><div class="fin-kpi-num" style="color:var(--green-dark)">${fmt(m.receita)}</div><div class="fin-kpi-sub">${fmt(m.recebido)} recebidos${m.retido ? ' · ' + fmt(m.retido) + ' de cancelamentos' : ''}</div></div>
+    <div class="fin-kpi"><div class="fin-kpi-label">Despesas totais</div><div class="fin-kpi-num" style="color:#c0392b">${fmt(m.despesaTotal)}</div><div class="fin-kpi-sub">${m.nDespesas} registo${m.nDespesas === 1 ? '' : 's'}</div></div>
     <div class="fin-kpi"><div class="fin-kpi-label">Lucro</div><div class="fin-kpi-num" style="color:${lucroCor}">${fmt(m.lucro)}</div><div class="fin-kpi-sub">${fmt(m.lucroPorAtleta)} por atleta</div></div>
     <div class="fin-kpi"><div class="fin-kpi-label">Margem</div><div class="fin-kpi-num" style="color:${lucroCor}">${Math.round(m.margem * 100)}%</div><div class="fin-kpi-sub">alvo ${finState.margemAlvo}%</div></div>
-    <div class="fin-kpi"><div class="fin-kpi-label">Custo por atleta</div><div class="fin-kpi-num">${fmt(m.custoPorAtleta)}</div><div class="fin-kpi-sub">preço médio ${fmt(m.precoMedio)}</div></div>
+    <div class="fin-kpi"><div class="fin-kpi-label">Pago médio por atleta</div><div class="fin-kpi-num">${fmt(m.precoMedio)}</div><div class="fin-kpi-sub">${m.nAtl} atletas · custou ${fmt(m.custoPorAtleta)}</div></div>
   `;
   document.getElementById('fin-sub').textContent = `${m.nAtl} atletas · ${m.nDespesas} despesas · margem ${Math.round(m.margem * 100)}%`;
 
-  // Receita · Despesa · Lucro
-  document.getElementById('fin-rdl-meta').textContent = `margem ${Math.round(m.margem * 100)}%`;
-  document.getElementById('fin-chart-rdl').innerHTML = finBars([
-    { label: 'Receita', value: m.receita, color: '#2e7d32', valText: fmt(m.receita) },
-    { label: 'Despesa', value: m.despesaTotal, color: '#c0392b', valText: fmt(m.despesaTotal) },
-    { label: 'Lucro', value: Math.abs(m.lucro), color: m.lucro >= 0 ? '#1e6f2e' : '#c0392b', valText: fmt(m.lucro), valColor: lucroCor }
-  ]);
-
-  // Donut categorias
-  document.getElementById('fin-cat-meta').textContent = Object.keys(m.porCat).length ? Object.keys(m.porCat).length + ' categorias' : '—';
-  finRenderDonut(m.porCat, m.despesaTotal);
-
-  // Lucro por semana
-  const wRows = [1, 2].map(w => {
-    const a = m.weeksAg[w];
-    return { label: 'Semana ' + w, value: Math.abs(a.lucro || 0), color: (a.lucro || 0) >= 0 ? '#2e7d32' : '#c0392b',
-      valText: fmt(a.lucro || 0), valColor: (a.lucro || 0) >= 0 ? 'var(--green-dark)' : '#c0392b',
-      sub: `${a.atl} atletas · receita ${fmt(a.rec || 0)} · custo ${fmt(a.desp || 0)} · ${fmt(a.lpa || 0)}/atleta` };
-  });
-  document.getElementById('fin-week-meta').textContent = m.despesaTotal ? '' : 'adiciona despesas';
-  document.getElementById('fin-chart-week').innerHTML = m.nAtl ? finBars(wRows) : '<div class="fin-empty">Sem atletas carregados.</div>';
-
-  // Refeições e jantares — custo por cabeça (strip de controlos + factos)
+  // Previsão CFT 2027 (painel colapsável)
   const st = staffMetrics(m);
+  const prevBody = document.getElementById('fin-prev-body');
+  if (prevBody) prevBody.innerHTML = finPrevisao(m, st);
+
+  // Staff e refeições — controlos de custo por cabeça
   const strip = document.getElementById('fin-refstrip');
   if (strip) {
-    document.getElementById('fin-refstrip-meta').textContent =
-      `atletas ${fmt(st.refAtl)} · staff ${fmt(st.refStaff + st.jantares)}`;
+    const staffMeta = document.getElementById('fin-staff-meta');
+    if (staffMeta) staffMeta.textContent = `equipa ${fmt(st.total)} · refeições atletas ${fmt(st.refAtl)}`;
     strip.innerHTML = `
       <label>Atleta <input type="number" value="${st.refAtlDia}" min="0" step="1" onchange="staffSet('precoAtletaDia',this.value)"> €/dia</label>
       <label>Staff <input type="number" value="${st.refStaffDia}" min="0" step="1" onchange="staffSet('precoStaffDia',this.value)"> €/dia</label>
       <label>Dias <input type="number" value="${st.dias}" min="1" max="7" step="1" onchange="staffSet('dias',this.value)"></label>
       <div class="fin-refstrip-fact"><span>Por atleta</span><b>${fmt(st.refAtlSemana)}</b>/semana</div>
       <div class="fin-refstrip-fact"><span>Por staff</span><b>${fmt(st.refPorElemento)}</b>/semana</div>
-      <div class="fin-refstrip-fact"><span>Atletas total</span><b>${fmt(st.refAtl)}</b> S1 ${st.semanas[1].nAtl} · S2 ${st.semanas[2].nAtl}</div>
-      <div class="fin-refstrip-fact"><span>Jantares equipa</span><b>${fmt(st.jantares)}</b> das despesas</div>
       <button class="fin-mini-btn" onclick="staffReset()" title="Repor nomes e valores iniciais">↺ Repor</button>
       <div style="flex-basis:100%;font-size:11px;color:var(--mid-gray);font-style:italic">Valores de referência editáveis (guardados neste browser) — não entram no lucro; os pagamentos reais registam-se nas Despesas.</div>`;
   }
 
-  // Staff — Semana 1 e Semana 2, lado a lado (salário + refeições + jantar)
-  const hasJ = st.jantares > 0;
+  // Staff — Semana 1 e Semana 2, compactas. Jantar + lanches dividem-se pelos
+  // treinadores; os gastos do Tiago e do Miga ficam à parte.
   [1, 2].forEach(w => {
     const box = document.getElementById('fin-staff-' + w);
     if (!box) return;
     const s = st.semanas[w];
-    document.getElementById('fin-staff-meta-' + w).textContent =
-      `${s.rows.length} pessoas · total ${fmt(s.total)}`;
+    const metaEl = document.getElementById('fin-staff-meta-' + w);
+    if (metaEl) metaEl.textContent = `${s.rows.length} pessoas · ${fmt(s.total)}`;
+    const extraEquipa = s.jantar + s.lanches;
     box.innerHTML = `
       <div class="fin-staff-week"><table class="fin-tbl fin-tbl--sm">
-        <thead><tr><th>Nome</th><th style="text-align:right">Salário</th><th style="text-align:right">Refeições</th>${hasJ ? '<th style="text-align:right">Jantar</th>' : ''}<th style="text-align:right">Total</th><th></th></tr></thead>
+        <thead><tr><th>Nome</th><th style="text-align:right">Salário</th><th style="text-align:right">Ref.</th><th style="text-align:right">Jantar+lanches</th><th style="text-align:right">Total</th><th></th></tr></thead>
         <tbody>${s.rows.map((r, i) => `<tr>
           <td><input type="text" class="fin-staff-input fin-staff-nome" value="${escHtml(r.nome)}" onchange="staffEdit(${w},${i},'nome',this.value)"></td>
           <td style="text-align:right"><input type="number" class="fin-staff-input fin-staff-num" value="${Number(r.salario) || 0}" min="0" step="5" onchange="staffEdit(${w},${i},'salario',this.value)"></td>
           <td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(r.refeicoes)}</td>
-          ${hasJ ? `<td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(r.jantar)}</td>` : ''}
+          <td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(r.jantar)}</td>
           <td style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums">${fmt(r.total)}</td>
           <td style="text-align:right"><button class="fin-del" title="Remover" onclick="staffDel(${w},${i})">✕</button></td>
         </tr>`).join('')}</tbody>
@@ -5646,18 +5581,25 @@ function renderFinancas(){
           <td style="font-weight:700;border-top:2px solid var(--sand)">Total</td>
           <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);font-variant-numeric:tabular-nums">${fmt(s.salarios)}</td>
           <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);font-variant-numeric:tabular-nums">${fmt(s.refStaff)}</td>
-          ${hasJ ? `<td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);font-variant-numeric:tabular-nums">${fmt(s.jantar)}</td>` : ''}
+          <td style="text-align:right;font-weight:700;border-top:2px solid var(--sand);font-variant-numeric:tabular-nums">${fmt(extraEquipa)}</td>
           <td style="text-align:right;font-weight:800;border-top:2px solid var(--sand);color:#c0392b;font-variant-numeric:tabular-nums">${fmt(s.total)}</td>
           <td style="border-top:2px solid var(--sand)"></td>
         </tr></tfoot>
       </table></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <div class="fin-staff-foot">
+        Jantar <input type="number" class="fin-staff-input fin-staff-num" value="${s.jantar}" min="0" step="1" onchange="staffExtra(${w},'jantar',this.value)"> €
+        · Lanches <input type="number" class="fin-staff-input fin-staff-num" value="${s.lanches}" min="0" step="1" onchange="staffExtra(${w},'lanches',this.value)"> €
+        — divididos pelos ${s.rows.length} elementos<br>
+        <b>Gastos Tiago e Miga</b> <input type="number" class="fin-staff-input fin-staff-num" value="${s.tm}" min="0" step="1" onchange="staffExtra(${w},'tm',this.value)"> €
+        — jantares e lanches nossos, fora das contas dos treinadores
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px">
         <button class="fin-mini-btn" style="margin-left:0" onclick="staffAdd(${w})">+ Adicionar</button>
-        <div class="fin-staff-foot" style="margin-top:0">Refeições dos ${s.nAtl} atletas: <b>${fmt(s.refAtl)}</b>${hasJ ? ` · jantar ${fmt(s.jantar)} ÷ ${s.rows.length}` : ''}</div>
+        <div class="fin-staff-foot" style="margin-top:0">Refeições dos ${s.nAtl} atletas: <b>${fmt(s.refAtl)}</b></div>
       </div>`;
   });
 
-  // Origem das inscrições — compacto (top 5 + Outras) com conclusão para 2027
+  // Origem das inscrições — gráfico circular com conclusão para 2027
   const ref = finReferral();
   const origemBox = document.getElementById('fin-origem');
   const origemMeta = document.getElementById('fin-origem-meta');
@@ -5668,15 +5610,19 @@ function renderFinancas(){
       const palette = ['#2e7d32', '#4a78a8', '#e0a83f', '#c0392b', '#7b5ea7', '#8a8f98'];
       const top = ref.oList.slice(0, 5);
       const resto = ref.oList.slice(5);
-      const rows = top.map((o, i) => ({
-        label: o.label, value: o.n, color: palette[i % palette.length],
-        valText: `${o.n} · ${Math.round(o.n / ref.nAtivos * 100)}%`
-      }));
+      const rows = top.map((o, i) => ({ label: o.label, value: o.n, color: palette[i % palette.length] }));
       if (resto.length) {
         const n = resto.reduce((s, o) => s + o.n, 0);
-        rows.push({ label: `Outras (${resto.length})`, value: n, color: '#b0b0b0', valText: `${n} · ${Math.round(n / ref.nAtivos * 100)}%` });
+        rows.push({ label: `Outras (${resto.length})`, value: n, color: '#b0b0b0' });
       }
-      origemBox.innerHTML = finBars(rows);
+      origemBox.innerHTML = `<div class="fin-pie-row">${finPie(rows)}
+        <div class="fin-pie-legend">${rows.map(it => `
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:11px;height:11px;border-radius:3px;background:${it.color};flex-shrink:0"></span>
+            <span style="flex:1">${escHtml(it.label)}</span>
+            <b style="font-variant-numeric:tabular-nums">${it.value} · ${Math.round(it.value / ref.nAtivos * 100)}%</b>
+          </div>`).join('')}
+        </div></div>`;
       // Conclusão automática: canal mais forte vs canais fracos
       const known = ref.oList.filter(o => o.label !== 'Não indicado');
       if (origemConc && known.length) {
@@ -5696,28 +5642,37 @@ function renderFinancas(){
     }
   }
 
-  // Tabela de despesas
-  const ds = finState.despesas.slice().sort((a, b) => (b.data || '').localeCompare(a.data || ''));
-  document.getElementById('fin-list-meta').textContent = ds.length ? fmt(m.despesaTotal) + ' em ' + ds.length : '—';
-  document.getElementById('fin-list').innerHTML = ds.length ? `
-    <table class="fin-tbl">
-      <thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Semana</th><th style="text-align:right">Valor</th><th></th></tr></thead>
-      <tbody>${ds.map(d => `<tr>
-        <td>${d.data || ''}</td>
-        <td><span class="fin-cat-pill" style="background:${finCatColor(d.categoria)}">${d.categoria || 'Outro'}</span></td>
-        <td>${(d.descricao || '').replace(/</g, '&lt;') || '<span style="color:var(--mid-gray)">—</span>'}</td>
-        <td>${d.semana ? 'Semana ' + d.semana : 'Geral'}</td>
-        <td style="text-align:right;font-weight:600">${fmt(d.valor)}</td>
-        <td style="text-align:right"><button class="fin-del" title="Eliminar" onclick="finDelete('${d.id}')">✕</button></td>
-      </tr>`).join('')}</tbody>
-    </table>` : '<div class="fin-empty">Ainda não há despesas. Adiciona a primeira acima.</div>';
-
-  // O Diário do Campo — não re-renderiza enquanto escreves nos comentários
-  const jbox = document.getElementById('fin-jornal');
-  if (jbox && !(document.activeElement && jbox.contains(document.activeElement))) {
-    jbox.innerHTML = finJornal(m, st, ref);
-    const jd = document.getElementById('fin-jornal-data');
-    if (jd) jd.textContent = new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' });
+  // Despesas registadas — agrupadas por categoria, subtotal no fim de cada grupo
+  const ds = finState.despesas || [];
+  document.getElementById('fin-list-meta').textContent = ds.length ? fmt(m.despesaTotal) + ' em ' + ds.length + ' registos' : '—';
+  const listBox = document.getElementById('fin-list');
+  if (!ds.length) {
+    listBox.innerHTML = '<div class="fin-empty">Ainda não há despesas. Adiciona a primeira acima.</div>';
+  } else {
+    const grupos = {};
+    ds.forEach(d => { const c = d.categoria || 'Outro'; (grupos[c] = grupos[c] || []).push(d); });
+    const ordem = Object.keys(grupos).sort((a, b) => (m.porCat[b] || 0) - (m.porCat[a] || 0));
+    const corpo = ordem.map(cat => {
+      const items = grupos[cat].slice().sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+      return `<tr class="fin-group-head"><td colspan="5"><span class="fin-cat-pill" style="background:${finCatColor(cat)}">${cat}</span> <span style="color:var(--mid-gray);font-size:11px">${items.length} registo${items.length === 1 ? '' : 's'}</span></td></tr>`
+        + items.map(d => `<tr>
+          <td style="white-space:nowrap">${d.data || ''}</td>
+          <td>${(d.descricao || '').replace(/</g, '&lt;') || '<span style="color:var(--mid-gray)">—</span>'}</td>
+          <td>${d.semana ? 'Sem ' + d.semana : 'Geral'}</td>
+          <td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(d.valor)}</td>
+          <td style="text-align:right"><button class="fin-del" title="Eliminar" onclick="finDelete('${d.id}')">✕</button></td>
+        </tr>`).join('')
+        + `<tr class="fin-group-total"><td colspan="3">Total ${cat}</td><td style="text-align:right;font-variant-numeric:tabular-nums">${fmt(m.porCat[cat] || 0)}</td><td></td></tr>`;
+    }).join('');
+    listBox.innerHTML = `
+      <table class="fin-tbl fin-tbl--sm">
+        <thead><tr><th>Data</th><th>Descrição</th><th>Semana</th><th style="text-align:right">Valor</th><th></th></tr></thead>
+        <tbody>${corpo}
+          <tr><td colspan="3" style="font-weight:800;padding-top:10px;border-bottom:none">Total despesas</td>
+              <td style="text-align:right;font-weight:800;color:#c0392b;padding-top:10px;border-bottom:none;font-variant-numeric:tabular-nums">${fmt(m.despesaTotal)}</td>
+              <td style="border-bottom:none"></td></tr>
+        </tbody>
+      </table>`;
   }
 }
 
