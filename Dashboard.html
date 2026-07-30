@@ -1153,7 +1153,7 @@
   <div class="login-card">
     <img src="assets/logo_CFT.png" alt="CFT logo">
     <h1>CFT Dashboard</h1>
-    <div class="lbl">4ª edição · 2026</div>
+    <div class="lbl">2026 · arquivo — 2027 · em preparação</div>
     <p>Acesso restrito a administradores autorizados. Inicia sessão com a conta Google da CFT.</p>
     <div id="gsi-button"></div>
     <div id="gsi-error"></div>
@@ -1167,7 +1167,7 @@
       <img src="assets/logo_CFT.png" alt="CFT logo" class="brand-logo">
       <div class="brand-meta">
         <div class="brand-title">CFT</div>
-        <div class="brand-edition">4ª edição · Julho 2026</div>
+        <div class="brand-edition" id="brand-edition">4ª edição · Julho 2026</div>
       </div>
     </div>
     <div class="appbar-divider"></div>
@@ -1182,11 +1182,30 @@
 </header>
 
 <!-- ================ TABS ================ -->
+<style>
+  /* Seletor de edição (2026 arquivo · 2027 atual) + chip do banco */
+  .nav-editions { display:flex; align-items:center; gap:5px; margin-right:16px; padding:8px 0; }
+  .ed-pill { border:1px solid var(--sand); background:var(--beige-light); color:var(--mid-gray); font-family:var(--font-condensed); font-size:11.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; padding:6px 13px; border-radius:14px; cursor:pointer; }
+  .ed-pill.active { background:var(--charcoal); color:var(--off-white); border-color:var(--charcoal); }
+  .ed-pill .ed-tag { font-size:9px; letter-spacing:0.1em; opacity:0.65; margin-left:4px; }
+  body[data-edicao="2027"] .ed-26 { display:none !important; }
+  body[data-edicao="2026"] .ed-27 { display:none !important; }
+  .nav-banco { margin-left:auto; align-self:center; display:flex; align-items:baseline; gap:7px; padding:6px 13px; border:1px solid var(--sand); border-radius:6px; background:var(--beige-light); cursor:pointer; white-space:nowrap; }
+  .nav-banco:hover { border-color:var(--sand-dark); }
+  .nav-banco .nb-lbl { font-family:var(--font-condensed); font-size:9.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--mid-gray); }
+  .nav-banco b { font-family:var(--font-display); font-size:17px; color:var(--charcoal); font-weight:400; }
+  @media (max-width: 720px) { .nav-banco .nb-lbl { display:none; } .nav-editions { margin-right:8px; } }
+</style>
 <nav class="nav">
   <div class="nav-inner">
-    <div class="tab active" data-panel="overview">Visão geral</div>
-    <div class="tab" data-panel="list">Lista <span class="tab-count warn" id="tc-list">0</span></div>
-    <div class="nav-more">
+    <div class="nav-editions">
+      <button class="ed-pill" id="ed-pill-2027" onclick="setEdicao('2027')">2027</button>
+      <button class="ed-pill" id="ed-pill-2026" onclick="setEdicao('2026')">2026<span class="ed-tag">arquivo</span></button>
+    </div>
+    <div class="tab ed-27" data-panel="plano2027">Plano 2027</div>
+    <div class="tab ed-26 active" data-panel="overview">Visão geral</div>
+    <div class="tab ed-26" data-panel="list">Lista <span class="tab-count warn" id="tc-list">0</span></div>
+    <div class="nav-more ed-26">
       <div class="tab nav-more-toggle" onclick="document.getElementById('nav-more-menu').classList.toggle('open')">⋯</div>
       <div class="nav-more-menu" id="nav-more-menu">
         <div class="more-item" data-panel="banco"        onclick="showTab('banco'); document.getElementById('nav-more-menu').classList.remove('open');">Banco <span class="tab-count" id="tc-banco">0</span></div>
@@ -1195,6 +1214,9 @@
         <div class="more-item" data-panel="historico"    onclick="showTab('historico'); document.getElementById('nav-more-menu').classList.remove('open');">Histórico</div>
         <div class="more-item" data-panel="eliminados"   onclick="showTab('eliminados'); document.getElementById('nav-more-menu').classList.remove('open');">Eliminados <span class="tab-count" id="tc-eliminados">0</span></div>
       </div>
+    </div>
+    <div class="nav-banco" onclick="goBancoReal()" title="Saldo real da conta APDFE — clica para ver e editar">
+      <span class="nb-lbl">🏦 conta</span><b id="nav-banco-val">—</b>
     </div>
   </div>
 </nav>
@@ -1568,6 +1590,82 @@
     </div>
   </div>
 
+  <!-- ============ PLANO 2027 (5ª edição) ============ -->
+  <div class="panel" id="panel-plano2027">
+    <style>
+      #panel-plano2027 .p27-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:16px; }
+      #panel-plano2027 .p27-kpi { background:var(--white); border:1px solid var(--sand); border-radius:6px; padding:14px 16px; }
+      #panel-plano2027 .p27-kpi-label { font-family:var(--font-condensed); font-size:10.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--mid-gray); margin-bottom:6px; }
+      #panel-plano2027 .p27-kpi-num { font-family:var(--font-display); font-size:26px; line-height:1; }
+      #panel-plano2027 .p27-kpi-sub { font-size:11.5px; color:var(--mid-gray); margin-top:6px; line-height:1.45; }
+      #panel-plano2027 .p27-saldo-input { font-family:var(--font-display); font-size:24px; width:130px; padding:2px 6px; border:1px solid var(--sand); background:var(--beige-light); border-radius:4px; color:var(--charcoal); }
+      #panel-plano2027 .p27-grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:14px; }
+      #panel-plano2027 .p27-tbl { width:100%; border-collapse:collapse; font-size:13px; }
+      #panel-plano2027 .p27-tbl th { text-align:left; font-family:var(--font-condensed); font-size:10.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--mid-gray); padding:6px 8px; border-bottom:1px solid var(--sand); }
+      #panel-plano2027 .p27-tbl td { padding:8px; border-bottom:1px solid var(--beige-light); }
+      #panel-plano2027 .p27-tbl td.num { text-align:right; font-variant-numeric:tabular-nums; }
+      #panel-plano2027 .p27-dl-row { display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid var(--beige-light); }
+      #panel-plano2027 .p27-dl-row.done .p27-dl-label { text-decoration:line-through; color:var(--mid-gray); }
+      #panel-plano2027 .p27-dl-row.next { background:var(--beige-light); border-radius:6px; }
+      #panel-plano2027 .p27-dl-date { font-family:var(--font-condensed); font-size:12px; font-weight:700; letter-spacing:0.06em; color:var(--green-dark); width:88px; flex-shrink:0; }
+      #panel-plano2027 .p27-dl-label { flex:1; font-size:13.5px; }
+      #panel-plano2027 .p27-dl-eta { font-size:11.5px; color:var(--mid-gray); white-space:nowrap; }
+      #panel-plano2027 .p27-dl-eta.late { color:#c0392b; font-weight:700; }
+      #panel-plano2027 .p27-dl-del { color:#c0392b; cursor:pointer; font-weight:700; border:none; background:none; font-size:14px; }
+      #panel-plano2027 .p27-form { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+      #panel-plano2027 .p27-form input { padding:8px 10px; border:1px solid var(--sand); background:var(--beige-light); font-size:13px; border-radius:4px; font-family:var(--font-body); }
+      #panel-plano2027 .p27-form input#p27-new-label { flex:1; min-width:180px; }
+      #panel-plano2027 .p27-add-btn { padding:8px 16px; border:none; background:var(--green-dark); color:#fff; font-weight:600; font-size:13px; border-radius:4px; cursor:pointer; }
+      #panel-plano2027 .p27-note { font-size:12px; color:var(--mid-gray); margin-top:10px; line-height:1.5; }
+      #panel-plano2027 .p27-preco-input { width:70px; padding:5px 7px; border:1px solid var(--sand); background:var(--beige-light); border-radius:4px; font-size:13px; text-align:right; }
+      @media (max-width: 640px) {
+        #panel-plano2027 .p27-kpis { grid-template-columns:1fr 1fr; gap:8px; }
+        #panel-plano2027 .p27-kpi-num { font-size:21px; }
+      }
+    </style>
+
+    <div class="panel-head">
+      <div class="panel-title">Plano CFT 2027</div>
+      <div class="panel-sub">5ª edição · em preparação — deadlines, banco e preços</div>
+    </div>
+
+    <div class="p27-kpis" id="p27-kpis"></div>
+
+    <div class="p27-grid2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Deadlines · caminho para julho 2027</div>
+          <div class="card-meta" id="p27-dl-meta">—</div>
+        </div>
+        <div id="p27-dl-list"></div>
+        <div class="p27-form">
+          <input type="date" id="p27-new-date">
+          <input type="text" id="p27-new-label" placeholder="Nova deadline (ex: Encomendar equipamentos)">
+          <button class="p27-add-btn" onclick="p27Add()">Adicionar</button>
+        </div>
+        <div class="p27-note">Datas pré-preenchidas com base no calendário de 2026 — ajusta à vontade. Guardado neste browser (localStorage).</div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Banco · conta APDFE</div>
+            <div class="card-meta" id="p27-banco-meta">—</div>
+          </div>
+          <div id="p27-banco-body"></div>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <div class="card-head">
+            <div class="card-title">Preços 2027 · a decidir</div>
+            <div class="card-meta">referência: tabela 2026</div>
+          </div>
+          <div id="p27-precos"></div>
+          <div class="p27-note">Preenche a coluna 2027 quando fecharem os preços com base na margem alvo. Em 2026 a margem ficou apertada — considerar subida ligeira ou corte de custos (equipamentos/refeições).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ================ MODAL: EDITAR SEMANAS ================ -->
@@ -1909,6 +2007,7 @@ function showTab(id){
   if (id === 'banco') { renderBanco(); }
   if (id === 'entregaveis') { renderEntregaveis(); }
   if (id === 'financas') { renderFinancas(); }
+  if (id === 'plano2027') { renderPlano2027(); }
 }
 // Fecha o menu "⋯" se clicar fora
 document.addEventListener('click', e => {
@@ -5695,8 +5794,197 @@ function renderFinancas(){
   }
 }
 
+// ============ EDIÇÃO ATIVA · 2026 (arquivo) vs 2027 ============
+const EDICAO_KEY = 'cft_edicao_v1';
+function setEdicao(ano){
+  ano = ano === '2026' ? '2026' : '2027';
+  try { localStorage.setItem(EDICAO_KEY, ano); } catch (e) {}
+  document.body.dataset.edicao = ano;
+  const p26 = document.getElementById('ed-pill-2026');
+  const p27 = document.getElementById('ed-pill-2027');
+  if (p26) p26.classList.toggle('active', ano === '2026');
+  if (p27) p27.classList.toggle('active', ano === '2027');
+  const be = document.getElementById('brand-edition');
+  if (be) be.textContent = ano === '2026' ? '4ª edição · 2026 · arquivo' : '5ª edição · 2027 · em preparação';
+  showTab(ano === '2026' ? 'overview' : 'plano2027');
+}
+function goBancoReal(){ setEdicao('2027'); }
+
+// ============ BANCO · saldo real partilhado (chip no nav + Plano 2027) ============
+// Fonte: extrato NovoBanco (APDFE). Atualizar à mão quando houver movimentos.
+const BANCO_REAL_KEY = 'cft_banco_real_v1';
+function fmt2(v){ return (Number(v) || 0).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function bancoRealLoad(){
+  try {
+    const s = JSON.parse(localStorage.getItem(BANCO_REAL_KEY));
+    if (s && isFinite(Number(s.valor))) return s;
+  } catch (e) {}
+  // 30/07/2026: 1.059,62€ após fecho 2026 (4.000€ Tiago + 4.000€ Miguel + 2.157,40€ gastos Tiago)
+  return { valor: 1059.62, data: '2026-07-30' };
+}
+function bancoRealSet(v){
+  const valor = Number(v) || 0;
+  try { localStorage.setItem(BANCO_REAL_KEY, JSON.stringify({ valor, data: new Date().toISOString().slice(0, 10) })); } catch (e) {}
+  updateNavBanco();
+  renderPlano2027();
+}
+function updateNavBanco(){
+  const el = document.getElementById('nav-banco-val');
+  if (el) el.textContent = fmt2(bancoRealLoad().valor);
+}
+
+// ============ PLANO 2027 · deadlines + banco + preços ============
+const P27_DL_KEY = 'cft_plano2027_dl_v1';
+const P27_DL_DEFAULT = [
+  { d: '2026-09-15', l: 'Balanço 2026 + definir preços 2027 (com o Miguel)' },
+  { d: '2026-10-01', l: 'Reservar pavilhão e fechar datas oficiais' },
+  { d: '2026-10-15', l: 'Nova cara CFT 2027 — design, site, templates de email' },
+  { d: '2026-11-02', l: 'Abrir inscrições + anúncio (Instagram, clubes, treinadores)' },
+  { d: '2027-03-31', l: 'Fim do desconto de pronto pagamento' },
+  { d: '2027-06-07', l: 'Enviar aviso de prazo de pagamento' },
+  { d: '2027-06-21', l: 'Prazo final de pagamento' },
+  { d: '2027-06-28', l: 'Enviar informações finais aos pais' },
+  { d: '2027-07-01', l: 'Seguro, staff e equipamentos fechados' },
+  { d: '2027-07-12', l: 'Semana 1 · CFT 2027 (data a confirmar)' },
+  { d: '2027-07-19', l: 'Semana 2 · CFT 2027 (data a confirmar)' }
+];
+function p27Load(){
+  try { const s = JSON.parse(localStorage.getItem(P27_DL_KEY)); if (Array.isArray(s) && s.length) return s; } catch (e) {}
+  return P27_DL_DEFAULT.map((x, i) => ({ id: 'd' + i, data: x.d, label: x.l, done: false }));
+}
+function p27Save(list){ try { localStorage.setItem(P27_DL_KEY, JSON.stringify(list)); } catch (e) {} }
+function p27Add(){
+  const d = document.getElementById('p27-new-date').value;
+  const l = document.getElementById('p27-new-label').value.trim();
+  if (!d || !l) { toast('Preenche a data e a descrição'); return; }
+  const list = p27Load();
+  list.push({ id: 'd' + Date.now(), data: d, label: l, done: false });
+  p27Save(list);
+  document.getElementById('p27-new-label').value = '';
+  renderPlano2027();
+}
+function p27Toggle(id){
+  const list = p27Load();
+  const it = list.find(x => x.id === id);
+  if (it) { it.done = !it.done; p27Save(list); renderPlano2027(); }
+}
+function p27Del(id){ p27Save(p27Load().filter(x => x.id !== id)); renderPlano2027(); }
+
+const P27_PRECOS_KEY = 'cft_precos2027_v1';
+function p27PrecosLoad(){ try { return JSON.parse(localStorage.getItem(P27_PRECOS_KEY)) || {}; } catch (e) { return {}; } }
+function p27PrecoSet(k, v){
+  const p = p27PrecosLoad();
+  p[k] = v === '' ? '' : Number(v);
+  try { localStorage.setItem(P27_PRECOS_KEY, JSON.stringify(p)); } catch (e) {}
+}
+
+function renderPlano2027(){
+  if (!document.getElementById('panel-plano2027')) return;
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const saldo = bancoRealLoad();
+  const fixosMes = FIN_FIXOS_MES.contabilidade + FIN_FIXOS_MES.workspace + FIN_FIXOS_MES.banco;
+
+  // Fôlego: quantos meses de custos fixos o saldo aguenta (sem receitas novas)
+  const mesesFolego = saldo.valor / fixosMes;
+  const dataEsgota = new Date(hoje.getTime() + mesesFolego * 30.44 * 86400000);
+  const list = p27Load().slice().sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+  const next = list.find(x => !x.done && new Date(x.data) >= hoje);
+  const sem1 = list.find(x => /semana 1/i.test(x.label));
+  const abertura = list.find(x => /inscri/i.test(x.label) && /abrir|abertura/i.test(x.label));
+
+  // Saldo projetado na abertura das inscrições (primeiras receitas 2027)
+  let abrHtml = '';
+  if (abertura) {
+    const mesesAteAbertura = Math.max(0, (new Date(abertura.data) - hoje) / (30.44 * 86400000));
+    const saldoNaAbertura = saldo.valor - mesesAteAbertura * fixosMes;
+    abrHtml = `<p style="font-size:12.5px;line-height:1.55;margin:10px 0 0;">Na abertura das inscrições (${_fmtDateShort(new Date(abertura.data))}) a conta deve ter <b style="color:${saldoNaAbertura < 200 ? '#c0392b' : 'var(--green-dark)'}">${fmt2(saldoNaAbertura)}</b> — as primeiras receitas de 2027 chegam a tempo${saldoNaAbertura < 200 ? ', mas mesmo à justa: qualquer despesa extra obriga a adiantar dinheiro' : ''}.</p>`;
+  }
+
+  // KPIs
+  const kpis = document.getElementById('p27-kpis');
+  if (kpis) kpis.innerHTML = `
+    <div class="p27-kpi">
+      <div class="p27-kpi-label">Saldo em conta</div>
+      <div class="p27-kpi-num"><input type="number" class="p27-saldo-input" value="${saldo.valor}" step="0.01" onchange="bancoRealSet(this.value)"> €</div>
+      <div class="p27-kpi-sub">extrato de ${saldo.data} · edita quando houver movimentos</div>
+    </div>
+    <div class="p27-kpi">
+      <div class="p27-kpi-label">Custos fixos</div>
+      <div class="p27-kpi-num">${fmt2(fixosMes)}<span style="font-size:13px;font-family:var(--font-body)">/mês</span></div>
+      <div class="p27-kpi-sub">contabilidade 98,40 · Workspace 16,20 · banco 8,32</div>
+    </div>
+    <div class="p27-kpi">
+      <div class="p27-kpi-label">Fôlego da conta</div>
+      <div class="p27-kpi-num" style="color:${mesesFolego < 4 ? '#c0392b' : 'var(--green-dark)'}">~${_fmtDateShort(dataEsgota)}</div>
+      <div class="p27-kpi-sub">${mesesFolego.toFixed(1)} meses de custos fixos sem receitas novas</div>
+    </div>
+    <div class="p27-kpi">
+      <div class="p27-kpi-label">Semana 1 · 2027</div>
+      <div class="p27-kpi-num">${sem1 ? daysUntil(new Date(sem1.data)) + 'd' : '—'}</div>
+      <div class="p27-kpi-sub">${sem1 ? _fmtDateShort(new Date(sem1.data)) + ' · a confirmar' : 'adiciona a deadline da semana 1'}</div>
+    </div>`;
+
+  // Banco card
+  const bancoMeta = document.getElementById('p27-banco-meta');
+  if (bancoMeta) bancoMeta.textContent = 'NovoBanco · ' + saldo.data;
+  const bancoBody = document.getElementById('p27-banco-body');
+  if (bancoBody) bancoBody.innerHTML = `
+    <table class="p27-tbl">
+      <thead><tr><th>Custo fixo</th><th style="text-align:right">Mês</th><th style="text-align:right">Ano</th></tr></thead>
+      <tbody>
+        <tr><td>Contabilidade (Perguiçar)</td><td class="num">${fmt2(FIN_FIXOS_MES.contabilidade)}</td><td class="num">${fmt2(FIN_FIXOS_MES.contabilidade * 12)}</td></tr>
+        <tr><td>Google Workspace</td><td class="num">${fmt2(FIN_FIXOS_MES.workspace)}</td><td class="num">${fmt2(FIN_FIXOS_MES.workspace * 12)}</td></tr>
+        <tr><td>Manutenção de conta + selo</td><td class="num">${fmt2(FIN_FIXOS_MES.banco)}</td><td class="num">${fmt2(FIN_FIXOS_MES.banco * 12)}</td></tr>
+        <tr><td style="font-weight:800;border-bottom:none">Total</td><td class="num" style="font-weight:800;border-bottom:none">${fmt2(fixosMes)}</td><td class="num" style="font-weight:800;border-bottom:none">${fmt2(fixosMes * 12)}</td></tr>
+      </tbody>
+    </table>
+    ${abrHtml}
+    <p style="font-size:12.5px;line-height:1.55;margin:8px 0 0;color:var(--mid-gray)">Só o seguro (Generali, ~364€ em jul) e despesas do campo ficam fora disto. Renegociar a contabilidade continua a ser a maior alavanca (~${fmt(FIN_FIXOS_MES.contabilidade * 12)}/ano).</p>`;
+
+  // Deadlines
+  const dlMeta = document.getElementById('p27-dl-meta');
+  const feitas = list.filter(x => x.done).length;
+  if (dlMeta) dlMeta.textContent = feitas + ' de ' + list.length + ' feitas';
+  const dlHost = document.getElementById('p27-dl-list');
+  if (dlHost) dlHost.innerHTML = list.map(x => {
+    const d = new Date(x.data);
+    const dias = daysUntil(d);
+    const isNext = next && x.id === next.id;
+    const late = !x.done && d < hoje;
+    const eta = x.done ? '✓' : late ? 'há ' + Math.abs(dias) + 'd' : dias === 0 ? 'hoje' : 'daqui a ' + dias + 'd';
+    return `<div class="p27-dl-row ${x.done ? 'done' : ''} ${isNext ? 'next' : ''}">
+      <input type="checkbox" ${x.done ? 'checked' : ''} onchange="p27Toggle('${x.id}')">
+      <div class="p27-dl-date">${_fmtDateShort(d)}</div>
+      <div class="p27-dl-label">${escHtml(x.label)}</div>
+      <div class="p27-dl-eta ${late ? 'late' : ''}">${eta}</div>
+      <button class="p27-dl-del" title="Eliminar" onclick="p27Del('${x.id}')">✕</button>
+    </div>`;
+  }).join('');
+
+  // Preços — referência 2026 vs decisão 2027
+  const p = p27PrecosLoad();
+  const inp = k => `<input type="number" class="p27-preco-input" value="${p[k] !== undefined && p[k] !== '' ? p[k] : ''}" placeholder="?" min="0" step="5" onchange="p27PrecoSet('${k}', this.value)">`;
+  const precosHost = document.getElementById('p27-precos');
+  if (precosHost) precosHost.innerHTML = `
+    <table class="p27-tbl">
+      <thead><tr><th>Modalidade (por semana)</th><th style="text-align:right">2026</th><th style="text-align:right">2027</th></tr></thead>
+      <tbody>
+        <tr><td>Interno · pronto pagamento (até 31/03)</td><td class="num">330 €</td><td class="num">${inp('int_pronto')}</td></tr>
+        <tr><td>Interno · pronto c/ desconto</td><td class="num">295 €</td><td class="num">${inp('int_pronto_desc')}</td></tr>
+        <tr><td>Interno · prestações (120 € + resto)</td><td class="num">375 €</td><td class="num">${inp('int_prest')}</td></tr>
+        <tr><td>Interno · depois de 31/03 (só pronto)</td><td class="num">375 €</td><td class="num">${inp('int_tarde')}</td></tr>
+        <tr><td>Externo</td><td class="num">275 €</td><td class="num">${inp('externo')}</td></tr>
+      </tbody>
+    </table>`;
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   Auth.init();
+  // Edição ativa (2027 por defeito) + chip do banco
+  let ed = '2027';
+  try { ed = localStorage.getItem(EDICAO_KEY) || '2027'; } catch (e) {}
+  setEdicao(ed);
+  updateNavBanco();
   // Wire sortable headers
   document.querySelectorAll('.th-sort').forEach(th => {
     th.addEventListener('click', () => setSort(th.dataset.sort));
