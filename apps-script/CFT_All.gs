@@ -149,7 +149,7 @@ const Config = {
   invalidate() { this._cache = null; }
 };
 /**
- * Lógica de preços CFT 2026.
+ * Lógica de preços CFT 2027.
  *
  * Externo: 275 € por semana, fixo.
  * Interno + inscrição até 31 mar:
@@ -2528,7 +2528,7 @@ const EmailTemplates = {
   IBAN_CFT: 'PT50 0007 0000 0065 0137 6512 3',
   LOGO_URL: 'https://raw.githubusercontent.com/tiagojgcc/cft-dashboard/main/assets/logo_CFT.png',
   LOGO_DARK_URL: 'https://raw.githubusercontent.com/tiagojgcc/cft-dashboard/main/assets/logo_CFT_dark.png',
-  EDITION: '4ª EDIÇÃO · 2026',
+  EDITION: '5ª EDIÇÃO · 2027',
 
   // ============ Helpers ============
   shortName(fullName) {
@@ -2876,7 +2876,7 @@ const EmailTemplates = {
       </div>
       <div style="padding:0 40px 24px 40px;">
         ${this._greeting(ee, data)}
-        ${this._para(`Antes de mais, obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2026.`)}
+        ${this._para(`Antes de mais, obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2027.`)}
         ${this._para(`Estamos a fechar os acertos das inscrições e, ao contabilizar as inscrições ${data.clube ? `do <b>${this._esc(data.clube)}</b>` : 'do clube'}, verificámos que o grupo ficou aquém do mínimo de <b>8 inscrições</b> necessário para atribuir o desconto de clube. Por esse motivo, precisamos de pedir a regularização da diferença face ao valor individual.`)}
       </div>
       ${this._infoBox([
@@ -2908,7 +2908,7 @@ const EmailTemplates = {
       </div>
       <div style="padding:0 40px 24px 40px;">
         ${this._greeting(ee, data)}
-        ${this._para(`Obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2026. Está praticamente tudo a postos para a participação ${a.dele}.`)}
+        ${this._para(`Obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2027. Está praticamente tudo a postos para a participação ${a.dele}.`)}
         ${this._para(`Estamos a finalizar os registos de pagamento e, à data de hoje, ainda não nos chegou nenhum comprovativo. Pode ter-nos escapado, por isso queríamos confirmar consigo antes de fechar.`)}
       </div>
       ${this._infoBox([
@@ -2940,7 +2940,7 @@ const EmailTemplates = {
       </div>
       <div style="padding:0 40px 24px 40px;">
         ${this._greeting(ee, data)}
-        ${this._para(`Obrigado pela 1ª prestação da inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> — já está registada do nosso lado. Está praticamente tudo pronto para a participação ${a.dele} no CFT 2026.`)}
+        ${this._para(`Obrigado pela 1ª prestação da inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> — já está registada do nosso lado. Está praticamente tudo pronto para a participação ${a.dele} no CFT 2027.`)}
         ${this._para(`Este email é só para relembrar que a 2ª prestação tem como prazo <span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;">${this._esc(data.data_limite)}</span>.`)}
       </div>
       ${this._infoBox([
@@ -2972,7 +2972,7 @@ const EmailTemplates = {
       </div>
       <div style="padding:0 40px 24px 40px;">
         ${this._greeting(ee, data)}
-        ${this._para(`Antes de mais, obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2026.`)}
+        ${this._para(`Antes de mais, obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2027.`)}
         ${this._para(`Ao fechar os registos, vimos que o valor recebido ficou acima do valor previsto para esta inscrição. Há, portanto, uma diferença a devolver.`)}
       </div>
       ${this._infoBox([
@@ -3008,7 +3008,7 @@ const EmailTemplates = {
       </div>
       <div style="padding:0 40px 24px 40px;">
         ${this._greeting(ee, data)}
-        ${this._para(`Obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2026 pelo <b>${this._esc(data.clube)}</b>.`)}
+        ${this._para(`Obrigado pela inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no CFT 2027 pelo <b>${this._esc(data.clube)}</b>.`)}
         ${this._para(`Como sabe, oferecemos um desconto a todos os atletas inscritos por clubes com 8 ou mais participantes. À data de hoje, o <b>${this._esc(data.clube)}</b> tem <b>${this._esc(data.clube_atletas)}</b> atleta${data.clube_atletas === '1' ? '' : 's'} ${data.clube_atletas === '1' ? 'inscrito' : 'inscritos'} — falta${faltam === '1' ? '' : 'm'} apenas <b style="color:${C.greenDark};">${this._esc(String(faltam))}</b> para destravar o desconto.`)}
       </div>
       ${this._infoBox([
@@ -3135,7 +3135,7 @@ const EmailTemplates = {
       </div>
       <div style="padding:0 40px 24px 40px;">
         ${this._greeting(ee, data)}
-        ${this._para(`É com muito gosto que recebemos a inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no <b>CFT 2026 · 4ª edição</b>. Bem-${a.benvindo} ao nosso campus.`)}
+        ${this._para(`É com muito gosto que recebemos a inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no <b>CFT 2027 · 5ª edição</b>. Bem-${a.benvindo} ao nosso campus.`)}
         ${this._para(`Vamos tratar de todos os detalhes nas próximas semanas. Nesta primeira mensagem, deixamos o resumo da inscrição e os passos seguintes.`)}
       </div>
       ${this._infoBox([
@@ -3184,14 +3184,14 @@ const EmailTemplates = {
   },
 
   // 10. Informações finais — email logístico enviado dias antes do início.
-  //     (Substitui o antigo "pré-campus".) Conteúdo fixo do CFT 2026:
+  //     (Substitui o antigo "pré-campus".) Conteúdo fixo do CFT 2027:
   //     datas, check-in, horário dos externos, encerramento, local, o que
   //     trazer, alimentação/segurança, 2.ª semana, contacto e nota t-shirts.
   //     Design: claude.ai/design "Email" · Informacoes Finais para Gmail.html
   prePampus(data) {
     const C = this.C;
     const ee = this.G_ee(data);
-    const subject = `[CFT 2026] Informações finais — tudo o que precisa antes do início`;
+    const subject = `[CFT 2027] Informações finais — tudo o que precisa antes do início`;
     const cond = `font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-weight:700;text-transform:uppercase;`;
     const bebas = `font-family:'Bebas Neue','Arial Narrow',sans-serif;`;
     const serif = `font-family:'Playfair Display',Georgia,serif;font-style:italic;`;
@@ -3226,13 +3226,13 @@ const EmailTemplates = {
     </tr>`).join('');
     const body = `
       <div style="padding:48px 40px 28px 40px;">
-        ${this._over('CFT 2026 · Informações finais')}
+        ${this._over('CFT 2027 · Informações finais')}
         <h1 style="${bebas}font-size:62px;line-height:1.04;color:${C.nearBlack};margin:0;text-transform:uppercase;letter-spacing:0.005em;">Tudo o que precisa<br>antes do <span style="color:${C.greenDark};">início.</span></h1>
-        <div style="${serif}font-size:21px;color:${C.midGray};margin-top:16px;">Campus de Formação Técnica 2026 · Ponte da Barca</div>
+        <div style="${serif}font-size:21px;color:${C.midGray};margin-top:16px;">Campus de Formação Técnica 2027 · Ponte da Barca</div>
       </div>
       <div style="padding:0 40px 8px 40px;">
         ${this._greeting(ee, data)}
-        ${this._para(`Falta pouco para o arranque do <b>Campus de Formação Técnica 2026</b> e queremos deixar-lhe toda a informação necessária para uma semana tranquila.`)}
+        ${this._para(`Falta pouco para o arranque do <b>Campus de Formação Técnica 2027</b> e queremos deixar-lhe toda a informação necessária para uma semana tranquila.`)}
       </div>
       <div style="margin:20px 40px 0 40px;background:${C.nearBlack};color:${C.beige};padding:28px 30px;">
         <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenBright};margin-bottom:18px;">Datas</div>
@@ -3288,7 +3288,7 @@ const EmailTemplates = {
         ${this._para(`Em anexo seguem os planos semanais (Semana 1 e Semana 2) e o documento com todas as informações oficiais.`)}
         ${this._para(`Qualquer dúvida, estamos disponíveis por esta via.`)}
         ${this._para(`Os melhores cumprimentos,`)}
-        <div style="${serif}font-size:20px;color:${C.charcoal};">Organização do Campus de Formação Técnica 2026</div>
+        <div style="${serif}font-size:20px;color:${C.charcoal};">Organização do Campus de Formação Técnica 2027</div>
       </div>`;
     return { subject, html: this._wrap(body) };
   },
