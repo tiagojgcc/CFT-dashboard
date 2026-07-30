@@ -1319,6 +1319,7 @@
         <button class="compose-btn" id="compose-btn" disabled onclick="openCompose()">Enviar email</button>
         <button class="quick-template" id="promo-desconto-btn" onclick="promoverDescontoClube()" title="Envia rascunho branded a atletas internos cujo clube tem 1-7 atletas (potencial desconto se chegarem a 8). Pode incluir já-pagos.">📢 Promover desconto de clube</button>
         <button class="quick-template" id="info-finais-btn" onclick="enviarInfoFinaisBulk()" title="Cria 1 único rascunho no Gmail com o email 'Informações finais' e todos os encarregados (atletas ativos com email) em BCC — mesma mensagem para todos, sem personalização.">✉ Informações finais · todos em BCC</button>
+        <button class="quick-template" id="agradecimento-btn" onclick="enviarAgradecimentoBulk()" title="Cria 1 único rascunho no Gmail 'Agradecimento + questionário de satisfação' com todos os encarregados (atletas ativos com email) em BCC. O link do questionário vai sem pré-preenchimento.">🙏 Agradecimento + questionário · todos em BCC</button>
       </div>
     </div>
 
@@ -1899,7 +1900,8 @@ const TEMPLATE_LABELS = {
   descontoClube:    'Promo desconto clube',
   avisoPrazo:       'Aviso prazo',
   infoPraticas:     'Info práticas',
-  confirmacao:      'Confirmação'
+  confirmacao:      'Confirmação',
+  agradecimento:    'Agradecimento + questionário'
 };
 // Categoria do template para efeitos de "este pill já foi enviado".
 // Permite saber se a pill "Problema pagamento" do painel já foi disparada
@@ -1915,7 +1917,8 @@ const TEMPLATE_KIND = {
   descontoClube:    'descontoClube',
   avisoPrazo:       'problema',
   infoPraticas:     'prePampus',
-  confirmacao:      'boasVindas'
+  confirmacao:      'boasVindas',
+  agradecimento:    'agradecimento'
 };
 
 // Lista cronológica (mais recente primeiro) de eventos de email para 1 atleta.
@@ -2585,7 +2588,9 @@ const EMAIL_PANEL_TEMPLATES = [
   { kind: 'problema',    label: 'Problema pagamento', tpl: null,
     hint: 'Auto-deteta o template: sem pagamento, parcial, valor errado ou a devolver.' },
   { kind: 'prePampus',   label: 'Informações finais',   tpl: 'prePampus',
-    hint: 'Email logístico antes do início: datas, check-in, horários, o que trazer, contacto.' }
+    hint: 'Email logístico antes do início: datas, check-in, horários, o que trazer, contacto.' },
+  { kind: 'agradecimento', label: 'Agradecimento + questionário', tpl: 'agradecimento',
+    hint: 'Obrigado pós-edição + link para o questionário de satisfação (a fase «No campo» responde-se em conjunto com o atleta).' }
 ];
 
 function getEmailPanelState(id){
@@ -4922,6 +4927,25 @@ async function enviarInfoFinaisBulk(){
   toast('A criar rascunho único (BCC)…');
   try {
     const res = await Api.createBulkEmailDraft(elegiveis.map(r => r.id), 'prePampus');
+    toast(`Rascunho criado · ${res.count} destinatário${res.count === 1 ? '' : 's'} em BCC`);
+    window.open(res.url, '_blank');
+    setTimeout(() => { try { refreshNow(); } catch(_) {} }, 700);
+  } catch (e) {
+    toast('Falha a criar rascunho: ' + e.message, true);
+  }
+}
+
+// Cria UM único rascunho "Agradecimento + questionário" com todos os
+// encarregados em BCC. Enviado no fim da edição; o link do questionário
+// vem da Config (survey_url), sem pré-preenchimento por atleta.
+async function enviarAgradecimentoBulk(){
+  const elegiveis = data.filter(r => r.ativo && r.email_enc);
+  if (elegiveis.length === 0) { toast('Nenhum atleta ativo com email', true); return; }
+  const nEmails = new Set(elegiveis.map(r => String(r.email_enc).trim().toLowerCase())).size;
+  if (!confirm(`Vai criar 1 único rascunho "Agradecimento + questionário de satisfação" com ${nEmails} email${nEmails === 1 ? '' : 's'} em BCC (${elegiveis.length} atletas ativos). Continuar?`)) return;
+  toast('A criar rascunho único (BCC)…');
+  try {
+    const res = await Api.createBulkEmailDraft(elegiveis.map(r => r.id), 'agradecimento');
     toast(`Rascunho criado · ${res.count} destinatário${res.count === 1 ? '' : 's'} em BCC`);
     window.open(res.url, '_blank');
     setTimeout(() => { try { refreshNow(); } catch(_) {} }, 700);

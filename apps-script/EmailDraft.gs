@@ -92,6 +92,17 @@ const EmailDraft = {
       logistica:       (Config.get('email_logistica')     || 'entrada a partir das 08h30 · saída até às 18h00'),
       contacto_dia:    (Config.get('email_contacto_dia') || '912 345 678')
     };
+    // Questionário de satisfação (template agradecimento):
+    //   survey_url  — base configurável na aba Config (key survey_url)
+    //   survey_link — com nome/clube pré-preenchidos para reduzir fricção
+    const surveyBase = String(Config.get('survey_url') || 'https://cft-dashboard.netlify.app/questionario.html');
+    data.survey_url = surveyBase;
+    data.survey_link = surveyBase
+      + (surveyBase.indexOf('?') === -1 ? '?' : '&')
+      + 'atleta=' + encodeURIComponent(atleta.atleta || '')
+      + '&clube=' + encodeURIComponent(atleta.clube || '')
+      + '&ref=email';
+    data.edicao_curta = String(Config.get('survey_edicao') || '');
     if (overrides) Object.keys(overrides).forEach(k => { data[k] = overrides[k]; });
     return data;
   },
@@ -168,6 +179,10 @@ const EmailDraft = {
     const data = this._buildData(atletas[0], overrides);
     data.atleta = '';  // bulk: não personalizar
     data.ee_nome = '';
+    // bulk: link do questionário sem pré-preenchimento (o do 1º atleta não
+    // representa os restantes destinatários em BCC)
+    data.survey_link = data.survey_url
+      + (String(data.survey_url).indexOf('?') === -1 ? '?' : '&') + 'ref=email';
 
     const { subject, html } = EmailTemplates.render(tpl, data);
 

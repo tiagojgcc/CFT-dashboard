@@ -14,6 +14,12 @@ function handle_(e, method) {
     const action = params.action;
     if (!action) throw new Error('Missing action');
 
+    // Endpoint público (sem token): submissão do questionário de satisfação
+    // pelos encarregados. Tudo o resto continua a exigir token de admin.
+    if (action === 'survey_submit') {
+      return json_({ ok: true, data: Satisfacao.submit(params) });
+    }
+
     const user = Auth.verify(params.token);
 
     let result;
@@ -2755,15 +2761,16 @@ const EmailTemplates = {
     return `<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;700&family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">`;
   },
 
-  _header() {
+  _header(edition) {
     // Banda preta com o logo claro (logo_CFT_dark) — versão Gmail-safe do
     // BrandHeader do design: table + bgcolor (Gmail remove `filter` CSS,
     // por isso o asset já vem claro) e width/height no <img> para o Gmail
-    // não redimensionar o logo.
+    // não redimensionar o logo. `edition` (opcional) sobrepõe a edição
+    // mostrada à direita — usado pelo agradecimento pós-edição.
     const C = this.C;
     return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.nearBlack}" style="background-color:${C.nearBlack};border-collapse:collapse;width:100%;"><tr>
       <td bgcolor="${C.nearBlack}" width="50%" align="left" style="background-color:${C.nearBlack};padding:26px 40px;"><img src="${this.LOGO_DARK_URL}" alt="CFT" width="150" height="55" style="display:block;width:150px;height:55px;" /></td>
-      <td bgcolor="${C.nearBlack}" width="50%" align="right" style="background-color:${C.nearBlack};padding:26px 40px;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;color:${C.sand};text-transform:uppercase;">${this.EDITION}</td>
+      <td bgcolor="${C.nearBlack}" width="50%" align="right" style="background-color:${C.nearBlack};padding:26px 40px;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;color:${C.sand};text-transform:uppercase;">${edition || this.EDITION}</td>
     </tr></table>`;
   },
 
@@ -2804,12 +2811,12 @@ const EmailTemplates = {
     </div>`;
   },
 
-  _wrap(content) {
+  _wrap(content, edition) {
     const C = this.C;
     return `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">${this._googleFontsLink()}<style>body{margin:0;padding:0;}</style></head>
 <body style="margin:0;padding:0;background:#f0eee9;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;color:${C.charcoal};">
   <div style="max-width:680px;margin:0 auto;background:${C.beige};border:1px solid ${C.beigeMid};">
-    ${this._header()}
+    ${this._header(edition)}
     ${content}
     ${this._signature()}
     ${this._footer()}
@@ -3293,6 +3300,55 @@ const EmailTemplates = {
     return { subject, html: this._wrap(body) };
   },
 
+  // 11. Agradecimento pós-edição + questionário de satisfação.
+  //     Enviado no fim da edição: obrigado pela inscrição/participação e
+  //     pedido de 3 minutos para o questionário (link em {survey_link}).
+  //     Funciona per-atleta (link pré-preenchido com nome/clube) e em bulk
+  //     (sem nome — link genérico). A fase "No campo" do questionário é para
+  //     ser respondida em conjunto com o atleta, e o email di-lo claramente.
+  agradecimento(data) {
+    const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
+    const hasName = !!String(data.atleta || '').trim();
+    const surveyLink = data.survey_link || data.survey_url || '#';
+    const edicao = data.edicao_curta || 'este ano';
+    const subject = `CFT · Obrigado — e 3 minutos que valem ouro`;
+    const cond = `font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-weight:700;text-transform:uppercase;`;
+    const intro = hasName
+      ? `A edição chegou ao fim e queríamos agradecer-lhe a inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> e a confiança que depositou em nós durante o campus. Esperamos que tenha sido uma semana para recordar.`
+      : `A edição chegou ao fim e queríamos agradecer-lhe a confiança que depositou em nós com a inscrição do seu educando. Esperamos que tenha sido uma semana para recordar.`;
+    const body = `
+      <div style="padding:48px 40px 24px 40px;">
+        ${this._over('Obrigado por fazerem parte', C.greenDark)}
+        ${this._display('Foi um prazer\nreceber-vos.')}
+      </div>
+      <div style="padding:0 40px 24px 40px;">
+        ${this._greeting(ee, data)}
+        ${this._para(intro)}
+        ${this._para(`Antes de arrumarmos de vez as bolas ${edicao !== 'este ano' ? `do ${this._esc(edicao)}` : 'desta edição'}, pedimos-lhe uma última coisa: <b>3 minutos</b> para nos dizer como correu. É um questionário curto, em <b>4 fases</b>, quase tudo respondido com um toque — e nenhuma pergunta é obrigatória.`)}
+      </div>
+      <div style="margin:0 40px;background:${C.greenDark};padding:28px 30px;">
+        <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenBright};margin-bottom:10px;">Questionário de satisfação</div>
+        <p style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:14px;color:rgba(255,255,255,0.9);line-height:1.6;margin:0 0 18px 0;">4 fases curtas · menos de 3 minutos · respostas confidenciais</p>
+        <a href="${surveyLink}" style="display:inline-block;text-decoration:none;background:${C.white};color:${C.greenDark};${cond}font-size:15px;letter-spacing:0.18em;padding:15px 26px;">Responder agora →</a>
+      </div>
+      <div style="margin:20px 40px 0 40px;background:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};padding:16px 22px;">
+        <div style="${cond}font-size:11px;letter-spacing:0.22em;color:${C.orange};margin-bottom:4px;">Respondam a meias</div>
+        <div style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:14px;color:${C.charcoal};line-height:1.55;">A fase <b>«No campo»</b> é sobre os treinos, os treinadores e a vida no campus — como os pais não estiveram lá dentro, pedimos que essa parte seja respondida <b>em conjunto com ${hasName ? `${a.oA} ${this._esc(this.firstName(data.atleta))}` : 'o vosso atleta'}</b>.</div>
+      </div>
+      <div style="padding:24px 40px 8px 40px;">
+        ${this._para(`As respostas servem exclusivamente para melhorarmos a próxima edição — e são levadas a sério, uma a uma. A crítica sincera vale-nos mais do que o elogio simpático.`)}
+        ${this._para(`Obrigado, e esperamos voltar a ver-vos para o ano.`)}
+      </div>
+      <div style="padding:8px 40px 16px 40px;">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Até já,</div>
+      </div>`;
+    // Header com a edição que terminou (ex.: "CFT 2026 · Obrigado"), não a próxima.
+    const headerEd = data.edicao_curta ? (this._esc(data.edicao_curta).toUpperCase() + ' · OBRIGADO') : null;
+    return { subject, html: this._wrap(body, headerEd) };
+  },
+
   // ============ Entry point: render template by name ============
   render(templateName, data) {
     const fn = this[templateName];
@@ -3394,6 +3450,17 @@ const EmailDraft = {
       logistica:       (Config.get('email_logistica')     || 'entrada a partir das 08h30 · saída até às 18h00'),
       contacto_dia:    (Config.get('email_contacto_dia') || '912 345 678')
     };
+    // Questionário de satisfação (template agradecimento):
+    //   survey_url  — base configurável na aba Config (key survey_url)
+    //   survey_link — com nome/clube pré-preenchidos para reduzir fricção
+    const surveyBase = String(Config.get('survey_url') || 'https://cft-dashboard.netlify.app/questionario.html');
+    data.survey_url = surveyBase;
+    data.survey_link = surveyBase
+      + (surveyBase.indexOf('?') === -1 ? '?' : '&')
+      + 'atleta=' + encodeURIComponent(atleta.atleta || '')
+      + '&clube=' + encodeURIComponent(atleta.clube || '')
+      + '&ref=email';
+    data.edicao_curta = String(Config.get('survey_edicao') || '');
     if (overrides) Object.keys(overrides).forEach(k => { data[k] = overrides[k]; });
     return data;
   },
@@ -3470,6 +3537,10 @@ const EmailDraft = {
     const data = this._buildData(atletas[0], overrides);
     data.atleta = '';  // bulk: não personalizar
     data.ee_nome = '';
+    // bulk: link do questionário sem pré-preenchimento (o do 1º atleta não
+    // representa os restantes destinatários em BCC)
+    data.survey_link = data.survey_url
+      + (String(data.survey_url).indexOf('?') === -1 ? '?' : '&') + 'ref=email';
 
     const { subject, html } = EmailTemplates.render(tpl, data);
 
@@ -3705,5 +3776,111 @@ const Despesas = {
       return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
     }
     return String(d || '').slice(0, 10);
+  }
+};
+
+
+// ================================================================
+// ============ SATISFACAO (Satisfacao.gs) ============
+// ================================================================
+
+/**
+ * Questionário de satisfação pós-edição.
+ *
+ * As respostas chegam do questionario.html (hospedado com o Dashboard) via a
+ * action pública `survey_submit` — sem token, porque quem responde são os
+ * encarregados, não admins. Proteções: honeypot (campo "website"), caps de
+ * tamanho nos textos e coerção numérica das avaliações.
+ *
+ * As respostas caem na aba "Satisfacao" do Sheet (criada automaticamente na
+ * primeira submissão). Analisar diretamente no Sheets — filtros/pivots.
+ */
+const Satisfacao = {
+  SHEET_NAME: 'Satisfacao',
+
+  // Ordem das colunas na aba (a seguir a timestamp/edicao/meta).
+  // [chave, tipo] — tipo: 'r5' avaliação 1-5 · 'n10' NPS 0-10 · 't' texto
+  FIELDS: [
+    // Fase 1 · Inscrição & comunicação (pais)
+    ['insc_processo',        'r5'],
+    ['insc_clareza',         'r5'],
+    ['insc_comunicacao',     'r5'],
+    ['insc_melhorar',        't'],
+    // Fase 2 · Organização & confiança (pais)
+    ['log_checkin',          'r5'],
+    ['log_informado',        'r5'],
+    ['log_seguranca',        'r5'],
+    ['log_qualidade_preco',  'r5'],
+    // Fase 3 · No campo (respondida em conjunto com o atleta)
+    ['campo_treinos',        'r5'],
+    ['campo_treinadores',    'r5'],
+    ['treinadores_destaque', 't'],
+    ['campo_alimentacao',    'r5'],
+    ['campo_instalacoes',    'r5'],
+    ['campo_ambiente',       'r5'],
+    ['mais_gostou',          't'],
+    ['menos_gostou',         't'],
+    // Fase 4 · Para o ano
+    ['nps',                  'n10'],
+    ['volta',                't'],
+    ['mudar_uma_coisa',      't'],
+    // Identificação opcional
+    ['atleta',               't'],
+    ['clube',                't']
+  ],
+
+  sheet_() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    let sh = ss.getSheetByName(this.SHEET_NAME);
+    if (!sh) {
+      sh = ss.insertSheet(this.SHEET_NAME);
+      const headers = ['timestamp', 'edicao', 'origem', 'duracao_seg']
+        .concat(this.FIELDS.map(f => f[0]));
+      sh.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sh.setFrozenRows(1);
+    }
+    return sh;
+  },
+
+  _clean(v, type) {
+    if (v === null || v === undefined) return '';
+    if (type === 'r5') {
+      const n = Number(v);
+      return (Number.isFinite(n) && n >= 1 && n <= 5) ? Math.round(n) : '';
+    }
+    if (type === 'n10') {
+      const n = Number(v);
+      return (Number.isFinite(n) && n >= 0 && n <= 10) ? Math.round(n) : '';
+    }
+    return String(v).slice(0, 1000).trim();
+  },
+
+  submit(params) {
+    // Honeypot: bots preenchem o campo escondido — finge sucesso e descarta.
+    if (String(params.website || '').trim() !== '') return { recebido: true };
+
+    const r = params.respostas || {};
+    // Submissão completamente vazia não vale a pena registar.
+    const temAlgo = this.FIELDS.some(([k]) => {
+      const v = r[k];
+      return v !== undefined && v !== null && String(v).trim() !== '';
+    });
+    if (!temAlgo) return { recebido: true };
+
+    const row = [
+      new Date(),
+      String(params.edicao || '').slice(0, 100),
+      String(params.origem || '').slice(0, 100),
+      Number(params.duracao_seg) || ''
+    ].concat(this.FIELDS.map(([k, type]) => this._clean(r[k], type)));
+
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      this.sheet_().appendRow(row);
+    } finally {
+      lock.releaseLock();
+    }
+    return { recebido: true };
   }
 };

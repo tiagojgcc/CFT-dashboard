@@ -242,6 +242,29 @@ Checklist mínimo no UI:
 
 ---
 
+## Questionário de satisfação (pós-edição)
+
+O questionário vive em [`questionario.html`](questionario.html) (deploy junto com o Dashboard no Netlify) e as respostas caem na aba **`Satisfacao`** do Sheet (criada automaticamente na 1ª submissão). A submissão usa a action pública `survey_submit` do mesmo endpoint `/exec` — **não precisa de login** (protecção: honeypot + sanitização; nunca expõe dados, só recebe).
+
+**Para pôr a funcionar:**
+
+1. **Apps Script**: cola o novo ficheiro `Satisfacao.gs` (ou usa o `CFT_All.gs` atualizado) e o `Code.gs`/`EmailTemplates.gs`/`EmailDraft.gs` atualizados → **Deploy → Manage deployments → New version**.
+2. **Netlify**: volta a arrastar a pasta (agora com `questionario.html`).
+3. **Config do Sheet** (opcional mas recomendado):
+
+   | key | value | para quê |
+   |---|---|---|
+   | `survey_url` | `https://<site>.netlify.app/questionario.html` | link usado no email de agradecimento |
+   | `survey_edicao` | `CFT 2026` | edição mostrada no email/header (ex.: "CFT 2026 · OBRIGADO") |
+
+4. **No topo do `questionario.html`**: confirma o `API_URL` (é o mesmo `/exec` do Dashboard) e, se quiseres chips clicáveis na pergunta "que treinador te marcou pela positiva", preenche `TREINADORES: ['Nome1', 'Nome2', …]` — vazio mostra campo de texto livre.
+
+**Como enviar:** o email de agradecimento é o template `agradecimento` — disponível no painel inline de cada atleta (pill "Agradecimento + questionário", com link pré-preenchido com nome/clube) e em bulk na Lista ("🙏 Agradecimento + questionário · todos em BCC", link genérico). O email pede explicitamente que a fase **«No campo»** seja respondida em conjunto com o atleta.
+
+**Formato do questionário:** 4 fases curtas (Inscrição & comunicação → Organização & confiança → No campo *com o atleta* → Para o ano), quase tudo avaliações de 1 toque (1–5 e NPS 0–10), **nenhuma pergunta obrigatória**, identificação opcional no fim. As respostas analisam-se diretamente na aba `Satisfacao` (filtros/pivots do Sheets).
+
+---
+
 ## Resolução de problemas
 
 - **"CFT_CONFIG.CLIENT_ID não configurado"** → preencheste em `Dashboard.html` mas não fizeste reload? Hard reload (Ctrl+Shift+R).

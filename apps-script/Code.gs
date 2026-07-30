@@ -14,6 +14,12 @@ function handle_(e, method) {
     const action = params.action;
     if (!action) throw new Error('Missing action');
 
+    // Endpoint público (sem token): submissão do questionário de satisfação
+    // pelos encarregados. Tudo o resto continua a exigir token de admin.
+    if (action === 'survey_submit') {
+      return json_({ ok: true, data: Satisfacao.submit(params) });
+    }
+
     const user = Auth.verify(params.token);
 
     let result;

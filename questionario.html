@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CFT · Questionário de satisfação</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+<script>
+// ============ CONFIG ============
+// API_URL: o mesmo endpoint /exec do Dashboard (a submissão usa a action
+// pública survey_submit — não precisa de login).
+// TREINADORES: opcional — se preenchido (ex.: ['Miguel','Rui']), a pergunta
+// "quem marcou pela positiva" mostra chips clicáveis; se vazio, texto livre.
+window.CFT_SURVEY = {
+  API_URL: 'https://script.google.com/macros/s/AKfycbx3yw0iNCS-oUt5HM0hSg5zw_nEBYz787Uz49YyfiWBgfI801KGXTFCKz8i12-EqPu40w/exec',
+  EDICAO: 'CFT 2026 · 4ª edição',
+  TREINADORES: []
+};
+</script>
+<style>
+:root {
+  --beige: #f4ede0;
+  --beige-mid: #e5d9c4;
+  --sand: #c9b99a;
+  --sand-dark: #a89278;
+  --charcoal: #1c1c18;
+  --near-black: #111110;
+  --mid-gray: #6b6b65;
+  --green-dark: #2d6b3c;
+  --green-bright: #78c832;
+  --orange: #d4845a;
+  --off-white: #faf7f2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+button { appearance: none; -webkit-appearance: none; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: #efe9dd;
+  font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+  color: var(--charcoal);
+  min-height: 100vh;
+}
+.shell { max-width: 640px; margin: 0 auto; background: var(--beige); min-height: 100vh; border-left: 1px solid var(--beige-mid); border-right: 1px solid var(--beige-mid); display: flex; flex-direction: column; }
+
+/* Header */
+.band { background: var(--near-black); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; }
+.band img { width: 110px; height: auto; display: block; }
+.band .ed { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--sand); }
+
+/* Progress */
+.progress { padding: 16px 24px 0 24px; }
+.progress-track { height: 4px; background: var(--beige-mid); position: relative; }
+.progress-fill { height: 4px; background: var(--green-dark); width: 0%; transition: width .35s ease; }
+.progress-label { margin-top: 8px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mid-gray); display: flex; justify-content: space-between; }
+.progress-label .fase-atual { color: var(--green-dark); }
+
+/* Steps */
+.step { padding: 28px 24px 32px 24px; display: none; flex: 1; }
+.step.active { display: block; animation: fadeIn .3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.over { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--green-dark); margin-bottom: 10px; }
+h1.display { font-family: 'Bebas Neue', 'Arial Narrow', sans-serif; font-size: clamp(44px, 11vw, 64px); line-height: 0.94; text-transform: uppercase; color: var(--near-black); letter-spacing: 0.005em; }
+.lede { font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: 18px; color: var(--mid-gray); margin-top: 12px; }
+p.body { font-size: 15px; line-height: 1.65; margin-top: 16px; }
+p.body b { color: var(--green-dark); }
+
+.hint-card { margin-top: 20px; background: var(--off-white); border: 1px solid var(--beige-mid); border-left: 4px solid var(--green-dark); padding: 14px 18px; font-size: 14px; line-height: 1.55; }
+.hint-card.atleta { border-left-color: var(--orange); }
+.hint-card .hint-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--green-dark); margin-bottom: 4px; }
+.hint-card.atleta .hint-title { color: var(--orange); }
+
+/* Questions */
+.q { margin-top: 26px; }
+.q-label { font-size: 15px; font-weight: 700; line-height: 1.4; }
+.q-sub { font-size: 13px; color: var(--mid-gray); margin-top: 2px; }
+.optional-tag { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sand-dark); margin-left: 6px; }
+
+/* Rating 1-5 */
+.rate { display: flex; gap: 8px; margin-top: 12px; }
+.rate button {
+  flex: 1; height: 52px; border: 1.5px solid var(--beige-mid); background: var(--off-white);
+  font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--charcoal);
+  cursor: pointer; transition: all .12s ease; border-radius: 2px;
+}
+.rate button:active { transform: scale(.96); }
+.rate button.sel { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
+.rate-legend { display: flex; justify-content: space-between; margin-top: 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid-gray); }
+
+/* NPS 0-10 */
+.nps { display: grid; grid-template-columns: repeat(11, 1fr); gap: 5px; margin-top: 12px; }
+.nps button {
+  height: 44px; border: 1.5px solid var(--beige-mid); background: var(--off-white);
+  font-family: 'Bebas Neue', sans-serif; font-size: 17px; color: var(--charcoal);
+  cursor: pointer; border-radius: 2px; transition: all .12s ease; padding: 0;
+}
+.nps button.sel { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
+
+/* Pills (single choice) & chips (multi) */
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.pills button {
+  border: 1.5px solid var(--beige-mid); background: var(--off-white); color: var(--charcoal);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 10px 16px; cursor: pointer; border-radius: 999px; transition: all .12s ease;
+}
+.pills button.sel { background: var(--charcoal); border-color: var(--charcoal); color: var(--beige); }
+.pills button.sel.green { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
+
+/* Text inputs */
+textarea, input[type="text"] {
+  width: 100%; margin-top: 12px; padding: 12px 14px; border: 1.5px solid var(--beige-mid);
+  background: var(--off-white); font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--charcoal);
+  border-radius: 2px; resize: vertical;
+}
+textarea { min-height: 76px; }
+textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--green-dark); }
+
+/* Nav */
+.nav { display: flex; gap: 10px; margin-top: 34px; }
+.btn {
+  flex: 1; padding: 16px 20px; border: none; cursor: pointer; border-radius: 2px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px;
+  letter-spacing: 0.18em; text-transform: uppercase; transition: all .12s ease;
+}
+.btn:active { transform: scale(.98); }
+.btn-primary { background: var(--near-black); color: var(--beige); }
+.btn-primary:disabled { opacity: .5; cursor: default; }
+.btn-back { flex: 0 0 auto; background: transparent; border: 1.5px solid var(--beige-mid); color: var(--mid-gray); padding: 16px 18px; }
+.btn-send { background: var(--green-dark); color: #fff; }
+.skip-note { text-align: center; margin-top: 14px; font-size: 12.5px; color: var(--mid-gray); }
+
+/* Done */
+.done-check { width: 64px; height: 64px; border-radius: 50%; background: var(--green-dark); color: #fff; font-size: 30px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+.err-box { margin-top: 18px; background: #fdf0ea; border: 1px solid var(--orange); border-left: 4px solid var(--orange); padding: 12px 16px; font-size: 14px; line-height: 1.5; display: none; }
+
+footer { background: var(--charcoal); color: var(--sand); padding: 18px 24px; font-size: 11px; line-height: 1.6; }
+footer b { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--green-bright); display: block; margin-bottom: 4px; }
+/* honeypot: escondido de humanos */
+.hp { position: absolute; left: -9999px; top: -9999px; }
+@media (max-width: 420px) {
+  .rate button { height: 48px; font-size: 20px; }
+  .nps button { height: 38px; font-size: 15px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="band">
+    <img src="assets/logo_CFT_dark.png" alt="CFT">
+    <div class="ed" id="band-ed">Questionário</div>
+  </div>
+
+  <div class="progress" id="progress" style="display:none;">
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-label"><span class="fase-atual" id="fase-nome">—</span><span id="fase-count">—</span></div>
+  </div>
+
+  <!-- honeypot anti-spam: humanos não vêem nem preenchem -->
+  <input type="text" class="hp" id="hp-website" name="website" tabindex="-1" autocomplete="off">
+
+  <!-- ============ INTRO ============ -->
+  <section class="step active" id="step-0">
+    <div class="over" id="intro-ed">CFT · Questionário de satisfação</div>
+    <h1 class="display">Como<br>correu?</h1>
+    <div class="lede">Ajudem-nos a fazer a próxima edição ainda melhor.</div>
+    <p class="body">São <b>4 fases curtas — menos de 3 minutos</b>. Quase tudo se responde com um toque e <b>nenhuma pergunta é obrigatória</b>: se alguma não fizer sentido, saltem-na.</p>
+    <div class="hint-card atleta">
+      <div class="hint-title">Respondam a meias</div>
+      A fase <b>«No campo»</b> é sobre os treinos, os treinadores e a vida no campus — como os pais não estiveram lá dentro, pedimos que essa parte seja respondida <b>em conjunto com o vosso atleta</b>.
+    </div>
+    <p class="body" style="font-size:13px;color:var(--mid-gray);">As respostas são confidenciais e a identificação no fim é opcional. Servem apenas para melhorarmos.</p>
+    <div class="nav">
+      <button class="btn btn-primary" onclick="goTo(1)">Começar →</button>
+    </div>
+  </section>
+
+  <!-- ============ FASE 1 · INSCRIÇÃO ============ -->
+  <section class="step" id="step-1">
+    <div class="over">Fase 1 de 4 · Para os pais</div>
+    <h1 class="display" style="font-size:clamp(34px,8vw,46px);">Inscrição &amp; comunicação</h1>
+    <div id="qs-1"></div>
+    <div class="nav">
+      <button class="btn btn-back" onclick="goTo(0)">←</button>
+      <button class="btn btn-primary" onclick="goTo(2)">Continuar →</button>
+    </div>
+    <div class="skip-note">Podem avançar mesmo sem responder a tudo.</div>
+  </section>
+
+  <!-- ============ FASE 2 · LOGÍSTICA ============ -->
+  <section class="step" id="step-2">
+    <div class="over">Fase 2 de 4 · Para os pais</div>
+    <h1 class="display" style="font-size:clamp(34px,8vw,46px);">Organização &amp; confiança</h1>
+    <div id="qs-2"></div>
+    <div class="nav">
+      <button class="btn btn-back" onclick="goTo(1)">←</button>
+      <button class="btn btn-primary" onclick="goTo(3)">Continuar →</button>
+    </div>
+    <div class="skip-note">Podem avançar mesmo sem responder a tudo.</div>
+  </section>
+
+  <!-- ============ FASE 3 · NO CAMPO (com o atleta) ============ -->
+  <section class="step" id="step-3">
+    <div class="over" style="color:var(--orange);">Fase 3 de 4 · Com o atleta</div>
+    <h1 class="display" style="font-size:clamp(34px,8vw,46px);">No campo</h1>
+    <div class="hint-card atleta">
+      <div class="hint-title">Chamem o vosso atleta</div>
+      Esta fase é para responderem <b>juntos</b> — é ele/ela quem viveu os treinos por dentro.
+    </div>
+    <div id="qs-3"></div>
+    <div class="nav">
+      <button class="btn btn-back" onclick="goTo(2)">←</button>
+      <button class="btn btn-primary" onclick="goTo(4)">Continuar →</button>
+    </div>
+    <div class="skip-note">Podem avançar mesmo sem responder a tudo.</div>
+  </section>
+
+  <!-- ============ FASE 4 · PARA O ANO ============ -->
+  <section class="step" id="step-4">
+    <div class="over">Fase 4 de 4 · Última</div>
+    <h1 class="display" style="font-size:clamp(34px,8vw,46px);">Para o ano</h1>
+    <div id="qs-4"></div>
+
+    <div class="q">
+      <div class="q-label">Identificação <span class="optional-tag">totalmente opcional</span></div>
+      <div class="q-sub">Ajuda-nos a ligar o feedback à experiência concreta, mas podem submeter em anónimo.</div>
+      <input type="text" id="id-atleta" placeholder="Nome do atleta (opcional)">
+      <input type="text" id="id-clube" placeholder="Clube (opcional)">
+    </div>
+
+    <div class="err-box" id="err-box"></div>
+    <div class="nav">
+      <button class="btn btn-back" onclick="goTo(3)">←</button>
+      <button class="btn btn-send" id="btn-send" onclick="submitSurvey()">Enviar respostas</button>
+    </div>
+  </section>
+
+  <!-- ============ FIM ============ -->
+  <section class="step" id="step-5">
+    <div class="done-check">✓</div>
+    <div class="over">Recebido</div>
+    <h1 class="display" style="font-size:clamp(38px,9vw,54px);">Obrigado.<br>A sério.</h1>
+    <div class="lede">Cada resposta destas muda alguma coisa na próxima edição.</div>
+    <p class="body">Já podem fechar esta página. Até para o ano! 🤾</p>
+  </section>
+
+  <footer>
+    <b>Campo de Formação Técnica</b>
+    APDFE · Associação Promoção e Desporto em Férias Escolares · As respostas são usadas exclusivamente para melhoria interna.
+  </footer>
+</div>
+
+<script>
+(function () {
+  const CFG = window.CFT_SURVEY || {};
+  const $ = (id) => document.getElementById(id);
+  const answers = {};
+  const t0 = Date.now();
+
+  document.getElementById('band-ed').textContent = CFG.EDICAO || 'Questionário';
+  document.getElementById('intro-ed').textContent = (CFG.EDICAO || 'CFT') + ' · Questionário de satisfação';
+
+  // Prefill via URL (?atleta=...&clube=...) — vem do link do email.
+  const qp = new URLSearchParams(location.search);
+  if (qp.get('atleta')) $('id-atleta').value = qp.get('atleta');
+  if (qp.get('clube'))  $('id-clube').value  = qp.get('clube');
+
+  // ============ Definição das perguntas ============
+  const PHASES = {
+    1: [
+      { id: 'insc_processo',    type: 'rate', label: 'O processo de inscrição foi fácil?', legend: ['Complicado', 'Muito fácil'] },
+      { id: 'insc_clareza',     type: 'rate', label: 'A informação antes do início foi clara?', sub: 'Preços, datas, o que levar, regras.', legend: ['Confusa', 'Muito clara'] },
+      { id: 'insc_comunicacao', type: 'rate', label: 'Como avaliam a nossa comunicação por email?', sub: 'Rapidez e utilidade das respostas.', legend: ['Fraca', 'Excelente'] },
+      { id: 'insc_melhorar',    type: 'textarea', label: 'Algo que pudéssemos ter feito melhor antes do campo?', optional: true, placeholder: 'Opcional — escrevam à vontade…' }
+    ],
+    2: [
+      { id: 'log_checkin',        type: 'rate', label: 'Check-in e levantamento dos atletas', sub: 'Chegada de domingo e encerramento de sábado.', legend: ['Caótico', 'Impecável'] },
+      { id: 'log_informado',      type: 'rate', label: 'Sentiram-se informados durante a semana?', legend: ['Às escuras', 'Sempre a par'] },
+      { id: 'log_seguranca',      type: 'rate', label: 'Confiança na segurança e acompanhamento', legend: ['Pouca', 'Total'] },
+      { id: 'log_qualidade_preco',type: 'rate', label: 'Relação qualidade / preço', legend: ['Fraca', 'Excelente'] }
+    ],
+    3: [
+      { id: 'campo_treinos',     type: 'rate', label: 'Os treinos — qualidade e intensidade', legend: ['Fracos', 'Top'] },
+      { id: 'campo_treinadores', type: 'rate', label: 'Os treinadores — acompanhamento e disponibilidade', legend: ['Distantes', 'Sempre lá'] },
+      { id: 'treinadores_destaque', type: (CFG.TREINADORES && CFG.TREINADORES.length ? 'chips' : 'text'),
+        label: 'Algum treinador que te tenha marcado pela positiva?', optional: true,
+        options: CFG.TREINADORES || [], placeholder: 'Opcional — nome(s) do(s) treinador(es)…' },
+      { id: 'campo_alimentacao', type: 'rate', label: 'A comida', legend: ['Má', 'Muito boa'] },
+      { id: 'campo_instalacoes', type: 'rate', label: 'Instalações e alojamento', legend: ['Fracas', 'Muito boas'] },
+      { id: 'campo_ambiente',    type: 'rate', label: 'Ambiente e convívio entre atletas', legend: ['Fraco', 'Espetacular'] },
+      { id: 'mais_gostou',  type: 'textarea', label: 'O que mais gostaste?', optional: true, placeholder: 'Opcional…' },
+      { id: 'menos_gostou', type: 'textarea', label: 'E o que menos gostaste?', optional: true, placeholder: 'Opcional — sê sincero, ajuda-nos mesmo…' }
+    ],
+    4: [
+      { id: 'nps', type: 'nps', label: 'Recomendariam o CFT a outra família?', sub: '0 = nunca · 10 = sem hesitar' },
+      { id: 'volta', type: 'pills', label: 'Contam voltar na próxima edição?', options: ['Sim, já é certo', 'Provavelmente', 'Ainda não sabemos', 'Não'] },
+      { id: 'mudar_uma_coisa', type: 'textarea', label: 'Se pudéssemos mudar UMA coisa na próxima edição, qual seria?', optional: true, placeholder: 'A resposta mais valiosa do questionário…' }
+    ]
+  };
+
+  const FASE_NOMES = { 1: 'Inscrição & comunicação', 2: 'Organização & confiança', 3: 'No campo · com o atleta', 4: 'Para o ano' };
+
+  // ============ Render ============
+  function esc(s) { return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  function renderQuestion(q) {
+    const opt = q.optional ? '<span class="optional-tag">opcional</span>' : '';
+    let inner = '';
+    if (q.type === 'rate') {
+      inner = `<div class="rate" data-q="${q.id}">` +
+        [1, 2, 3, 4, 5].map(n => `<button type="button" data-v="${n}">${n}</button>`).join('') +
+        `</div><div class="rate-legend"><span>${esc(q.legend[0])}</span><span>${esc(q.legend[1])}</span></div>`;
+    } else if (q.type === 'nps') {
+      inner = `<div class="nps" data-q="${q.id}">` +
+        Array.from({ length: 11 }, (_, n) => `<button type="button" data-v="${n}">${n}</button>`).join('') +
+        `</div>`;
+    } else if (q.type === 'pills') {
+      inner = `<div class="pills" data-q="${q.id}" data-single="1">` +
+        q.options.map(o => `<button type="button" data-v="${esc(o)}">${esc(o)}</button>`).join('') +
+        `</div>`;
+    } else if (q.type === 'chips') {
+      inner = `<div class="pills" data-q="${q.id}">` +
+        q.options.map(o => `<button type="button" class="green-target" data-v="${esc(o)}">${esc(o)}</button>`).join('') +
+        `</div>`;
+    } else if (q.type === 'text') {
+      inner = `<input type="text" data-q="${q.id}" placeholder="${esc(q.placeholder || '')}" maxlength="300">`;
+    } else if (q.type === 'textarea') {
+      inner = `<textarea data-q="${q.id}" placeholder="${esc(q.placeholder || '')}" maxlength="1000"></textarea>`;
+    }
+    return `<div class="q"><div class="q-label">${esc(q.label)}${opt}</div>${q.sub ? `<div class="q-sub">${esc(q.sub)}</div>` : ''}${inner}</div>`;
+  }
+
+  [1, 2, 3, 4].forEach(ph => {
+    $('qs-' + ph).innerHTML = PHASES[ph].map(renderQuestion).join('');
+  });
+
+  // ============ Interação ============
+  document.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.rate button, .nps button, .pills button');
+    if (!btn) return;
+    const group = btn.parentElement;
+    const qid = group.dataset.q;
+    const multi = group.classList.contains('pills') && !group.dataset.single;
+    if (multi) {
+      btn.classList.toggle('sel');
+      btn.classList.toggle('green', btn.classList.contains('sel'));
+      answers[qid] = Array.from(group.querySelectorAll('button.sel')).map(b => b.dataset.v);
+    } else {
+      const was = btn.classList.contains('sel');
+      group.querySelectorAll('button').forEach(b => b.classList.remove('sel'));
+      if (was) { delete answers[qid]; return; }  // segundo toque desmarca
+      btn.classList.add('sel');
+      answers[qid] = group.classList.contains('pills') ? btn.dataset.v : Number(btn.dataset.v);
+    }
+  });
+
+  document.addEventListener('input', (ev) => {
+    const el = ev.target;
+    if (el.dataset && el.dataset.q) answers[el.dataset.q] = el.value;
+  });
+
+  // ============ Navegação ============
+  window.goTo = function (n) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    $('step-' + n).classList.add('active');
+    const prog = $('progress');
+    if (n >= 1 && n <= 4) {
+      prog.style.display = 'block';
+      $('progress-fill').style.width = (n * 25) + '%';
+      $('fase-nome').textContent = FASE_NOMES[n];
+      $('fase-count').textContent = 'Fase ' + n + ' / 4';
+    } else {
+      prog.style.display = 'none';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // ============ Submissão ============
+  window.submitSurvey = async function () {
+    const btn = $('btn-send');
+    const err = $('err-box');
+    err.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'A enviar…';
+
+    const respostas = Object.assign({}, answers, {
+      atleta: $('id-atleta').value.trim(),
+      clube: $('id-clube').value.trim()
+    });
+    if (Array.isArray(respostas.treinadores_destaque)) {
+      respostas.treinadores_destaque = respostas.treinadores_destaque.join(', ');
+    }
+
+    const payload = {
+      action: 'survey_submit',
+      website: $('hp-website').value,   // honeypot — vazio para humanos
+      edicao: CFG.EDICAO || '',
+      origem: qp.get('ref') || '',
+      duracao_seg: Math.round((Date.now() - t0) / 1000),
+      respostas
+    };
+
+    try {
+      if (!CFG.API_URL) throw new Error('API_URL não configurado');
+      const resp = await fetch(CFG.API_URL, {
+        method: 'POST',
+        // text/plain evita CORS preflight no Apps Script (igual ao Dashboard)
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+      });
+      const json = await resp.json();
+      if (!json.ok) throw new Error(json.error || 'erro desconhecido');
+      goTo(5);
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Tentar de novo';
+      err.innerHTML = 'Não conseguimos enviar as respostas (' + esc(e.message) + ').<br>' +
+        'Tentem novamente dentro de momentos — ou enviem-nos as sugestões por email para <b>geral@camposft.com</b>.';
+      err.style.display = 'block';
+    }
+  };
+})();
+</script>
+</body>
+</html>
