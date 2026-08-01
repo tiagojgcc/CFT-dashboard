@@ -1205,6 +1205,7 @@
     <div class="tab ed-27" data-panel="plano2027">Plano 2027</div>
     <div class="tab ed-26 active" data-panel="overview">Visão geral</div>
     <div class="tab ed-26" data-panel="list">Lista <span class="tab-count warn" id="tc-list">0</span></div>
+    <div class="tab" data-panel="satisfacao">Satisfação</div>
     <div class="nav-more ed-26">
       <div class="tab nav-more-toggle" onclick="document.getElementById('nav-more-menu').classList.toggle('open')">⋯</div>
       <div class="nav-more-menu" id="nav-more-menu">
@@ -1351,6 +1352,51 @@
   <!-- (panel-tasks removido — content agora vive dentro de panel-trabalho) -->
 
   <!-- ============ HISTÓRICO ============ -->
+  <!-- ============ SATISFAÇÃO ============ -->
+  <style>
+    .sf-grid { display:grid; grid-template-columns: 1.35fr 1fr; gap:14px; margin-bottom:16px; align-items:start; }
+    @media (max-width: 900px) { .sf-grid { grid-template-columns: 1fr; } }
+    .sf-read { background: var(--charcoal); color: var(--off-white); border: 1px solid var(--charcoal); border-radius: var(--radius-md); padding: 18px 22px; margin-bottom: 16px; }
+    .sf-read-title { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--green-bright); margin-bottom: 10px; }
+    .sf-read ul { margin: 0; padding-left: 18px; }
+    .sf-read li { font-size: 13.5px; line-height: 1.7; color: var(--off-white); }
+    .sf-read li b { color: var(--green-bright); }
+    .sf-fase { margin-bottom: 4px; }
+    .sf-fase-title { font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mid-gray); padding: 12px 0 4px 0; }
+    .sf-q { display: grid; grid-template-columns: minmax(140px, 190px) 1fr 42px 34px; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--beige-mid); }
+    .sf-q:last-child { border-bottom: none; }
+    .sf-q-label { font-size: 12.5px; color: var(--charcoal); }
+    .sf-q-bar { height: 8px; background: var(--beige-mid); border-radius: 999px; overflow: hidden; }
+    .sf-q-fill { height: 100%; border-radius: 999px; transition: width 500ms ease-out; }
+    .sf-q-val { font-family: var(--font-display); font-size: 19px; text-align: right; letter-spacing: 0.01em; }
+    .sf-q-n { font-family: var(--font-condensed); font-size: 10px; color: var(--mid-gray); text-align: right; letter-spacing: 0.06em; }
+    .sf-npsbar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; margin: 12px 0 8px 0; background: var(--beige-mid); }
+    .sf-npsbar div { height: 100%; }
+    .sf-legend { display: flex; gap: 14px; flex-wrap: wrap; font-family: var(--font-condensed); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid-gray); }
+    .sf-legend b { color: var(--charcoal); }
+    .sf-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+    .sf-volta-row { display: grid; grid-template-columns: minmax(110px, 150px) 1fr 34px; gap: 10px; align-items: center; padding: 6px 0; }
+    .sf-volta-lbl { font-size: 12.5px; color: var(--charcoal); }
+    .sf-volta-n { font-family: var(--font-display); font-size: 17px; text-align: right; }
+    .sf-chips { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 6px; }
+    .sf-chip { font-family: var(--font-condensed); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; background: var(--off-white); border: 1.5px solid var(--sand); border-radius: 999px; padding: 6px 13px; color: var(--charcoal); }
+    .sf-chip b { color: var(--green-dark); margin-left: 4px; }
+    .sf-txt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 16px; align-items: start; }
+    @media (max-width: 900px) { .sf-txt-grid { grid-template-columns: 1fr; } }
+    .sf-txt-item { padding: 9px 0; border-bottom: 1px solid var(--beige-mid); font-size: 13px; line-height: 1.55; color: var(--charcoal); }
+    .sf-txt-item:last-child { border-bottom: none; }
+    .sf-txt-meta { font-family: var(--font-condensed); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid-gray); margin-top: 3px; }
+    .sf-card-hl { border-left: 4px solid var(--green-dark); }
+    .sf-empty { padding: 56px 20px; text-align: center; color: var(--mid-gray); font-family: var(--font-condensed); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; background: var(--white); border: 1px dashed var(--sand); border-radius: var(--radius-md); line-height: 2; }
+  </style>
+  <div class="panel" id="panel-satisfacao">
+    <div class="panel-head">
+      <div class="panel-title">Satisfação · questionário</div>
+      <div class="panel-sub"><span id="sf-sub">—</span> · <a href="#" onclick="renderSatisfacao(true); return false;" style="color:var(--green-dark);">↻ atualizar</a></div>
+    </div>
+    <div id="sf-body"><div class="sf-empty">A carregar respostas…</div></div>
+  </div>
+
   <div class="panel" id="panel-historico">
     <div class="panel-head">
       <div class="panel-title">Histórico</div>
@@ -2011,6 +2057,7 @@ function showTab(id){
   if (id === 'entregaveis') { renderEntregaveis(); }
   if (id === 'financas') { renderFinancas(); }
   if (id === 'plano2027') { renderPlano2027(); }
+  if (id === 'satisfacao') { renderSatisfacao(); }
 }
 // Fecha o menu "⋯" se clicar fora
 document.addEventListener('click', e => {
@@ -5148,6 +5195,251 @@ function abrirAtletaNaLista(id){
     const row = document.querySelector(`tr[data-id="${id}"]`);
     if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 80);
+}
+
+// ============ SATISFAÇÃO · análise do questionário ============
+let sfCache = null;
+let sfLoading = false;
+
+const SF_RATINGS = [
+  { key: 'insc_processo',      label: 'Facilidade de inscrição',     fase: 'Fase 1 · Inscrição & comunicação' },
+  { key: 'insc_clareza',       label: 'Clareza da informação',       fase: 'Fase 1 · Inscrição & comunicação' },
+  { key: 'insc_comunicacao',   label: 'Comunicação por email',       fase: 'Fase 1 · Inscrição & comunicação' },
+  { key: 'log_checkin',        label: 'Check-in e levantamento',     fase: 'Fase 2 · Organização & confiança' },
+  { key: 'log_informado',      label: 'Informação durante a semana', fase: 'Fase 2 · Organização & confiança' },
+  { key: 'log_seguranca',      label: 'Segurança e acompanhamento',  fase: 'Fase 2 · Organização & confiança' },
+  { key: 'log_qualidade_preco',label: 'Relação qualidade / preço',   fase: 'Fase 2 · Organização & confiança' },
+  { key: 'campo_treinos',      label: 'Treinos',                     fase: 'Fase 3 · No campo (com o atleta)' },
+  { key: 'campo_treinadores',  label: 'Treinadores',                 fase: 'Fase 3 · No campo (com o atleta)' },
+  { key: 'campo_alimentacao',  label: 'Alimentação',                 fase: 'Fase 3 · No campo (com o atleta)' },
+  { key: 'campo_instalacoes',  label: 'Instalações e alojamento',    fase: 'Fase 3 · No campo (com o atleta)' },
+  { key: 'campo_ambiente',     label: 'Ambiente e convívio',         fase: 'Fase 3 · No campo (com o atleta)' }
+];
+const SF_TEXTS = [
+  { key: 'mudar_uma_coisa', title: '«Se pudéssemos mudar UMA coisa» — o plano de melhorias', hl: true },
+  { key: 'menos_gostou',    title: 'O que menos gostaram (fase com o atleta)' },
+  { key: 'mais_gostou',     title: 'O que mais gostaram (fase com o atleta)' },
+  { key: 'insc_melhorar',   title: 'A melhorar antes do campo (inscrição/comunicação)' }
+];
+const SF_VOLTA_OPTS = ['Sim, já é certo', 'Provavelmente', 'Ainda não sabemos', 'Não'];
+
+function sfNum(v){
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+function sfFmt1(v){ return v.toFixed(1).replace('.', ','); }
+function sfColor(avg){
+  if (avg >= 4)   return 'var(--green-dark)';
+  if (avg >= 3.2) return '#b8860b';
+  return 'var(--orange-accent)';
+}
+
+// Calcula todas as estatísticas de uma vez a partir das respostas cruas.
+function sfStats(rows){
+  const S = { n: rows.length, ratings: [], allVals: [] };
+  SF_RATINGS.forEach(q => {
+    const vals = rows.map(r => sfNum(r[q.key])).filter(v => v !== null && v >= 1 && v <= 5);
+    const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    S.ratings.push({ key: q.key, label: q.label, fase: q.fase, n: vals.length, avg });
+    S.allVals.push(...vals);
+  });
+  S.mediaGlobal = S.allVals.length ? S.allVals.reduce((a, b) => a + b, 0) / S.allVals.length : null;
+  // NPS
+  const npsVals = rows.map(r => sfNum(r.nps)).filter(v => v !== null && v >= 0 && v <= 10);
+  S.npsN = npsVals.length;
+  S.prom = npsVals.filter(v => v >= 9).length;
+  S.detr = npsVals.filter(v => v <= 6).length;
+  S.pass = S.npsN - S.prom - S.detr;
+  S.nps = S.npsN ? Math.round(((S.prom - S.detr) / S.npsN) * 100) : null;
+  // Voltam?
+  S.volta = {};
+  SF_VOLTA_OPTS.forEach(o => { S.volta[o] = 0; });
+  let voltaN = 0;
+  rows.forEach(r => {
+    const v = String(r.volta || '').trim();
+    if (!v) return;
+    if (S.volta[v] === undefined) S.volta[v] = 0;
+    S.volta[v]++; voltaN++;
+  });
+  S.voltaN = voltaN;
+  S.voltaPos = voltaN ? Math.round(((S.volta['Sim, já é certo'] || 0) + (S.volta['Provavelmente'] || 0)) / voltaN * 100) : null;
+  // Treinadores em destaque (texto livre ou chips separados por vírgula)
+  S.treinadores = {};
+  rows.forEach(r => {
+    String(r.treinadores_destaque || '').split(/[,;]/).map(s => s.trim()).filter(Boolean)
+      .forEach(nome => {
+        const k = nome.toLowerCase();
+        if (!S.treinadores[k]) S.treinadores[k] = { nome, count: 0 };
+        S.treinadores[k].count++;
+      });
+  });
+  // Duração média (só quem demorou > 10s, para excluir testes)
+  const dur = rows.map(r => sfNum(r.duracao_seg)).filter(v => v && v > 10);
+  S.durMedia = dur.length ? Math.round(dur.reduce((a, b) => a + b, 0) / dur.length) : null;
+  // Taxa de resposta vs famílias ativas (emails únicos)
+  S.familias = new Set((data || []).filter(r => r.ativo && r.email_enc).map(r => String(r.email_enc).trim().toLowerCase())).size;
+  S.taxa = S.familias ? Math.round(S.n / S.familias * 100) : null;
+  return S;
+}
+
+// Bullets da "Leitura rápida" — a análise já feita, só para ler.
+function sfInsights(S){
+  const out = [];
+  const comN = S.ratings.filter(r => r.n > 0);
+  if (S.taxa !== null) {
+    out.push(`<b>${S.n}</b> resposta${S.n === 1 ? '' : 's'} de ~${S.familias} famílias (<b>${S.taxa}%</b>)` +
+      (S.taxa < 30 ? ' — vale a pena reenviar o email a quem ainda não respondeu' : ''));
+  }
+  if (S.nps !== null) {
+    const t = S.nps >= 70 ? 'excelente' : S.nps >= 50 ? 'muito bom' : S.nps >= 0 ? 'positivo, com margem para crescer' : 'negativo — atenção';
+    out.push(`NPS <b>${S.nps}</b> (${t}): ${S.prom} promotor${S.prom === 1 ? '' : 'es'}, ${S.pass} neutro${S.pass === 1 ? '' : 's'}, ${S.detr} detrator${S.detr === 1 ? '' : 'es'}`);
+  }
+  const sorted = comN.filter(r => r.avg !== null).sort((a, b) => b.avg - a.avg);
+  if (sorted.length >= 2) {
+    out.push('Pontos mais fortes: ' + sorted.slice(0, 2).map(r => `<b>${escHtml(r.label)}</b> (${sfFmt1(r.avg)})`).join(' · '));
+    const lows = sorted.slice(-2).reverse().filter(r => r.avg < 4.3);
+    if (lows.length) out.push('A trabalhar para a próxima edição: ' + lows.map(r => `<b>${escHtml(r.label)}</b> (${sfFmt1(r.avg)})`).join(' · '));
+  }
+  if (S.voltaPos !== null) out.push(`<b>${S.voltaPos}%</b> contam voltar (sim + provavelmente)`);
+  const nMudar = sfCache.filter(r => String(r.mudar_uma_coisa || '').trim()).length;
+  if (nMudar) out.push(`<b>${nMudar}</b> ${nMudar === 1 ? 'sugestão concreta' : 'sugestões concretas'} em «mudar uma coisa» — é aí que está o plano de melhorias (lista em baixo)`);
+  if (S.durMedia) out.push(`Tempo médio de resposta: <b>${Math.floor(S.durMedia / 60)}m${String(S.durMedia % 60).padStart(2, '0')}s</b> — o formato por fases está a funcionar`);
+  return out;
+}
+
+async function renderSatisfacao(force){
+  const body = document.getElementById('sf-body');
+  if (!body) return;
+  if (!sfCache || force) {
+    if (sfLoading) return;
+    sfLoading = true;
+    body.innerHTML = '<div class="sf-empty">A carregar respostas…</div>';
+    try {
+      sfCache = await Api.satisfacao_list();
+    } catch (e) {
+      sfLoading = false;
+      const msg = /unknown action/i.test(e.message)
+        ? 'O backend ainda não tem a versão nova — cola o CFT_All.gs atualizado no Apps Script e faz «Nova versão».'
+        : escHtml(e.message);
+      body.innerHTML = `<div class="sf-empty">Erro a carregar respostas<br><span style="text-transform:none;letter-spacing:0;">${msg}</span><br><br><button class="quick-template" onclick="renderSatisfacao(true)">↻ tentar de novo</button></div>`;
+      return;
+    }
+    sfLoading = false;
+  }
+  const rows = sfCache || [];
+  const sub = document.getElementById('sf-sub');
+  if (sub) sub.textContent = rows.length + ' resposta' + (rows.length === 1 ? '' : 's');
+  if (rows.length === 0) {
+    body.innerHTML = `<div class="sf-empty">Ainda sem respostas ao questionário.<br>
+      <span style="text-transform:none;letter-spacing:0;">Envia o email «Agradecimento + questionário» na Lista — as respostas aparecem aqui automaticamente.</span></div>`;
+    return;
+  }
+  const S = sfStats(rows);
+
+  // KPIs
+  const kpis = `<div class="kpi-row">
+    <div class="kpi kpi--hero">
+      <div class="kpi-label">NPS · recomendariam?</div>
+      <div class="kpi-num">${S.nps === null ? '—' : S.nps}</div>
+      <div class="kpi-sub">${S.npsN} resposta${S.npsN === 1 ? '' : 's'} · ${S.prom} promotor${S.prom === 1 ? '' : 'es'} · ${S.detr} detrator${S.detr === 1 ? '' : 'es'}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Respostas</div>
+      <div class="kpi-num">${S.n}${S.taxa !== null ? `<span class="pct">${S.taxa}%</span>` : ''}</div>
+      <div class="kpi-sub">de ~${S.familias} famílias com email</div>
+      ${S.taxa !== null ? `<div class="kpi-bar"><div class="kpi-bar-fill" style="width:${Math.min(100, S.taxa)}%"></div></div>` : ''}
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Média global</div>
+      <div class="kpi-num">${S.mediaGlobal === null ? '—' : sfFmt1(S.mediaGlobal)}<span class="small"> / 5</span></div>
+      <div class="kpi-sub">todas as avaliações 1–5</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Contam voltar</div>
+      <div class="kpi-num">${S.voltaPos === null ? '—' : S.voltaPos + '%'}</div>
+      <div class="kpi-sub">sim + provavelmente (${S.voltaN} resposta${S.voltaN === 1 ? '' : 's'})</div>
+    </div>
+  </div>`;
+
+  // Leitura rápida
+  const insights = sfInsights(S);
+  const leitura = insights.length ? `<div class="sf-read">
+    <div class="sf-read-title">Leitura rápida — a análise já feita</div>
+    <ul>${insights.map(i => `<li>${i}</li>`).join('')}</ul>
+  </div>` : '';
+
+  // Barras por pergunta, agrupadas por fase
+  let fases = '';
+  let faseAtual = '';
+  S.ratings.forEach(r => {
+    if (r.fase !== faseAtual) {
+      faseAtual = r.fase;
+      fases += `<div class="sf-fase-title">${escHtml(r.fase)}</div>`;
+    }
+    const avg = r.avg;
+    fases += `<div class="sf-q">
+      <div class="sf-q-label">${escHtml(r.label)}</div>
+      <div class="sf-q-bar"><div class="sf-q-fill" style="width:${avg === null ? 0 : (avg / 5 * 100)}%;background:${avg === null ? 'transparent' : sfColor(avg)};"></div></div>
+      <div class="sf-q-val" style="color:${avg === null ? 'var(--mid-gray)' : sfColor(avg)};">${avg === null ? '—' : sfFmt1(avg)}</div>
+      <div class="sf-q-n">n=${r.n}</div>
+    </div>`;
+  });
+
+  // NPS breakdown + voltam + treinadores
+  const npsPct = (x) => S.npsN ? (x / S.npsN * 100) : 0;
+  const npsCard = `<div class="card">
+    <div class="card-head"><div class="card-title">Recomendação (0–10)</div><div class="card-meta">${S.npsN} resposta${S.npsN === 1 ? '' : 's'}</div></div>
+    <div class="sf-npsbar">
+      <div style="width:${npsPct(S.detr)}%;background:var(--orange-accent);"></div>
+      <div style="width:${npsPct(S.pass)}%;background:var(--sand);"></div>
+      <div style="width:${npsPct(S.prom)}%;background:var(--green-dark);"></div>
+    </div>
+    <div class="sf-legend">
+      <span><span class="sf-dot" style="background:var(--green-dark);"></span>promotores (9–10) <b>${S.prom}</b></span>
+      <span><span class="sf-dot" style="background:var(--sand);"></span>neutros (7–8) <b>${S.pass}</b></span>
+      <span><span class="sf-dot" style="background:var(--orange-accent);"></span>detratores (0–6) <b>${S.detr}</b></span>
+    </div>
+  </div>`;
+  const voltaMax = Math.max(1, ...Object.values(S.volta));
+  const voltaCard = `<div class="card" style="margin-top:14px;">
+    <div class="card-head"><div class="card-title">Voltam na próxima edição?</div><div class="card-meta">${S.voltaN} resposta${S.voltaN === 1 ? '' : 's'}</div></div>
+    ${Object.keys(S.volta).map(o => `<div class="sf-volta-row">
+      <div class="sf-volta-lbl">${escHtml(o)}</div>
+      <div class="sf-q-bar"><div class="sf-q-fill" style="width:${S.volta[o] / voltaMax * 100}%;background:${o === 'Não' ? 'var(--orange-accent)' : o === 'Ainda não sabemos' ? 'var(--sand)' : 'var(--green-dark)'};"></div></div>
+      <div class="sf-volta-n">${S.volta[o]}</div>
+    </div>`).join('')}
+  </div>`;
+  const treinList = Object.values(S.treinadores).sort((a, b) => b.count - a.count);
+  const treinCard = treinList.length ? `<div class="card" style="margin-top:14px;">
+    <div class="card-head"><div class="card-title">Treinadores em destaque</div><div class="card-meta">mencionados pelos atletas</div></div>
+    <div class="sf-chips">${treinList.map(t => `<span class="sf-chip">${escHtml(t.nome)}<b>×${t.count}</b></span>`).join('')}</div>
+  </div>` : '';
+
+  // Respostas de texto
+  const fmtDia = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('pt-PT'); };
+  const txtCards = SF_TEXTS.map(t => {
+    const items = rows
+      .map(r => ({ txt: String(r[t.key] || '').trim(), atleta: String(r.atleta || '').trim(), ts: r.timestamp }))
+      .filter(x => x.txt);
+    if (!items.length) return '';
+    return `<div class="card${t.hl ? ' sf-card-hl' : ''}">
+      <div class="card-head"><div class="card-title">${escHtml(t.title)}</div><div class="card-meta">${items.length}</div></div>
+      ${items.map(x => `<div class="sf-txt-item">«${escHtml(x.txt)}»
+        <div class="sf-txt-meta">${x.atleta ? escHtml(x.atleta) : 'anónimo'}${x.ts ? ' · ' + fmtDia(x.ts) : ''}</div>
+      </div>`).join('')}
+    </div>`;
+  }).filter(Boolean).join('');
+
+  body.innerHTML = kpis + leitura + `
+    <div class="sf-grid">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Avaliações por pergunta (1–5)</div><div class="card-meta">verde ≥4 · amarelo ≥3,2 · laranja &lt;3,2</div></div>
+        ${fases}
+      </div>
+      <div>${npsCard}${voltaCard}${treinCard}</div>
+    </div>
+    ${txtCards ? `<div class="sf-txt-grid">${txtCards}</div>` : ''}`;
 }
 
 function renderAll(){

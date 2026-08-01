@@ -69,6 +69,7 @@ function handle_(e, method) {
       case 'despesa_delete':   result = Despesas.remove(params.id); break;
       case 'despesa_import':   result = Despesas.importBulk(params.items, user); break;
       case 'fin_setMargem':    result = Despesas.setMargem(params.valor, user); break;
+      case 'satisfacao_list':  result = Satisfacao.list(); break;
       default: throw new Error('Unknown action: ' + action);
     }
     return json_({ ok: true, user: user, data: result });

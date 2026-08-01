@@ -177,7 +177,8 @@
     despesa_add(categoria, descricao, valor, semana) { return this._call('despesa_add', { categoria, descricao, valor, semana }); },
     despesa_delete(id)               { return this._call('despesa_delete', { id }); },
     despesa_import(items)            { return this._call('despesa_import', { items }); },
-    fin_setMargem(valor)             { return this._call('fin_setMargem',  { valor }); }
+    fin_setMargem(valor)             { return this._call('fin_setMargem',  { valor }); },
+    satisfacao_list()                { return this._call('satisfacao_list'); }
   };
 
   window.Api = Api;

@@ -69,6 +69,26 @@ const Satisfacao = {
     return String(v).slice(0, 1000).trim();
   },
 
+  // Lê todas as respostas (para o separador Satisfação do Dashboard).
+  // Requer token de admin — só a submissão é pública.
+  list() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sh = ss.getSheetByName(this.SHEET_NAME);
+    if (!sh || sh.getLastRow() < 2) return [];
+    const nCols = sh.getLastColumn();
+    const headers = sh.getRange(1, 1, 1, nCols).getValues()[0].map(h => String(h || '').trim());
+    const values = sh.getRange(2, 1, sh.getLastRow() - 1, nCols).getValues();
+    return values.map(row => {
+      const o = {};
+      headers.forEach((h, i) => {
+        if (!h) return;
+        const v = row[i];
+        o[h] = (v instanceof Date) ? v.toISOString() : v;
+      });
+      return o;
+    });
+  },
+
   submit(params) {
     // Honeypot: bots preenchem o campo escondido — finge sucesso e descarta.
     if (String(params.website || '').trim() !== '') return { recebido: true };

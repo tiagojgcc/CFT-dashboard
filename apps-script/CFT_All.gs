@@ -69,6 +69,7 @@ function handle_(e, method) {
       case 'despesa_delete':   result = Despesas.remove(params.id); break;
       case 'despesa_import':   result = Despesas.importBulk(params.items, user); break;
       case 'fin_setMargem':    result = Despesas.setMargem(params.valor, user); break;
+      case 'satisfacao_list':  result = Satisfacao.list(); break;
       default: throw new Error('Unknown action: ' + action);
     }
     return json_({ ok: true, user: user, data: result });
@@ -3853,6 +3854,26 @@ const Satisfacao = {
       return (Number.isFinite(n) && n >= 0 && n <= 10) ? Math.round(n) : '';
     }
     return String(v).slice(0, 1000).trim();
+  },
+
+  // Lê todas as respostas (para o separador Satisfação do Dashboard).
+  // Requer token de admin — só a submissão é pública.
+  list() {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sh = ss.getSheetByName(this.SHEET_NAME);
+    if (!sh || sh.getLastRow() < 2) return [];
+    const nCols = sh.getLastColumn();
+    const headers = sh.getRange(1, 1, 1, nCols).getValues()[0].map(h => String(h || '').trim());
+    const values = sh.getRange(2, 1, sh.getLastRow() - 1, nCols).getValues();
+    return values.map(row => {
+      const o = {};
+      headers.forEach((h, i) => {
+        if (!h) return;
+        const v = row[i];
+        o[h] = (v instanceof Date) ? v.toISOString() : v;
+      });
+      return o;
+    });
   },
 
   submit(params) {
