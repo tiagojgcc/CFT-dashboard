@@ -2608,6 +2608,18 @@ function updateEmailField(id, field, value){
   // Não re-rendariza — preserva focus do input/textarea
 }
 
+// O questionário de satisfação vive no mesmo site que o Dashboard, por isso
+// o link deriva-se do próprio origin — não é preciso configurar survey_url
+// na Config (que continua a funcionar como fallback no backend).
+function _surveyOverrides(r){
+  if (!/^https?:/.test(location.origin)) return null;  // file:// em testes locais
+  const base = location.origin + '/questionario.html';
+  const o = { survey_url: base };
+  if (r) o.survey_link = base + '?atleta=' + encodeURIComponent(r.nome || '') +
+    '&clube=' + encodeURIComponent(r.clube || '') + '&ref=email';
+  return o;
+}
+
 async function submitEmailFromPanel(id){
   const r = data.find(x => x.id === id);
   if (!r) return;
@@ -2616,6 +2628,9 @@ async function submitEmailFromPanel(id){
   const opt = EMAIL_PANEL_TEMPLATES.find(o => o.kind === st.kind);
   if (!opt) return;
   let overrides = null;
+  if (opt.kind === 'agradecimento') {
+    overrides = _surveyOverrides(r);
+  }
   if (opt.kind === 'generico') {
     const subject = String(st.subject || '').trim();
     const body = String(st.body || '').trim();
@@ -4945,7 +4960,7 @@ async function enviarAgradecimentoBulk(){
   if (!confirm(`Vai criar 1 único rascunho "Agradecimento + questionário de satisfação" com ${nEmails} email${nEmails === 1 ? '' : 's'} em BCC (${elegiveis.length} atletas ativos). Continuar?`)) return;
   toast('A criar rascunho único (BCC)…');
   try {
-    const res = await Api.createBulkEmailDraft(elegiveis.map(r => r.id), 'agradecimento');
+    const res = await Api.createBulkEmailDraft(elegiveis.map(r => r.id), 'agradecimento', _surveyOverrides(null));
     toast(`Rascunho criado · ${res.count} destinatário${res.count === 1 ? '' : 's'} em BCC`);
     window.open(res.url, '_blank');
     setTimeout(() => { try { refreshNow(); } catch(_) {} }, 700);

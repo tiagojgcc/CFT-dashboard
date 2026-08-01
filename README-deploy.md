@@ -250,11 +250,11 @@ O questionário vive em [`questionario.html`](questionario.html) (deploy junto c
 
 1. **Apps Script**: cola o novo ficheiro `Satisfacao.gs` (ou usa o `CFT_All.gs` atualizado) e o `Code.gs`/`EmailTemplates.gs`/`EmailDraft.gs` atualizados → **Deploy → Manage deployments → New version**.
 2. **Netlify**: volta a arrastar a pasta (agora com `questionario.html`).
-3. **Config do Sheet** (opcional mas recomendado):
+3. **Config do Sheet** — **opcional**: o Dashboard deriva o link do questionário automaticamente do próprio site (mesmo origin), por isso não é preciso configurar nada. Estas chaves existem só como afinação:
 
    | key | value | para quê |
    |---|---|---|
-   | `survey_url` | `https://<site>.netlify.app/questionario.html` | link usado no email de agradecimento |
+   | `survey_url` | `https://<site>.netlify.app/questionario.html` | fallback do link (só usado se o draft for criado fora do Dashboard) |
    | `survey_edicao` | `CFT 2026` | edição mostrada no email/header (ex.: "CFT 2026 · OBRIGADO") |
 
 4. **No topo do `questionario.html`**: confirma o `API_URL` (é o mesmo `/exec` do Dashboard) e, se quiseres chips clicáveis na pergunta "que treinador te marcou pela positiva", preenche `TREINADORES: ['Nome1', 'Nome2', …]` — vazio mostra campo de texto livre.
