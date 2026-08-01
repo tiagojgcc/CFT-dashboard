@@ -95,7 +95,7 @@ const EmailDraft = {
     // Questionário de satisfação (template agradecimento):
     //   survey_url  — base configurável na aba Config (key survey_url)
     //   survey_link — com nome/clube pré-preenchidos para reduzir fricção
-    const surveyBase = String(Config.get('survey_url') || 'https://cft-dashboard.netlify.app/questionario.html');
+    const surveyBase = String(Config.get('survey_url') || 'https://tiagojgcc.github.io/CFT-dashboard/questionario.html');
     data.survey_url = surveyBase;
     data.survey_link = surveyBase
       + (surveyBase.indexOf('?') === -1 ? '?' : '&')

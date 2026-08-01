@@ -244,17 +244,17 @@ Checklist mínimo no UI:
 
 ## Questionário de satisfação (pós-edição)
 
-O questionário vive em [`questionario.html`](questionario.html) (deploy junto com o Dashboard no Netlify) e as respostas caem na aba **`Satisfacao`** do Sheet (criada automaticamente na 1ª submissão). A submissão usa a action pública `survey_submit` do mesmo endpoint `/exec` — **não precisa de login** (protecção: honeypot + sanitização; nunca expõe dados, só recebe).
+O questionário vive em [`questionario.html`](questionario.html) — servido pelo **GitHub Pages** junto com o Dashboard (o site publica automaticamente a partir do branch `main`, em `https://tiagojgcc.github.io/CFT-dashboard/questionario.html`). As respostas caem na aba **`Satisfacao`** do Sheet (criada automaticamente na 1ª submissão). A submissão usa a action pública `survey_submit` do mesmo endpoint `/exec` — **não precisa de login** (protecção: honeypot + sanitização; nunca expõe dados, só recebe).
 
 **Para pôr a funcionar:**
 
-1. **Apps Script**: cola o novo ficheiro `Satisfacao.gs` (ou usa o `CFT_All.gs` atualizado) e o `Code.gs`/`EmailTemplates.gs`/`EmailDraft.gs` atualizados → **Deploy → Manage deployments → New version**.
-2. **Netlify**: volta a arrastar a pasta (agora com `questionario.html`).
-3. **Config do Sheet** — **opcional**: o Dashboard deriva o link do questionário automaticamente do próprio site (mesmo origin), por isso não é preciso configurar nada. Estas chaves existem só como afinação:
+1. **Frontend**: automático — assim que o código chega ao `main`, o GitHub Pages publica sozinho (1-2 min).
+2. **Apps Script** (único passo manual): cola o novo ficheiro `Satisfacao.gs` e o `Code.gs`/`EmailTemplates.gs`/`EmailDraft.gs` atualizados → **Deploy → Manage deployments → ✏️ → New version → Deploy**.
+3. **Config do Sheet** — **opcional**: o Dashboard deriva o link do questionário automaticamente do próprio site, por isso não é preciso configurar nada. Estas chaves existem só como afinação:
 
    | key | value | para quê |
    |---|---|---|
-   | `survey_url` | `https://<site>.netlify.app/questionario.html` | fallback do link (só usado se o draft for criado fora do Dashboard) |
+   | `survey_url` | `https://tiagojgcc.github.io/CFT-dashboard/questionario.html` | fallback do link (só usado se o draft for criado fora do Dashboard) |
    | `survey_edicao` | `CFT 2026` | edição mostrada no email/header (ex.: "CFT 2026 · OBRIGADO") |
 
 4. **No topo do `questionario.html`**: confirma o `API_URL` (é o mesmo `/exec` do Dashboard) e, se quiseres chips clicáveis na pergunta "que treinador te marcou pela positiva", preenche `TREINADORES: ['Nome1', 'Nome2', …]` — vazio mostra campo de texto livre.

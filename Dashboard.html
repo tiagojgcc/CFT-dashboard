@@ -2612,8 +2612,10 @@ function updateEmailField(id, field, value){
 // o link deriva-se do próprio origin — não é preciso configurar survey_url
 // na Config (que continua a funcionar como fallback no backend).
 function _surveyOverrides(r){
-  if (!/^https?:/.test(location.origin)) return null;  // file:// em testes locais
-  const base = location.origin + '/questionario.html';
+  if (!/^https?:/.test(location.protocol)) return null;  // file:// em testes locais
+  // Resolve relativo à página do Dashboard (não ao origin) — o GitHub Pages
+  // serve o site numa subpasta (tiagojgcc.github.io/CFT-dashboard/).
+  const base = new URL('questionario.html', location.href).href;
   const o = { survey_url: base };
   if (r) o.survey_link = base + '?atleta=' + encodeURIComponent(r.nome || '') +
     '&clube=' + encodeURIComponent(r.clube || '') + '&ref=email';
