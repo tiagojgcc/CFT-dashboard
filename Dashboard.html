@@ -1194,7 +1194,16 @@
   .nav-banco:hover { border-color:var(--sand-dark); }
   .nav-banco .nb-lbl { font-family:var(--font-condensed); font-size:9.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--mid-gray); }
   .nav-banco b { font-family:var(--font-display); font-size:17px; color:var(--charcoal); font-weight:400; }
-  @media (max-width: 720px) { .nav-banco .nb-lbl { display:none; } .nav-editions { margin-right:8px; } }
+  @media (max-width: 720px) {
+    .nav-banco .nb-lbl { display:none; }
+    .nav-editions { margin-right:8px; }
+    /* Mobile: a barra desliza lateralmente em vez de cortar o último item
+       (chip da conta). Scrollbar escondida — arrasta-se com o dedo. */
+    .nav-inner { overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:0 14px; }
+    .nav-inner::-webkit-scrollbar { display:none; }
+    .nav-inner > * { flex-shrink:0; }
+    .tab { padding:11px 12px 9px; }
+  }
 </style>
 <nav class="nav">
   <div class="nav-inner">
@@ -5347,7 +5356,7 @@ async function renderSatisfacao(force){
     <div class="kpi">
       <div class="kpi-label">Respostas</div>
       <div class="kpi-num">${S.n}${S.taxa !== null ? `<span class="pct">${S.taxa}%</span>` : ''}</div>
-      <div class="kpi-sub">de ~${S.familias} famílias com email</div>
+      <div class="kpi-sub">${S.familias ? `de ~${S.familias} famílias com email` : 'taxa de resposta: a calcular…'}</div>
       ${S.taxa !== null ? `<div class="kpi-bar"><div class="kpi-bar-fill" style="width:${Math.min(100, S.taxa)}%"></div></div>` : ''}
     </div>
     <div class="kpi">
@@ -5457,6 +5466,10 @@ function renderAll(){
   updateToolbarHeight();
   const finPanel = document.getElementById('panel-financas');
   if (finPanel && finPanel.classList.contains('active')) renderFinancas();
+  // Se o separador Satisfação estiver aberto, recalcula os KPIs que dependem
+  // dos atletas (taxa de resposta) agora que `data` está carregado.
+  const sfPanel = document.getElementById('panel-satisfacao');
+  if (sfPanel && sfPanel.classList.contains('active') && sfCache) renderSatisfacao();
 }
 
 // Mede a altura efectiva da appbar e da toolbar (inclui margin-bottom) e expõe
