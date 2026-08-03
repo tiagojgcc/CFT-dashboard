@@ -1203,6 +1203,8 @@
     .nav-inner::-webkit-scrollbar { display:none; }
     .nav-inner > * { flex-shrink:0; }
     .tab { padding:11px 12px 9px; }
+    /* itens do menu ⋯ maiores para dedo */
+    .nav-more-menu .more-item { padding:15px 18px; font-size:13.5px; }
   }
 </style>
 <nav class="nav">
@@ -2085,14 +2087,23 @@ function toggleMoreMenu(){
   const toggle = document.querySelector('.nav-more-toggle');
   if (!menu) return;
   const willOpen = !menu.classList.contains('open');
-  if (willOpen && toggle) {
-    const r = toggle.getBoundingClientRect();
+  if (willOpen) {
     menu.style.position = 'fixed';
-    menu.style.top = Math.round(r.bottom) + 'px';
-    menu.style.right = Math.max(8, Math.round(window.innerWidth - r.right)) + 'px';
-    menu.style.left = 'auto';
-    menu.style.zIndex = '999';
-    menu.style.borderRadius = '6px';
+    menu.style.zIndex = '9999';
+    menu.style.borderRadius = '8px';
+    if (window.innerWidth <= 720) {
+      // Mobile: folha centrada no ecrã — imune a scroll/zoom/overflow da barra.
+      menu.style.top = '110px';
+      menu.style.left = '16px';
+      menu.style.right = '16px';
+      menu.style.boxShadow = '0 12px 40px rgba(0,0,0,0.45)';
+    } else if (toggle) {
+      const r = toggle.getBoundingClientRect();
+      menu.style.top = Math.round(r.bottom) + 'px';
+      menu.style.right = Math.max(8, Math.round(window.innerWidth - r.right)) + 'px';
+      menu.style.left = 'auto';
+      menu.style.boxShadow = '';
+    }
   }
   menu.classList.toggle('open');
 }
