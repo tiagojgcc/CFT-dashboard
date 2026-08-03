@@ -1216,7 +1216,7 @@
     <div class="tab ed-26" data-panel="list">Lista <span class="tab-count warn" id="tc-list">0</span></div>
     <div class="tab" data-panel="satisfacao">Satisfação</div>
     <div class="nav-more ed-26">
-      <div class="tab nav-more-toggle" onclick="document.getElementById('nav-more-menu').classList.toggle('open')">⋯</div>
+      <div class="tab nav-more-toggle" onclick="toggleMoreMenu()">⋯</div>
       <div class="nav-more-menu" id="nav-more-menu">
         <div class="more-item" data-panel="banco"        onclick="showTab('banco'); document.getElementById('nav-more-menu').classList.remove('open');">Banco <span class="tab-count" id="tc-banco">0</span></div>
         <div class="more-item" data-panel="entregaveis"  onclick="showTab('entregaveis'); document.getElementById('nav-more-menu').classList.remove('open');">Entregáveis</div>
@@ -2076,6 +2076,25 @@ function showTab(id){
   if (id === 'financas') { renderFinancas(); }
   if (id === 'plano2027') { renderPlano2027(); }
   if (id === 'satisfacao') { renderSatisfacao(); }
+}
+// Abre/fecha o menu "⋯". Posicionado como fixed (por cima de tudo): a
+// .nav-inner tem overflow-x:auto em mobile, o que cortaria um dropdown
+// posicionado com absolute dentro dela.
+function toggleMoreMenu(){
+  const menu = document.getElementById('nav-more-menu');
+  const toggle = document.querySelector('.nav-more-toggle');
+  if (!menu) return;
+  const willOpen = !menu.classList.contains('open');
+  if (willOpen && toggle) {
+    const r = toggle.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = Math.round(r.bottom) + 'px';
+    menu.style.right = Math.max(8, Math.round(window.innerWidth - r.right)) + 'px';
+    menu.style.left = 'auto';
+    menu.style.zIndex = '999';
+    menu.style.borderRadius = '6px';
+  }
+  menu.classList.toggle('open');
 }
 // Fecha o menu "⋯" se clicar fora
 document.addEventListener('click', e => {
