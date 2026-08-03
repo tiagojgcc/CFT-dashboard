@@ -1397,6 +1397,15 @@
     .sf-txt-meta { font-family: var(--font-condensed); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid-gray); margin-top: 3px; }
     .sf-card-hl { border-left: 4px solid var(--green-dark); }
     .sf-empty { padding: 56px 20px; text-align: center; color: var(--mid-gray); font-family: var(--font-condensed); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; background: var(--white); border: 1px dashed var(--sand); border-radius: var(--radius-md); line-height: 2; }
+    /* Mobile: os títulos dos cartões desta tab podem ser longos — têm de
+       poder quebrar linha (o .card-title global usa nowrap e empurrava o
+       cartão para fora do ecrã). min-width:0 impede as colunas de grid de
+       crescerem para lá do contentor. */
+    #panel-satisfacao .card-title { white-space: normal; line-height: 1.35; }
+    #panel-satisfacao .card-head { flex-wrap: wrap; }
+    .sf-grid > *, .sf-txt-grid > * { min-width: 0; }
+    .sf-txt-item { overflow-wrap: anywhere; }
+    .sf-read li { overflow-wrap: anywhere; }
   </style>
   <div class="panel" id="panel-satisfacao">
     <div class="panel-head">
