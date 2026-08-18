@@ -1332,6 +1332,7 @@
         <button class="quick-template" id="promo-desconto-btn" onclick="promoverDescontoClube()" title="Envia rascunho branded a atletas internos cujo clube tem 1-7 atletas (potencial desconto se chegarem a 8). Pode incluir já-pagos.">📢 Promover desconto de clube</button>
         <button class="quick-template" id="info-finais-btn" onclick="enviarInfoFinaisBulk()" title="Cria 1 único rascunho no Gmail com o email 'Informações finais' e todos os encarregados (atletas ativos com email) em BCC — mesma mensagem para todos, sem personalização.">✉ Informações finais · todos em BCC</button>
         <button class="quick-template" id="agradecimento-btn" onclick="enviarAgradecimentoBulk()" title="Cria 1 único rascunho no Gmail 'Agradecimento + questionário de satisfação' com todos os encarregados (atletas ativos com email) em BCC. O link do questionário vai sem pré-preenchimento.">🙏 Agradecimento + questionário · todos em BCC</button>
+        <button class="quick-template" id="lembrete-questionario-btn" onclick="enviarLembreteQuestionarioBulk()" title="Cria 1 único rascunho no Gmail 'Lembrete questionário' em BCC, excluindo quem se identificou na resposta. Quem respondeu em anónimo volta a receber — o email pede desculpa e diz para não responder outra vez.">🔁 Lembrete questionário · quem não se identificou</button>
       </div>
     </div>
 
@@ -1967,7 +1968,8 @@ const TEMPLATE_LABELS = {
   avisoPrazo:       'Aviso prazo',
   infoPraticas:     'Info práticas',
   confirmacao:      'Confirmação',
-  agradecimento:    'Agradecimento + questionário'
+  agradecimento:    'Agradecimento + questionário',
+  lembreteQuestionario: 'Lembrete questionário'
 };
 // Categoria do template para efeitos de "este pill já foi enviado".
 // Permite saber se a pill "Problema pagamento" do painel já foi disparada
@@ -1984,7 +1986,9 @@ const TEMPLATE_KIND = {
   avisoPrazo:       'problema',
   infoPraticas:     'prePampus',
   confirmacao:      'boasVindas',
-  agradecimento:    'agradecimento'
+  agradecimento:    'agradecimento',
+  // Categoria própria: o lembrete é um 2º toque, não substitui o agradecimento.
+  lembreteQuestionario: 'lembreteQuestionario'
 };
 
 // Lista cronológica (mais recente primeiro) de eventos de email para 1 atleta.
@@ -2685,7 +2689,9 @@ const EMAIL_PANEL_TEMPLATES = [
   { kind: 'prePampus',   label: 'Informações finais',   tpl: 'prePampus',
     hint: 'Email logístico antes do início: datas, check-in, horários, o que trazer, contacto.' },
   { kind: 'agradecimento', label: 'Agradecimento + questionário', tpl: 'agradecimento',
-    hint: 'Obrigado pós-edição + link para o questionário de satisfação (a fase «No campo» responde-se em conjunto com o atleta).' }
+    hint: 'Obrigado pós-edição + link para o questionário de satisfação (a fase «No campo» responde-se em conjunto com o atleta).' },
+  { kind: 'lembreteQuestionario', label: 'Lembrete questionário', tpl: 'lembreteQuestionario',
+    hint: 'Segundo toque, dias depois do agradecimento: pede desculpa por insistir e diz a quem já respondeu para não responder outra vez.' }
 ];
 
 function getEmailPanelState(id){
@@ -2725,7 +2731,7 @@ async function submitEmailFromPanel(id){
   const opt = EMAIL_PANEL_TEMPLATES.find(o => o.kind === st.kind);
   if (!opt) return;
   let overrides = null;
-  if (opt.kind === 'agradecimento') {
+  if (opt.kind === 'agradecimento' || opt.kind === 'lembreteQuestionario') {
     overrides = _surveyOverrides(r);
   }
   if (opt.kind === 'generico') {
@@ -5058,6 +5064,82 @@ async function enviarAgradecimentoBulk(){
   toast('A criar rascunho único (BCC)…');
   try {
     const res = await Api.createBulkEmailDraft(elegiveis.map(r => r.id), 'agradecimento', _surveyOverrides(null));
+    toast(`Rascunho criado · ${res.count} destinatário${res.count === 1 ? '' : 's'} em BCC`);
+    window.open(res.url, '_blank');
+    setTimeout(() => { try { refreshNow(); } catch(_) {} }, 700);
+  } catch (e) {
+    toast('Falha a criar rascunho: ' + e.message, true);
+  }
+}
+
+// ---- Quem se identificou no questionário --------------------------------
+// A identificação no questionário é opcional e escrita à mão ("Rita Costa"
+// para "Rita Oliveira Costa"), por isso o cruzamento é por tokens: o nome
+// dado tem de estar todo contido no nome inscrito. Falha para o lado seguro —
+// um nome ambíguo ou inexistente não exclui ninguém, porque mandar o lembrete
+// a quem já respondeu custa um pedido de desculpa (que o email já traz) e não
+// o mandar a quem falta custa a resposta.
+function _sfTok(s){
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/[^a-z ]/g, ' ').split(/\s+/).filter(t => t.length >= 3);
+}
+// Igual, ou a uma letra de distância em palavras longas — apanha as gralhas
+// da inscrição ("Rodigo" no Sheet vs "Rodrigo" escrito pelo pai).
+function _sfPerto(a, b){
+  if (a === b) return true;
+  if (a.length < 5 || b.length < 5 || Math.abs(a.length - b.length) > 1) return false;
+  let i = 0, j = 0, dif = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++dif > 1) return false;
+    if (a.length > b.length) i++; else if (b.length > a.length) j++; else { i++; j++; }
+  }
+  return dif + (a.length - i) + (b.length - j) <= 1;
+}
+function atletasQueSeIdentificaram(respostas){
+  const roster = data.map(r => ({ id: r.id, nomeToks: _sfTok(r.nome), clubeToks: _sfTok(r.clube) }));
+  const ids = new Set();
+  (respostas || []).forEach(x => {
+    const t = _sfTok(x.atleta);
+    if (t.length < 2) return;                       // só o primeiro nome não chega
+    let hits = roster.filter(a => t.every(q => a.nomeToks.some(w => _sfPerto(q, w))));
+    if (hits.length > 1) {                          // dois "Tiago Silva" — desempata o clube
+      const c = _sfTok(x.clube);
+      if (!c.length) return;
+      const score = a => a.clubeToks.filter(w => c.some(q => _sfPerto(q, w))).length;
+      const max = Math.max.apply(null, hits.map(score));
+      if (!max) return;
+      hits = hits.filter(a => score(a) === max);
+    }
+    if (hits.length === 1) ids.add(hits[0].id);
+  });
+  return ids;
+}
+
+// Cria UM rascunho "Lembrete questionário" em BCC para todos menos quem se
+// identificou na resposta. A exclusão é por email do encarregado, não por
+// atleta: se um irmão já foi identificado, a casa não volta a ser incomodada.
+async function enviarLembreteQuestionarioBulk(){
+  const ativos = data.filter(r => r.ativo && r.email_enc);
+  if (ativos.length === 0) { toast('Nenhum atleta ativo com email', true); return; }
+  if (!sfCache) {
+    toast('A ler as respostas do questionário…');
+    try { sfCache = await Api.satisfacao_list(); }
+    catch (e) { toast('Falha a ler as respostas: ' + e.message, true); return; }
+  }
+  const idsResp = atletasQueSeIdentificaram(sfCache);
+  const emailsResp = new Set(ativos.filter(r => idsResp.has(r.id))
+    .map(r => String(r.email_enc).trim().toLowerCase()));
+  const elegiveis = ativos.filter(r => !emailsResp.has(String(r.email_enc).trim().toLowerCase()));
+  if (elegiveis.length === 0) { toast('Toda a gente já se identificou nas respostas', true); return; }
+  const nEmails = new Set(elegiveis.map(r => String(r.email_enc).trim().toLowerCase())).size;
+  const nResp = (sfCache || []).length;
+  if (!confirm(`Vai criar 1 único rascunho "Lembrete questionário" com ${nEmails} email${nEmails === 1 ? '' : 's'} em BCC (${elegiveis.length} atletas).\n\n` +
+               `Excluídos ${emailsResp.size} encarregados que se identificaram na resposta, de ${nResp} respostas recebidas. ` +
+               `Quem respondeu sem se identificar volta a receber — o email pede desculpa e diz para não responder outra vez.\n\nContinuar?`)) return;
+  toast('A criar rascunho único (BCC)…');
+  try {
+    const res = await Api.createBulkEmailDraft(elegiveis.map(r => r.id), 'lembreteQuestionario', _surveyOverrides(null));
     toast(`Rascunho criado · ${res.count} destinatário${res.count === 1 ? '' : 's'} em BCC`);
     window.open(res.url, '_blank');
     setTimeout(() => { try { refreshNow(); } catch(_) {} }, 700);

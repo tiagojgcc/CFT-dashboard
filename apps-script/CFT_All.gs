@@ -3350,6 +3350,56 @@ const EmailTemplates = {
     return { subject, html: this._wrap(body, headerEd) };
   },
 
+  // Lembrete do questionário de satisfação, enviado dias depois do
+  // `agradecimento` a toda a gente menos quem se identificou na resposta.
+  // Como a identificação no questionário é opcional, há sempre quem receba
+  // isto já tendo respondido — daí o pedido de desculpa e o «não precisa de
+  // fazer nada» logo no topo, antes do pedido em si.
+  lembreteQuestionario(data) {
+    const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
+    const hasName = !!String(data.atleta || '').trim();
+    const surveyLink = data.survey_link || data.survey_url || '#';
+    const edicao = data.edicao_curta ? `o ${this._esc(data.edicao_curta)}` : 'a edição deste ano';
+    const subject = `CFT · Desculpe insistir — faltam-nos 3 minutos`;
+    const cond = `font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-weight:700;text-transform:uppercase;`;
+    const body = `
+      <div style="padding:48px 40px 24px 40px;">
+        ${this._over('Questionário de satisfação', C.greenDark)}
+        ${this._display('Um último\npedido.')}
+      </div>
+      <div style="padding:0 40px 20px 40px;">
+        ${this._greeting(ee, data)}
+        ${this._para(`Desculpe voltar a incomodar. Há duas semanas pedimos-lhe 3 minutos para nos dizer como correu ${edicao}, e estamos a insistir uma última vez — é destas respostas que sai a próxima edição.`)}
+      </div>
+      <div style="margin:0 40px 24px 40px;background:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};padding:16px 22px;">
+        <div style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:14px;color:${C.charcoal};line-height:1.55;"><b>Se já respondeu, não precisa de fazer nada.</b></div>
+      </div>
+      <div style="padding:0 40px 24px 40px;">
+        ${this._para(`Se ainda não respondeu: são <b>4 fases curtas</b>, menos de <b>3 minutos</b>, e nenhuma pergunta é obrigatória.`)}
+      </div>
+      <div style="margin:0 40px;background:${C.greenDark};padding:28px 30px;">
+        <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenBright};margin-bottom:10px;">Questionário de satisfação</div>
+        <p style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:14px;color:rgba(255,255,255,0.9);line-height:1.6;margin:0 0 18px 0;">4 fases curtas · menos de 3 minutos · respostas confidenciais</p>
+        <a href="${surveyLink}" style="display:inline-block;text-decoration:none;background:${C.white};color:${C.greenDark};${cond}font-size:15px;letter-spacing:0.18em;padding:15px 26px;">Responder agora →</a>
+      </div>
+      <div style="margin:20px 40px 0 40px;background:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};padding:16px 22px;">
+        <div style="${cond}font-size:11px;letter-spacing:0.22em;color:${C.orange};margin-bottom:4px;">Respondam a meias</div>
+        <div style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:14px;color:${C.charcoal};line-height:1.55;">A fase <b>«No campo»</b> é sobre os treinos, os treinadores e a vida no campus — como os pais não estiveram lá dentro, pedimos que essa parte seja respondida <b>em conjunto com ${hasName ? `${a.oA} ${this._esc(this.firstName(data.atleta))}` : 'o vosso atleta'}</b>.</div>
+      </div>
+      <div style="padding:24px 40px 8px 40px;">
+        ${this._para(`As respostas servem exclusivamente para melhorarmos a próxima edição, e são lidas uma a uma. A crítica sincera vale-nos mais do que o elogio simpático.`)}
+        ${this._para(`Prometemos que é a última vez que falamos disto.`)}
+      </div>
+      <div style="padding:8px 40px 16px 40px;">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Obrigado,</div>
+      </div>`;
+    // Header com a edição que terminou (ex.: "CFT 2026 · OBRIGADO"), não a próxima.
+    const headerEd = data.edicao_curta ? (this._esc(data.edicao_curta).toUpperCase() + ' · OBRIGADO') : null;
+    return { subject, html: this._wrap(body, headerEd) };
+  },
+
   // ============ Entry point: render template by name ============
   render(templateName, data) {
     const fn = this[templateName];
