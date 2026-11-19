@@ -907,6 +907,48 @@ const EmailTemplates = {
     return { subject, html: this._wrap(body, headerEd) };
   },
 
+  // 11. Inscrição recebida pelo site — enviado automaticamente logo após a
+  //     inscrição (InscricaoSite). Resumo com o valor, o sinal e o prazo.
+  inscricaoRecebida(data) {
+    const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
+    const subject = `CFT 2027 · Inscrição recebida · ${data.atleta || ''}`.trim();
+    const mono = (s) => `<span style="font-family:ui-monospace,Menlo,monospace;">${s}</span>`;
+    const rows = [
+      ['Atleta', this._esc(data.atleta)],
+      ['Semanas', this._esc(data.semanas)],
+      ['Opção', this._esc(data.opcao)],
+      ['Valor total', `<b>${this._esc(data.total)}</b>${data.desconto ? ' <span style="color:' + C.midGray + ';">(com desconto)</span>' : ''}`],
+      ['Sinal', `${this._esc(data.sinal)} <span style="color:${C.midGray};">para garantir o lugar</span>`],
+      ['Resto', `${this._esc(data.resto)} <span style="color:${C.midGray};">até 21 de junho de 2027</span>`],
+      ['Comprovativo', data.comprovativo ? 'Recebido' : '<b>Em falta</b>'],
+      ['IBAN', mono(this.IBAN_CFT)]
+    ];
+    const body = `
+      <div style="padding:48px 40px 24px 40px;">
+        ${this._over('Inscrição recebida', C.greenDark)}
+        ${this._display(a.benvindo === 'bem-vinda' ? 'Bem-vinda\nao CFT 2027.' : 'Bem-vindo\nao CFT 2027.')}
+      </div>
+      <div style="padding:0 40px 24px 40px;">
+        ${this._greeting(ee, data)}
+        ${this._para(`Recebemos a inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no <b>CFT 2027 · 5ª edição</b>, em Ponte da Barca. Obrigado pela confiança!`)}
+        ${this._para(data.comprovativo
+          ? `Recebemos também o comprovativo da transferência. Assim que confirmarmos o valor na conta, enviamos outro email e o lugar fica garantido.`
+          : `Ainda não recebemos o comprovativo da transferência. O lugar só fica garantido depois do pagamento do sinal ou do valor total. Basta responder a este email com o comprovativo.`)}
+      </div>
+      ${this._infoBox(rows, 'Resumo da inscrição')}
+      <div style="padding:24px 40px 8px 40px;">
+        ${this._para(`Se pagou só o sinal, o resto (<b>${this._esc(data.resto)}</b>) é pago até <b>21 de junho de 2027</b>, por transferência para o mesmo IBAN, com o nome ${a.doA} atleta na descrição.`)}
+        ${this._para(`O sinal não é devolvido em caso de desistência. O resto é devolvido a quem desistir até 21 de junho; depois dessa data, só com atestado médico.`)}
+        ${this._para(`Mais perto do campo enviamos as informações práticas. Qualquer dúvida, basta responder a este email.`)}
+      </div>
+      <div style="padding:8px 40px 16px 40px;">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Até breve,</div>
+      </div>`;
+    return { subject, html: this._wrap(body) };
+  },
+
   // ============ Entry point: render template by name ============
   render(templateName, data) {
     const fn = this[templateName];

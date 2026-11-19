@@ -3421,6 +3421,48 @@ const EmailTemplates = {
     return { subject, html: this._wrap(body, headerEd) };
   },
 
+  // 11. Inscrição recebida pelo site — enviado automaticamente logo após a
+  //     inscrição (InscricaoSite). Resumo com o valor, o sinal e o prazo.
+  inscricaoRecebida(data) {
+    const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
+    const subject = `CFT 2027 · Inscrição recebida · ${data.atleta || ''}`.trim();
+    const mono = (s) => `<span style="font-family:ui-monospace,Menlo,monospace;">${s}</span>`;
+    const rows = [
+      ['Atleta', this._esc(data.atleta)],
+      ['Semanas', this._esc(data.semanas)],
+      ['Opção', this._esc(data.opcao)],
+      ['Valor total', `<b>${this._esc(data.total)}</b>${data.desconto ? ' <span style="color:' + C.midGray + ';">(com desconto)</span>' : ''}`],
+      ['Sinal', `${this._esc(data.sinal)} <span style="color:${C.midGray};">para garantir o lugar</span>`],
+      ['Resto', `${this._esc(data.resto)} <span style="color:${C.midGray};">até 21 de junho de 2027</span>`],
+      ['Comprovativo', data.comprovativo ? 'Recebido' : '<b>Em falta</b>'],
+      ['IBAN', mono(this.IBAN_CFT)]
+    ];
+    const body = `
+      <div style="padding:48px 40px 24px 40px;">
+        ${this._over('Inscrição recebida', C.greenDark)}
+        ${this._display(a.benvindo === 'bem-vinda' ? 'Bem-vinda\nao CFT 2027.' : 'Bem-vindo\nao CFT 2027.')}
+      </div>
+      <div style="padding:0 40px 24px 40px;">
+        ${this._greeting(ee, data)}
+        ${this._para(`Recebemos a inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no <b>CFT 2027 · 5ª edição</b>, em Ponte da Barca. Obrigado pela confiança!`)}
+        ${this._para(data.comprovativo
+          ? `Recebemos também o comprovativo da transferência. Assim que confirmarmos o valor na conta, enviamos outro email e o lugar fica garantido.`
+          : `Ainda não recebemos o comprovativo da transferência. O lugar só fica garantido depois do pagamento do sinal ou do valor total. Basta responder a este email com o comprovativo.`)}
+      </div>
+      ${this._infoBox(rows, 'Resumo da inscrição')}
+      <div style="padding:24px 40px 8px 40px;">
+        ${this._para(`Se pagou só o sinal, o resto (<b>${this._esc(data.resto)}</b>) é pago até <b>21 de junho de 2027</b>, por transferência para o mesmo IBAN, com o nome ${a.doA} atleta na descrição.`)}
+        ${this._para(`O sinal não é devolvido em caso de desistência. O resto é devolvido a quem desistir até 21 de junho; depois dessa data, só com atestado médico.`)}
+        ${this._para(`Mais perto do campo enviamos as informações práticas. Qualquer dúvida, basta responder a este email.`)}
+      </div>
+      <div style="padding:8px 40px 16px 40px;">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Até breve,</div>
+      </div>`;
+    return { subject, html: this._wrap(body) };
+  },
+
   // ============ Entry point: render template by name ============
   render(templateName, data) {
     const fn = this[templateName];
@@ -4081,7 +4123,56 @@ const InscricaoSite = {
 
     // 3. Mesmo processamento do trigger do Form
     const id = processFormRow_(row);
-    return { recebido: true, id: id || null, comprovativo: !!comprovativoUrl };
+
+    // 4. Irmão declarado no site: marca o desconto (o admin pode desligar no Dashboard)
+    if (id && String(r.irmao) === 'Sim') {
+      try { Inscricoes.toggleIrmao(id, true, 'site'); } catch (e) { Logger.log('irmão falhou: ' + e.message); }
+    }
+    // 5. Email automático de confirmação (não bloqueia a inscrição se falhar)
+    let email = 'nao_enviado';
+    try { email = this.enviarConfirmacao_(r, id, !!comprovativoUrl); } catch (e) { Logger.log('Email confirmação falhou: ' + e.message); }
+    return { recebido: true, id: id || null, comprovativo: !!comprovativoUrl, email: email };
+  },
+
+  // Email automático "Inscrição recebida". Desliga-se pondo email_auto_inscricao = nao no Config.
+  enviarConfirmacao_(r, id, temComprovativo) {
+    const flag = String(Config.get('email_auto_inscricao') || 'sim').trim().toLowerCase();
+    if (flag === 'nao' || flag === 'não' || flag === 'false') return 'desligado';
+    const to = String(r.email_ee || '').trim();
+    if (!to) return 'sem email';
+    const atleta = {
+      timestamp_inscricao: new Date(), opcao_inscricao: r.opcao, semanas_atuais: r.semanas,
+      irmao_desconto: String(r.irmao) === 'Sim', clube: r.clube
+    };
+    const p = Pricing.calc(atleta, {});
+    const eur = (n) => (Number(n) || 0) + ' €';
+    const data = {
+      atleta: String(r.atleta || ''), ee_nome: EmailTemplates.shortName(r.encarregado || ''),
+      gen_atleta: EmailTemplates.guessGender(r.atleta || ''), gen_ee: EmailTemplates.guessGender(r.encarregado || ''),
+      semanas: String(r.semanas || ''), opcao: String(r.opcao || ''),
+      total: eur(p.prontoTotal), sinal: eur(p.prest1), resto: eur(p.prest2), desconto: !!p.desc,
+      comprovativo: !!temComprovativo
+    };
+    const { subject, html } = EmailTemplates.render('inscricaoRecebida', data);
+    const plain = EmailDraft._plainFallback(html);
+    const nl = '\r\n', wrap = (b64) => b64.replace(/(.{76})/g, '$1\r\n');
+    const boundary = 'cft_' + Utilities.getUuid().replace(/-/g, '');
+    const mime =
+      'From: =?UTF-8?B?' + Utilities.base64Encode('CFT · Campo de Formação Técnica', Utilities.Charset.UTF_8) + '?= <geral@camposft.com>' + nl +
+      'To: ' + to.replace(/[\r\n,;<>]/g, '') + nl +
+      'Subject: =?UTF-8?B?' + Utilities.base64Encode(subject, Utilities.Charset.UTF_8) + '?=' + nl +
+      'MIME-Version: 1.0' + nl +
+      'Content-Type: multipart/alternative; boundary="' + boundary + '"' + nl + nl +
+      '--' + boundary + nl + 'Content-Type: text/plain; charset=UTF-8' + nl + 'Content-Transfer-Encoding: base64' + nl + nl +
+      wrap(Utilities.base64Encode(plain, Utilities.Charset.UTF_8)) + nl +
+      '--' + boundary + nl + 'Content-Type: text/html; charset=UTF-8' + nl + 'Content-Transfer-Encoding: base64' + nl + nl +
+      wrap(Utilities.base64Encode(html, Utilities.Charset.UTF_8)) + nl +
+      '--' + boundary + '--';
+    Gmail.Users.Messages.send({ raw: Utilities.base64EncodeWebSafe(mime) }, 'me');
+    try {
+      Emails.log({ template: 'inscricaoRecebida', assunto: subject, corpo: '', destinatarios: [to], ids_atletas: id ? [id] : [] }, 'site');
+    } catch (e) { Logger.log('Emails.log falhou: ' + e.message); }
+    return 'enviado';
   },
 
   clean_(v, type) {

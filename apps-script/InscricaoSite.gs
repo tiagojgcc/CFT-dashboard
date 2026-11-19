@@ -103,7 +103,56 @@ const InscricaoSite = {
 
     // 3. Mesmo processamento do trigger do Form
     const id = processFormRow_(row);
-    return { recebido: true, id: id || null, comprovativo: !!comprovativoUrl };
+
+    // 4. Irmão declarado no site: marca o desconto (o admin pode desligar no Dashboard)
+    if (id && String(r.irmao) === 'Sim') {
+      try { Inscricoes.toggleIrmao(id, true, 'site'); } catch (e) { Logger.log('irmão falhou: ' + e.message); }
+    }
+    // 5. Email automático de confirmação (não bloqueia a inscrição se falhar)
+    let email = 'nao_enviado';
+    try { email = this.enviarConfirmacao_(r, id, !!comprovativoUrl); } catch (e) { Logger.log('Email confirmação falhou: ' + e.message); }
+    return { recebido: true, id: id || null, comprovativo: !!comprovativoUrl, email: email };
+  },
+
+  // Email automático "Inscrição recebida". Desliga-se pondo email_auto_inscricao = nao no Config.
+  enviarConfirmacao_(r, id, temComprovativo) {
+    const flag = String(Config.get('email_auto_inscricao') || 'sim').trim().toLowerCase();
+    if (flag === 'nao' || flag === 'não' || flag === 'false') return 'desligado';
+    const to = String(r.email_ee || '').trim();
+    if (!to) return 'sem email';
+    const atleta = {
+      timestamp_inscricao: new Date(), opcao_inscricao: r.opcao, semanas_atuais: r.semanas,
+      irmao_desconto: String(r.irmao) === 'Sim', clube: r.clube
+    };
+    const p = Pricing.calc(atleta, {});
+    const eur = (n) => (Number(n) || 0) + ' €';
+    const data = {
+      atleta: String(r.atleta || ''), ee_nome: EmailTemplates.shortName(r.encarregado || ''),
+      gen_atleta: EmailTemplates.guessGender(r.atleta || ''), gen_ee: EmailTemplates.guessGender(r.encarregado || ''),
+      semanas: String(r.semanas || ''), opcao: String(r.opcao || ''),
+      total: eur(p.prontoTotal), sinal: eur(p.prest1), resto: eur(p.prest2), desconto: !!p.desc,
+      comprovativo: !!temComprovativo
+    };
+    const { subject, html } = EmailTemplates.render('inscricaoRecebida', data);
+    const plain = EmailDraft._plainFallback(html);
+    const nl = '\r\n', wrap = (b64) => b64.replace(/(.{76})/g, '$1\r\n');
+    const boundary = 'cft_' + Utilities.getUuid().replace(/-/g, '');
+    const mime =
+      'From: =?UTF-8?B?' + Utilities.base64Encode('CFT · Campo de Formação Técnica', Utilities.Charset.UTF_8) + '?= <geral@camposft.com>' + nl +
+      'To: ' + to.replace(/[\r\n,;<>]/g, '') + nl +
+      'Subject: =?UTF-8?B?' + Utilities.base64Encode(subject, Utilities.Charset.UTF_8) + '?=' + nl +
+      'MIME-Version: 1.0' + nl +
+      'Content-Type: multipart/alternative; boundary="' + boundary + '"' + nl + nl +
+      '--' + boundary + nl + 'Content-Type: text/plain; charset=UTF-8' + nl + 'Content-Transfer-Encoding: base64' + nl + nl +
+      wrap(Utilities.base64Encode(plain, Utilities.Charset.UTF_8)) + nl +
+      '--' + boundary + nl + 'Content-Type: text/html; charset=UTF-8' + nl + 'Content-Transfer-Encoding: base64' + nl + nl +
+      wrap(Utilities.base64Encode(html, Utilities.Charset.UTF_8)) + nl +
+      '--' + boundary + '--';
+    Gmail.Users.Messages.send({ raw: Utilities.base64EncodeWebSafe(mime) }, 'me');
+    try {
+      Emails.log({ template: 'inscricaoRecebida', assunto: subject, corpo: '', destinatarios: [to], ids_atletas: id ? [id] : [] }, 'site');
+    } catch (e) { Logger.log('Emails.log falhou: ' + e.message); }
+    return 'enviado';
   },
 
   clean_(v, type) {
