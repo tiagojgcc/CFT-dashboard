@@ -1,18 +1,21 @@
 /**
- * Lógica de preços CFT 2026.
+ * Lógica de preços CFT 2027 (5ª edição).
  *
- * Externo: 275 € por semana, fixo.
- * Interno + inscrição até 31 mar:
- *    pronto: 330 (s/desc) | 295 (c/desc)
- *    prestações: 375 total (s/desc) | 330 total (c/desc) — 120 + (255 ou 210)
- * Interno + inscrição depois de 31 mar:
- *    pronto obrigatório: 375 (s/desc) | 330 (c/desc)
+ * O preço depende só da data de inscrição (não de como se paga):
+ *   Interno, inscrição até 31 mar:   350 € / semana (310 € com desconto)
+ *   Interno, inscrição depois:       395 € / semana (350 € com desconto)
+ *   Externo:                         290 € / semana
+ * Pagamento: tudo de uma vez, OU sinal de 130 € por semana + resto até 21/6.
+ * O total é o mesmo nas duas formas. O sinal não é devolvido.
  *
- * Desconto se: irmao_desconto = TRUE  OU  nSem >= 2  OU  clube_inscricoes >= 8.
+ * Desconto (não acumula) se: irmao_desconto = TRUE  OU  nSem >= 2  OU  clube_inscricoes >= 8
+ * OU desconto_outro_motivo preenchido (exceção acordada Tiago+Miguel).
  *
  * Classificação a partir de valor_pago: o admin tipa o valor depois de ver o
- * comprovativo; o sistema classifica em pago / parcial_1 / parcial_2 / valor_errado.
+ * comprovativo; o sistema classifica em pago / parcial_1 (sinal) / parcial_2 / valor_errado.
  */
+const PRECOS_2027 = { cedo: 350, cedoDesc: 310, tarde: 395, tardeDesc: 350, externo: 290, sinal: 130 };
+
 const Pricing = {
   parseSems(s) {
     if (s === null || s === undefined) return [];
@@ -48,34 +51,32 @@ const Pricing = {
   },
 
   isBeforeCutoff(timestamp) {
-    const raw = Config.get('cutoff_desconto') || '2026-03-31';
+    const raw = Config.get('cutoff_desconto') || '2027-03-31';
     let cutoff;
     if (raw instanceof Date) {
       cutoff = new Date(raw.getFullYear(), raw.getMonth(), raw.getDate(), 23, 59, 59);
     } else {
       cutoff = new Date(String(raw) + 'T23:59:59');
     }
-    if (isNaN(cutoff.getTime())) cutoff = new Date('2026-03-31T23:59:59');
+    if (isNaN(cutoff.getTime())) cutoff = new Date('2027-03-31T23:59:59');
     return new Date(timestamp) <= cutoff;
   },
 
   calc(atleta, clubeCounts) {
+    const P = PRECOS_2027;
     const nSem = this.parseSems(atleta.semanas_atuais).length;
     if (nSem === 0) {
       return { tipo: 'sem_semanas', desc: false, prontoTotal: 0, prestTotal: null, prest1: null, prest2: null, nSem: 0 };
     }
-    if (this.isExterno(atleta.opcao_inscricao)) {
-      return { tipo: 'externo', desc: false, prontoTotal: 275 * nSem, prestTotal: null, prest1: null, prest2: null, nSem };
-    }
-    const desc = this.hasDesconto(atleta, clubeCounts);
+    const externo = this.isExterno(atleta.opcao_inscricao);
+    const desc = externo ? false : this.hasDesconto(atleta, clubeCounts);
     const before = this.isBeforeCutoff(atleta.timestamp_inscricao);
-    const prontoPS = before ? (desc ? 295 : 330) : (desc ? 330 : 375);
-    const prestPS  = before ? (desc ? 330 : 375) : null;
-    const prontoTotal = prontoPS * nSem;
-    const prestTotal  = prestPS ? prestPS * nSem : null;
-    const prest1 = prestTotal !== null ? 120 * nSem : null;
-    const prest2 = prestTotal !== null ? prestTotal - prest1 : null;
-    return { tipo: 'interno', desc, before, prontoTotal, prestTotal, prest1, prest2, nSem };
+    const porSemana = externo ? P.externo : (before ? (desc ? P.cedoDesc : P.cedo) : (desc ? P.tardeDesc : P.tarde));
+    const total = porSemana * nSem;
+    // Mesmo total com ou sem sinal: prestTotal = prontoTotal.
+    const prest1 = Math.min(P.sinal * nSem, total);
+    const prest2 = total - prest1;
+    return { tipo: externo ? 'externo' : 'interno', desc, before, porSemana, prontoTotal: total, prestTotal: total, prest1, prest2, nSem };
   },
 
   classify(atleta, valorPago, clubeCounts) {
@@ -95,22 +96,12 @@ const Pricing = {
     }
     if (p.tipo === 'sem_semanas') return { estado: 'sem_semanas', regime: null, devido: 0, falta: 0, info: p };
     if (v === 0) return { estado: 'pendente', regime: null, devido: p.prontoTotal, falta: p.prontoTotal, info: p };
-    if (p.tipo === 'externo') {
-      if (v === p.prontoTotal) return { estado: 'pago', regime: 'externo', devido: p.prontoTotal, falta: 0, info: p };
-      // Sobrepagou (ex.: marcado externo mas pagou valor de interno) → a_devolver
-      if (v > p.prontoTotal) return { estado: 'a_devolver', regime: null, devido: p.prontoTotal, sobra: v - p.prontoTotal, falta: 0, info: p };
-      return { estado: 'valor_errado', regime: 'externo', devido: p.prontoTotal, falta: p.prontoTotal - v, info: p };
-    }
     if (v === p.prontoTotal) return { estado: 'pago', regime: 'pronto', devido: p.prontoTotal, falta: 0, info: p };
-    if (p.prestTotal !== null) {
-      if (v === p.prestTotal) return { estado: 'pago', regime: 'prestacoes', devido: p.prestTotal, falta: 0, info: p };
-      if (v === p.prest1)     return { estado: 'parcial_1', regime: 'prestacoes', devido: p.prestTotal, falta: p.prest2, info: p };
-      if (v === p.prest2)     return { estado: 'parcial_2', regime: 'prestacoes', devido: p.prestTotal, falta: p.prest1, info: p };
-    }
-    // Sobrepagou: pago > maior valor possível esperado → "a devolver"
-    const maxExpected = Math.max(p.prontoTotal, p.prestTotal || 0);
-    if (v > maxExpected) {
-      return { estado: 'a_devolver', regime: null, devido: maxExpected, sobra: v - maxExpected, falta: 0, info: p };
+    if (v === p.prest1) return { estado: 'parcial_1', regime: 'prestacoes', devido: p.prestTotal, falta: p.prest2, info: p };
+    if (v === p.prest2) return { estado: 'parcial_2', regime: 'prestacoes', devido: p.prestTotal, falta: p.prest1, info: p };
+    // Sobrepagou → "a devolver"
+    if (v > p.prontoTotal) {
+      return { estado: 'a_devolver', regime: null, devido: p.prontoTotal, sobra: v - p.prontoTotal, falta: 0, info: p };
     }
     return { estado: 'valor_errado', regime: null, devido: p.prontoTotal, falta: p.prontoTotal - v, info: p };
   }
