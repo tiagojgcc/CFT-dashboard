@@ -46,7 +46,8 @@ const EmailDraft = {
     const nSem = info.nSem || 0;
     if (nSem === 0) return null;
     // 2027: o preço com desconto depende só da data de inscrição (mesmo total com ou sem sinal).
-    const total = (info.before ? PRECOS_2027.cedoDesc : PRECOS_2027.tardeDesc) * nSem;
+    const esc = info.escalao || PRECOS_2027.escaloes[PRECOS_2027.escaloes.length - 1];
+    const total = esc.desc * nSem;
     return { pronto: total, prest: total };
   },
 
