@@ -934,7 +934,7 @@ const EmailTemplates = {
         ${this._greeting(ee, data)}
         ${this._para(`Recebemos a inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no <b>CFT 2027 · 5ª edição</b>, em Ponte da Barca. Obrigado pela confiança!`)}
         ${this._para(data.comprovativo
-          ? `Recebemos também o comprovativo da transferência. Assim que confirmarmos o valor na conta, enviamos outro email e o lugar fica garantido.`
+          ? `Recebemos também o comprovativo da transferência.`
           : `Ainda não recebemos o comprovativo da transferência. O lugar só fica garantido depois do pagamento do sinal ou do valor total. Basta responder a este email com o comprovativo.`)}
       </div>
       ${this._infoBox(rows, 'Resumo da inscrição')}
