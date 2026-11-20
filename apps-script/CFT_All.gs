@@ -25,6 +25,9 @@ function handle_(e, method) {
     if (action === 'inscricao_submit') {
       return json_({ ok: true, data: InscricaoSite.submit(params) });
     }
+    if (action === 'clube_contagem') {
+      return json_({ ok: true, data: InscricaoSite.clubeContagem(params.clube) });
+    }
 
     const user = Auth.verify(params.token);
 
@@ -3427,34 +3430,34 @@ const EmailTemplates = {
     const C = this.C;
     const a = this.G_atl(data);
     const ee = this.G_ee(data);
-    const subject = `CFT 2027 · Inscrição recebida · ${data.atleta || ''}`.trim();
+    const sinal = data.pagamento === 'sinal';
+    const subject = `CFT 2027 · Inscrição feita · ${data.atleta || ''}`.trim();
     const mono = (s) => `<span style="font-family:ui-monospace,Menlo,monospace;">${s}</span>`;
+    const cinza = (s) => ` <span style="color:${C.midGray};">${s}</span>`;
     const rows = [
       ['Atleta', this._esc(data.atleta)],
       ['Semanas', this._esc(data.semanas)],
       ['Opção', this._esc(data.opcao)],
-      ['Valor total', `<b>${this._esc(data.total)}</b>${data.desconto ? ' <span style="color:' + C.midGray + ';">(com desconto)</span>' : ''}`],
-      ['Sinal', `${this._esc(data.sinal)} <span style="color:${C.midGray};">para garantir o lugar</span>`],
-      ['Resto', `${this._esc(data.resto)} <span style="color:${C.midGray};">até 21 de junho de 2027</span>`],
-      ['Comprovativo', data.comprovativo ? 'Recebido' : '<b>Em falta</b>'],
-      ['IBAN', mono(this.IBAN_CFT)]
+      ['Valor total', `<b>${this._esc(data.total)}</b>${data.desconto ? cinza('(com desconto)') : ''}`],
+      ['Pago agora', sinal ? `${this._esc(data.sinal)}${cinza('(sinal)')}` : `${this._esc(data.total)}${cinza('(totalidade)')}`]
     ];
+    if (sinal) rows.push(['Falta pagar', `<b>${this._esc(data.resto)}</b>${cinza('até 21 de junho de 2027')}`]);
+    rows.push(['IBAN', mono(this.IBAN_CFT)]);
     const body = `
       <div style="padding:48px 40px 24px 40px;">
-        ${this._over('Inscrição recebida', C.greenDark)}
+        ${this._over('Inscrição feita', C.greenDark)}
         ${this._display(a.benvindo === 'bem-vinda' ? 'Bem-vinda\nao CFT 2027.' : 'Bem-vindo\nao CFT 2027.')}
       </div>
       <div style="padding:0 40px 24px 40px;">
         ${this._greeting(ee, data)}
-        ${this._para(`Recebemos a inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no <b>CFT 2027 · 5ª edição</b>, em Ponte da Barca. Obrigado pela confiança!`)}
-        ${this._para(data.comprovativo
-          ? `Recebemos também o comprovativo da transferência.`
-          : `Ainda não recebemos o comprovativo da transferência. O lugar só fica garantido depois do pagamento do sinal ou do valor total. Basta responder a este email com o comprovativo.`)}
+        ${this._para(`A inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no <b>CFT 2027 · 5ª edição</b>, em Ponte da Barca, está feita. Obrigado pela confiança!`)}
+        ${this._para(`Recebemos o comprovativo da transferência. Só voltamos a contactar se houver algum problema com o pagamento.`)}
       </div>
       ${this._infoBox(rows, 'Resumo da inscrição')}
       <div style="padding:24px 40px 8px 40px;">
-        ${this._para(`Se pagou só o sinal, o resto (<b>${this._esc(data.resto)}</b>) é pago até <b>21 de junho de 2027</b>, por transferência para o mesmo IBAN, com o nome ${a.doA} atleta na descrição.`)}
-        ${this._para(`O sinal não é devolvido em caso de desistência. O resto é devolvido a quem desistir até 21 de junho; depois dessa data, só com atestado médico.`)}
+        ${sinal ? this._para(`O resto (<b>${this._esc(data.resto)}</b>) é pago até <b>21 de junho de 2027</b>, por transferência para o mesmo IBAN, com o nome ${a.doA} atleta na descrição. Perto da data enviamos um lembrete.`) : ''}
+        ${this._para(`Se o clube ${a.doA} atleta chegar a 8 inscritos, o desconto de clube é descontado no valor que falta pagar ou devolvido para o IBAN indicado na inscrição.`)}
+        ${this._para(`O sinal não é devolvido em caso de desistência. O resto é devolvido a quem desistir até 21 de junho; depois dessa data, só com atestado médico. As restantes regras estão no <a href="https://camposft.com/regulamento.html" style="color:${C.greenDark};">regulamento</a>.`)}
         ${this._para(`Mais perto do campo enviamos as informações práticas. Qualquer dúvida, basta responder a este email.`)}
       </div>
       <div style="padding:8px 40px 16px 40px;">
@@ -4123,12 +4126,17 @@ const InscricaoSite = {
 
     // 3. Mesmo processamento do trigger do Form
     const id = processFormRow_(row);
+    try { CacheService.getScriptCache().remove('clube_counts'); } catch (e) {}
 
     // 4. Irmão declarado no site: marca o desconto (o admin pode desligar no Dashboard)
     if (id && String(r.irmao) === 'Sim') {
       try { Inscricoes.toggleIrmao(id, true, 'site'); } catch (e) { Logger.log('irmão falhou: ' + e.message); }
     }
-    // 5. Email automático de confirmação (não bloqueia a inscrição se falhar)
+    // 5. Forma de pagamento escolhida no site fica como nota no Dashboard
+    if (id && r.pagamento) {
+      try { Inscricoes.addNota(id, 'Site: pagou ' + (String(r.pagamento) === 'sinal' ? 'o sinal' : 'a totalidade') + ' na inscrição', 'site'); } catch (e) { Logger.log('nota falhou: ' + e.message); }
+    }
+    // 6. Email automático de confirmação (não bloqueia a inscrição se falhar)
     let email = 'nao_enviado';
     try { email = this.enviarConfirmacao_(r, id, !!comprovativoUrl); } catch (e) { Logger.log('Email confirmação falhou: ' + e.message); }
     return { recebido: true, id: id || null, comprovativo: !!comprovativoUrl, email: email };
@@ -4151,7 +4159,8 @@ const InscricaoSite = {
       gen_atleta: EmailTemplates.guessGender(r.atleta || ''), gen_ee: EmailTemplates.guessGender(r.encarregado || ''),
       semanas: String(r.semanas || ''), opcao: String(r.opcao || ''),
       total: eur(p.prontoTotal), sinal: eur(p.prest1), resto: eur(p.prest2), desconto: !!p.desc,
-      comprovativo: !!temComprovativo
+      comprovativo: !!temComprovativo,
+      pagamento: String(r.pagamento) === 'sinal' ? 'sinal' : 'total'
     };
     const { subject, html } = EmailTemplates.render('inscricaoRecebida', data);
     const plain = EmailDraft._plainFallback(html);
@@ -4173,6 +4182,22 @@ const InscricaoSite = {
       Emails.log({ template: 'inscricaoRecebida', assunto: subject, corpo: '', destinatarios: [to], ids_atletas: id ? [id] : [] }, 'site');
     } catch (e) { Logger.log('Emails.log falhou: ' + e.message); }
     return 'enviado';
+  },
+
+  // Público: quantas inscrições tem um clube (para o contador do desconto de clube no site).
+  // Conta inscrições (1 atleta em 2 semanas = 2), como no desconto. Cache de 5 minutos.
+  clubeContagem(clube) {
+    const nome = String(clube || '').trim();
+    if (!nome) return { clube: '', inscritos: 0, minimo: 8 };
+    const cache = CacheService.getScriptCache();
+    let counts = null;
+    try { counts = JSON.parse(cache.get('clube_counts') || 'null'); } catch (e) {}
+    if (!counts) {
+      counts = Inscricoes.getAll().clube_counts || {};
+      try { cache.put('clube_counts', JSON.stringify(counts), 300); } catch (e) {}
+    }
+    const key = Object.keys(counts).find(k => k.trim().toLowerCase() === nome.toLowerCase());
+    return { clube: nome, inscritos: key ? Number(counts[key]) || 0 : 0, minimo: 8 };
   },
 
   clean_(v, type) {

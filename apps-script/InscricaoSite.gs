@@ -103,12 +103,17 @@ const InscricaoSite = {
 
     // 3. Mesmo processamento do trigger do Form
     const id = processFormRow_(row);
+    try { CacheService.getScriptCache().remove('clube_counts'); } catch (e) {}
 
     // 4. Irmão declarado no site: marca o desconto (o admin pode desligar no Dashboard)
     if (id && String(r.irmao) === 'Sim') {
       try { Inscricoes.toggleIrmao(id, true, 'site'); } catch (e) { Logger.log('irmão falhou: ' + e.message); }
     }
-    // 5. Email automático de confirmação (não bloqueia a inscrição se falhar)
+    // 5. Forma de pagamento escolhida no site fica como nota no Dashboard
+    if (id && r.pagamento) {
+      try { Inscricoes.addNota(id, 'Site: pagou ' + (String(r.pagamento) === 'sinal' ? 'o sinal' : 'a totalidade') + ' na inscrição', 'site'); } catch (e) { Logger.log('nota falhou: ' + e.message); }
+    }
+    // 6. Email automático de confirmação (não bloqueia a inscrição se falhar)
     let email = 'nao_enviado';
     try { email = this.enviarConfirmacao_(r, id, !!comprovativoUrl); } catch (e) { Logger.log('Email confirmação falhou: ' + e.message); }
     return { recebido: true, id: id || null, comprovativo: !!comprovativoUrl, email: email };
@@ -131,7 +136,8 @@ const InscricaoSite = {
       gen_atleta: EmailTemplates.guessGender(r.atleta || ''), gen_ee: EmailTemplates.guessGender(r.encarregado || ''),
       semanas: String(r.semanas || ''), opcao: String(r.opcao || ''),
       total: eur(p.prontoTotal), sinal: eur(p.prest1), resto: eur(p.prest2), desconto: !!p.desc,
-      comprovativo: !!temComprovativo
+      comprovativo: !!temComprovativo,
+      pagamento: String(r.pagamento) === 'sinal' ? 'sinal' : 'total'
     };
     const { subject, html } = EmailTemplates.render('inscricaoRecebida', data);
     const plain = EmailDraft._plainFallback(html);
@@ -153,6 +159,22 @@ const InscricaoSite = {
       Emails.log({ template: 'inscricaoRecebida', assunto: subject, corpo: '', destinatarios: [to], ids_atletas: id ? [id] : [] }, 'site');
     } catch (e) { Logger.log('Emails.log falhou: ' + e.message); }
     return 'enviado';
+  },
+
+  // Público: quantas inscrições tem um clube (para o contador do desconto de clube no site).
+  // Conta inscrições (1 atleta em 2 semanas = 2), como no desconto. Cache de 5 minutos.
+  clubeContagem(clube) {
+    const nome = String(clube || '').trim();
+    if (!nome) return { clube: '', inscritos: 0, minimo: 8 };
+    const cache = CacheService.getScriptCache();
+    let counts = null;
+    try { counts = JSON.parse(cache.get('clube_counts') || 'null'); } catch (e) {}
+    if (!counts) {
+      counts = Inscricoes.getAll().clube_counts || {};
+      try { cache.put('clube_counts', JSON.stringify(counts), 300); } catch (e) {}
+    }
+    const key = Object.keys(counts).find(k => k.trim().toLowerCase() === nome.toLowerCase());
+    return { clube: nome, inscritos: key ? Number(counts[key]) || 0 : 0, minimo: 8 };
   },
 
   clean_(v, type) {

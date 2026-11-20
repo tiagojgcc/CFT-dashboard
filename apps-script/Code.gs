@@ -25,6 +25,9 @@ function handle_(e, method) {
     if (action === 'inscricao_submit') {
       return json_({ ok: true, data: InscricaoSite.submit(params) });
     }
+    if (action === 'clube_contagem') {
+      return json_({ ok: true, data: InscricaoSite.clubeContagem(params.clube) });
+    }
 
     const user = Auth.verify(params.token);
 
