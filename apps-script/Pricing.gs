@@ -3,9 +3,10 @@
  *
  * O preço depende só da data de inscrição (não de como se paga). 3 escalões
  * (proposta do Miguel, aceite pelo Tiago a 19/11/2026):
- *   Interno, inscrição até 31 jan:   350 € / semana (310 € com desconto)
- *   Interno, inscrição até 31 mar:   375 € / semana (330 € com desconto)
- *   Interno, inscrição depois:       395 € / semana (350 € com desconto)
+ *   Interno, inscrição até 24 dez (campanha de Natal): 350 € / semana (315 € com desconto)
+ *   Interno, inscrição até 31 mar:   375 € / semana (335 € com desconto)
+ *   Interno, inscrição depois:       395 € / semana (355 € com desconto)
+ *   Desconto = 10%, arredondado a 5 € a favor da família (Tiago, 20/11/2026).
  *   Externo:                         290 € / semana
  * Pagamento: tudo de uma vez, OU sinal de 130 € por semana + resto até 21/6.
  * O total é o mesmo nas duas formas. O sinal não é devolvido.
@@ -18,9 +19,9 @@
  */
 const PRECOS_2027 = {
   escaloes: [
-    { ate: '2027-01-31', preco: 350, desc: 310 },
-    { ate: '2027-03-31', preco: 375, desc: 330 },
-    { ate: null,         preco: 395, desc: 350 }
+    { ate: '2026-12-24', preco: 350, desc: 315 },
+    { ate: '2027-03-31', preco: 375, desc: 335 },
+    { ate: null,         preco: 395, desc: 355 }
   ],
   externo: 290, sinal: 130
 };
