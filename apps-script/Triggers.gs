@@ -21,18 +21,23 @@ const Triggers = {
 
 // Top-level (Apps Script triggers exigem função global, não método)
 function onFormSubmitTrigger_(e) {
+  processFormRow_(e.range.getRow());
+}
+
+// Processa uma linha de "Respostas do Formulário 1" (Form ou site): cria o id,
+// replica para Atletas, numera e lê o comprovativo. Devolve o id_inscricao.
+function processFormRow_(row) {
   const ss = SpreadsheetApp.openById(SHEET_ID);
   const formSheet = ss.getSheetByName('Respostas do Formulário 1');
   if (!formSheet) {
     Logger.log('Aba "Respostas do Formulário 1" não encontrada — trigger abortado.');
-    return;
+    return null;
   }
-  const row = e.range.getRow();
   const idCol = Backfill._idCol(formSheet);
   const migradoCol = Backfill._migradoCol(formSheet);
   if (idCol === -1 || migradoCol === -1) {
     Logger.log('Trigger abortado: colunas id_inscricao/migrado_em em falta');
-    return;
+    return null;
   }
   let id = formSheet.getRange(row, idCol).getValue();
   // Defensivo: se a cell contém Date ou algo não-UUID, gera novo UUID e sobrescreve.
@@ -56,4 +61,5 @@ function onFormSubmitTrigger_(e) {
   } catch (e) {
     Logger.log('OCR auto falhou para ' + id + ': ' + e.message);
   }
+  return id;
 }

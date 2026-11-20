@@ -148,11 +148,11 @@ const Backfill = {
       sh.appendRow(['key','value','notas']);
       sh.appendRow(['whitelist_emails','geral@camposft.com','separar por vírgula']);
       sh.appendRow(['client_id','','OAuth client ID do frontend (preencher após criar)']);
-      sh.appendRow(['vagas_total','180','60 × 3 semanas']);
+      sh.appendRow(['vagas_total','120','60 × 2 semanas']);
       sh.appendRow(['vagas_por_semana','60','']);
-      sh.appendRow(['cutoff_desconto','2026-03-31','até esta data: pronto pagamento mais barato']);
-      sh.appendRow(['prazo_pagamento','2026-06-21','liquidação 2ª prestação']);
-      sh.appendRow(['edicao','4','4ª edição']);
+      sh.appendRow(['cutoff_desconto','2027-03-31','inscrição até esta data: preço mais baixo']);
+      sh.appendRow(['prazo_pagamento','2027-06-21','prazo para pagar o resto (depois do sinal)']);
+      sh.appendRow(['edicao','5','5ª edição']);
       sh.getRange(1, 1, 1, 3).setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
       sh.setFrozenRows(1);
     }
