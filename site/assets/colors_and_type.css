@@ -1,0 +1,262 @@
+/* ============================================================
+   CFT — Campo de Formação Técnica
+   Design System · Colors & Typography Tokens
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+/* ============================================================
+   BASE COLOR TOKENS
+   ============================================================ */
+:root {
+  /* Greens */
+  --green-dark:    #2d6b3c;
+  --green-bright:  #78c832;
+  --green-mid:     #4a8f3f;
+  --green-pale:    #ddf0c8;
+  --sage:          #6b8a6a;
+  --sage-light:    #c8d9c4;
+
+  /* Beige / Sand */
+  --beige-light:   #f4ede0;
+  --beige-mid:     #e5d9c4;
+  --sand:          #c9b99a;
+  --sand-dark:     #a89278;
+
+  /* Neutral / Dark */
+  --charcoal:      #1c1c18;
+  --near-black:    #111110;
+  --mid-gray:      #6b6b65;
+  --light-gray:    #d8d2c8;
+
+  /* Accent */
+  --orange-accent: #d4845a;
+  --orange-light:  #f0c4a4;
+
+  /* Whites */
+  --white:         #ffffff;
+  --off-white:     #faf7f2;
+
+  /* ============================================================
+     SEMANTIC COLOR TOKENS
+     ============================================================ */
+
+  /* Backgrounds */
+  --bg-primary:    var(--beige-light);
+  --bg-secondary:  var(--beige-mid);
+  --bg-dark:       var(--charcoal);
+  --bg-accent:     var(--green-dark);
+
+  /* Foregrounds */
+  --fg-primary:    var(--near-black);
+  --fg-secondary:  var(--mid-gray);
+  --fg-muted:      var(--sand);
+  --fg-inverse:    var(--off-white);
+  --fg-accent:     var(--green-dark);
+  --fg-accent-bright: var(--green-bright);
+
+  /* Borders */
+  --border-strong: var(--charcoal);
+  --border-mid:    var(--sand);
+  --border-subtle: var(--light-gray);
+
+  /* Interactive */
+  --interactive-primary:       var(--green-dark);
+  --interactive-primary-hover: var(--green-mid);
+  --interactive-secondary:     var(--orange-accent);
+  --interactive-secondary-hover: #bf6e44;
+
+  /* Status */
+  --status-success: var(--green-bright);
+  --status-warning: var(--orange-accent);
+
+  /* ============================================================
+     TYPOGRAPHY TOKENS
+     ============================================================ */
+
+  /* Font Families */
+  --font-display:     'Bebas Neue', 'Arial Narrow', sans-serif;
+  --font-condensed:   'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-body:        'DM Sans', 'Helvetica Neue', sans-serif;
+  --font-serif:       'Playfair Display', Georgia, serif;
+
+  /* Font Sizes — Base Scale */
+  --text-xs:    0.75rem;   /* 12px */
+  --text-sm:    0.875rem;  /* 14px */
+  --text-base:  1rem;      /* 16px */
+  --text-md:    1.125rem;  /* 18px */
+  --text-lg:    1.25rem;   /* 20px */
+  --text-xl:    1.5rem;    /* 24px */
+  --text-2xl:   2rem;      /* 32px */
+  --text-3xl:   2.5rem;    /* 40px */
+  --text-4xl:   3.5rem;    /* 56px */
+  --text-5xl:   5rem;      /* 80px */
+  --text-6xl:   7.5rem;    /* 120px */
+  --text-hero:  12rem;     /* 192px */
+
+  /* Font Weights */
+  --weight-light:   300;
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semi:    600;
+  --weight-bold:    700;
+
+  /* Line Heights */
+  --leading-tight:  0.95;
+  --leading-snug:   1.1;
+  --leading-normal: 1.4;
+  --leading-relaxed: 1.6;
+  --leading-loose:  1.8;
+
+  /* Letter Spacing */
+  --tracking-tight:  -0.02em;
+  --tracking-normal:  0em;
+  --tracking-wide:    0.05em;
+  --tracking-wider:   0.1em;
+  --tracking-widest:  0.2em;
+
+  /* ============================================================
+     SEMANTIC TYPOGRAPHY ROLES
+     ============================================================ */
+
+  /* Spacing */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   24px;
+  --space-6:   32px;
+  --space-7:   48px;
+  --space-8:   64px;
+  --space-9:   96px;
+  --space-10:  128px;
+
+  /* Radii */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(28,28,24,0.08);
+  --shadow-md:  0 4px 12px rgba(28,28,24,0.12);
+  --shadow-lg:  0 8px 32px rgba(28,28,24,0.16);
+
+  /* Transitions */
+  --transition-fast:   150ms ease-out;
+  --transition-base:   250ms ease-out;
+  --transition-slow:   400ms ease-out;
+}
+
+/* ============================================================
+   SEMANTIC TYPE STYLES
+   Apply to elements for consistent hierarchy
+   ============================================================ */
+
+/* Hero — massive display, full bleed */
+.t-hero {
+  font-family: var(--font-display);
+  font-size: var(--text-hero);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-normal);
+  text-transform: uppercase;
+  color: var(--fg-primary);
+}
+
+/* H1 — section title */
+.t-h1, h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-5xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-normal);
+  text-transform: uppercase;
+  color: var(--fg-primary);
+  margin: 0 0 var(--space-4) 0;
+}
+
+/* H2 — subsection */
+.t-h2, h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  line-height: var(--leading-snug);
+  text-transform: uppercase;
+  color: var(--fg-primary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+/* H3 — card / component title */
+.t-h3, h3 {
+  font-family: var(--font-condensed);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--fg-primary);
+  margin: 0 0 var(--space-2) 0;
+}
+
+/* H4 — label-level heading */
+.t-h4, h4 {
+  font-family: var(--font-condensed);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semi);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--fg-primary);
+  margin: 0 0 var(--space-2) 0;
+}
+
+/* Body — primary paragraph */
+.t-body, p {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-relaxed);
+  color: var(--fg-primary);
+  margin: 0 0 var(--space-4) 0;
+}
+
+/* Body Large */
+.t-body-lg {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: var(--leading-relaxed);
+  color: var(--fg-primary);
+}
+
+/* Body Small */
+.t-body-sm {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--fg-secondary);
+}
+
+/* Caption / Meta */
+.t-caption {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+/* Serif accent — dates, quotes, locations */
+.t-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-lg);
+  color: var(--fg-primary);
+}
+
+/* Overline label */
+.t-overline {
+  font-family: var(--font-condensed);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semi);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--fg-accent);
+}
