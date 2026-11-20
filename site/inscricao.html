@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscrição CFT 2027 · camposft.com</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="assets/colors_and_type.css">
+<script>
+// ================= CONFIG =================
+// API_URL: o /exec do Apps Script do Dashboard (action pública inscricao_submit).
+// ABERTO: enquanto for false, mostra a mensagem de que as inscrições ainda não abriram.
+window.CFT_INSC = {
+  API_URL: 'https://script.google.com/macros/s/AKfycbx3yw0iNCS-oUt5HM0hSg5zw_nEBYz787Uz49YyfiWBgfI801KGXTFCKz8i12-EqPu40w/exec',
+  // Abre sozinho a 27/11/2026 às 00:00 (hora de Lisboa). Para testar antes: ?teste=1
+  ABERTO: Date.now() >= Date.parse('2026-11-27T00:00:00Z') || /[?&]teste=1/.test(location.search),
+  CLUBES: ['Académico Futebol Clube', 'Barca Basket Clube', 'Basket Club Limiense', 'Basket Clube de Valença', 'Club 5 Basket', 'Clube Basquete Viana', 'Futebol Clube Porto', 'GDB Leça', 'Guifões Sport Clube', 'Juvemaia', 'Maia Basket Clube', 'Powertogether', 'SC Braga'],
+  IBAN: 'PT50 0007 0000 0065 0137 6512 3',
+  TITULAR: 'APDFE',
+  PRAZO_RESTO: '21 de junho de 2027',
+  // Preço interno por semana conforme a data de inscrição (até ao fim do dia indicado).
+  ESCALOES: [
+    { ate: '2027-01-31', preco: 350, desc: 310, txt: 'Inscrição até 31 de janeiro' },
+    { ate: '2027-03-31', preco: 375, desc: 330, txt: 'Inscrição até 31 de março' },
+    { ate: null,         preco: 395, desc: 350, txt: 'Inscrição depois de 31 de março' }
+  ],
+  PRECO: { externo: 290, sinal: 130 },
+  SEMANAS: [
+    { v: 'Semana 1 - 11 a 17 de julho', t: 'Semana 1', d: '11 a 17 de julho' },
+    { v: 'Semana 2 - 18 a 24 de julho', t: 'Semana 2', d: '18 a 24 de julho' }
+  ]
+};
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; background: var(--beige-light); color: var(--near-black); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
+  a { color: var(--green-dark); }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px max(16px, env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--beige-mid); background: rgba(244,237,224,.95); position: sticky; top: 0; z-index: 5; }
+  .top img { height: 34px; }
+  .top a { font-family: var(--font-condensed); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: 14px; text-decoration: none; }
+  .hero { background: var(--charcoal); color: var(--off-white); padding: 40px max(16px, env(safe-area-inset-left, 0px)) 32px; }
+  .hero-in, .main { max-width: 760px; margin: 0 auto; }
+  .eyebrow { font-family: var(--font-condensed); font-weight: 700; letter-spacing: .2em; text-transform: uppercase; font-size: 13px; color: var(--green-bright); }
+  h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(44px, 9vw, 76px); line-height: .95; margin: 8px 0 12px; letter-spacing: .01em; }
+  .hero h1 { color: var(--off-white); }
+  .hero p { margin: 0; color: rgba(250,247,242,.75); max-width: 60ch; }
+  .main { padding: 28px max(16px, env(safe-area-inset-left, 0px)) 80px; }
+  .steps { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+  .steps span { flex: 1 1 0; min-width: 70px; font-family: var(--font-condensed); font-weight: 600; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--mid-gray); border-top: 4px solid var(--beige-mid); padding-top: 6px; }
+  .steps span.on { color: var(--green-dark); border-color: var(--green-dark); }
+  .steps span.done { color: var(--charcoal); border-color: var(--green-bright); }
+  fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 18px; }
+  legend { font-family: var(--font-display); font-size: 36px; line-height: 1; margin-bottom: 4px; padding: 0; }
+  .hint { font-size: 14px; color: var(--mid-gray); margin: -8px 0 4px; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  label.f { display: grid; gap: 6px; font-weight: 500; font-size: 15px; min-width: 0; }
+  label.f small { font-weight: 400; color: var(--mid-gray); }
+  input[type=text], input[type=email], input[type=tel], input[type=date], input[type=number], select, textarea {
+    font: 16px var(--font-body); padding: 12px 14px; border: 1.5px solid var(--sand); border-radius: 6px; background: var(--off-white); color: var(--near-black); width: 100%; }
+  textarea { min-height: 80px; resize: vertical; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green-dark); box-shadow: 0 0 0 3px var(--green-pale); }
+  .bad { border-color: #b23a2a !important; }
+  .err { color: #b23a2a; font-size: 13px; }
+  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .choice { position: relative; }
+  .choice input { position: absolute; opacity: 0; inset: 0; }
+  .choice span { display: grid; gap: 2px; padding: 14px 16px; border: 1.5px solid var(--sand); border-radius: 8px; background: var(--off-white); cursor: pointer; }
+  .choice b { font-family: var(--font-condensed); font-size: 18px; letter-spacing: .04em; text-transform: uppercase; }
+  .choice small { color: var(--mid-gray); }
+  .choice input:checked + span { border-color: var(--green-dark); background: var(--green-pale); }
+  .choice input:focus-visible + span { box-shadow: 0 0 0 3px var(--orange-light); }
+  .yn { display: flex; gap: 8px; }
+  .yn .choice span { padding: 8px 18px; }
+  .q { display: grid; gap: 8px; }
+  .q > .lbl { font-weight: 500; }
+  .check { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; }
+  .check input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--green-dark); flex: 0 0 auto; }
+  .nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 28px; }
+  button { font: 700 15px var(--font-condensed); letter-spacing: .1em; text-transform: uppercase; padding: 14px 26px; border-radius: 6px; border: 0; cursor: pointer; }
+  .next { background: var(--green-dark); color: var(--off-white); margin-left: auto; }
+  .next:hover { background: var(--green-mid); }
+  .back { background: transparent; color: var(--charcoal); border: 1.5px solid var(--sand); }
+  button:disabled { opacity: .5; cursor: default; }
+  button:focus-visible { outline: 3px solid var(--orange-accent); outline-offset: 2px; }
+  .pay { background: var(--charcoal); color: var(--off-white); border-radius: 10px; padding: 22px; display: grid; gap: 14px; }
+  .pay .big { font-family: var(--font-display); font-size: 56px; line-height: 1; }
+  .pay .lines { display: grid; gap: 6px; font-size: 15px; color: rgba(250,247,242,.8); }
+  .pay .lines div { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid rgba(250,247,242,.12); padding-bottom: 6px; }
+  .iban { font-family: var(--font-condensed); font-size: 22px; letter-spacing: .06em; color: var(--green-bright); word-break: break-word; }
+  .copy { background: var(--green-bright); color: var(--charcoal); padding: 8px 14px; font-size: 13px; justify-self: start; }
+  .drop { border: 2px dashed var(--sand); border-radius: 8px; padding: 18px; text-align: center; background: var(--off-white); }
+  .paychoice { display: grid; gap: 8px; }
+  .paychoice label { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1.5px solid rgba(250,247,242,.25); border-radius: 8px; cursor: pointer; }
+  .paychoice label:has(input:checked) { border-color: var(--green-bright); background: rgba(120,200,50,.12); }
+  .paychoice input { margin-top: 4px; accent-color: var(--green-bright); }
+  .paychoice span { display: grid; gap: 2px; }
+  .paychoice small { color: rgba(250,247,242,.7); font-size: 13px; }
+  .pay .err { color: #ffb4a8; }
+  .note { background: var(--off-white); border-left: 4px solid var(--orange-accent); padding: 12px 14px; font-size: 14px; border-radius: 0 6px 6px 0; }
+  .done-box { text-align: center; display: grid; gap: 14px; padding: 30px 0; }
+  .done-box .big { font-family: var(--font-display); font-size: 56px; color: var(--green-dark); line-height: 1; }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: no-preference) { fieldset { animation: in .25s ease; } @keyframes in { from { opacity: .4; transform: translateY(6px); } } }
+</style>
+</head>
+<body>
+<header class="top">
+  <a href="/"><img src="assets/logo_CFT.png" alt="CFT – Campo de Formação Técnica"></a>
+  <a href="/">← Voltar ao site</a>
+</header>
+<section class="hero"><div class="hero-in">
+  <div class="eyebrow">5ª edição · Julho 2027 · Ponte da Barca</div>
+  <h1>Inscrição CFT 2027</h1>
+  <p>Leva cerca de 5 minutos. No fim mostramos o valor a pagar e onde enviar o comprovativo. Atletas dos 8 aos 16 anos. 60 vagas por semana.</p>
+</div></section>
+
+<main class="main">
+  <div class="steps" id="steps"></div>
+  <form id="f" novalidate>
+    <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+
+    <fieldset data-step="Semana">
+      <legend>Semana e opção</legend>
+      <div class="q"><span class="lbl">Em que semana(s) queres participar?</span>
+        <div class="choices" id="semanas"></div>
+        <span class="err" data-err="semanas" hidden>Escolhe pelo menos uma semana.</span>
+      </div>
+      <div class="q"><span class="lbl">Opção de inscrição</span>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="opcao" value="Interno" required><span><b>Interno</b><small>Fica a dormir no campo</small></span></label>
+          <label class="choice"><input type="radio" name="opcao" value="Externo"><span><b>Externo</b><small>Participa no campo e dorme em casa</small></span></label>
+        </div>
+        <span class="err" data-err="opcao" hidden>Escolhe interno ou externo.</span>
+      </div>
+      <label class="check"><input type="checkbox" name="irmao" value="Sim"><span>Tenho um irmão ou irmã também inscrito(a) no CFT 2027.</span></label>
+    </fieldset>
+
+    <fieldset data-step="Atleta" hidden>
+      <legend>O atleta</legend>
+      <label class="f">Nome completo<input type="text" name="nome" required autocomplete="off"></label>
+      <div class="row">
+        <label class="f">Data de nascimento<input type="date" name="nascimento" required min="2011-01-01" max="2019-12-31"></label>
+        <label class="f">Nº do Cartão de Cidadão<input type="text" name="cc" required inputmode="numeric"></label>
+        <label class="f">NIF<input type="text" name="nif" required inputmode="numeric" pattern="\d{9}"></label>
+      </div>
+      <div class="row">
+        <label class="f">Clube onde joga
+          <select name="clube_sel" id="clube_sel" required><option value="">Escolher</option></select></label>
+        <label class="f" id="clube-outro-wrap" hidden>Nome do clube<input type="text" name="clube_outro"></label>
+        <label class="f">Posição <small>(opcional)</small><input type="text" name="posicao"></label>
+      </div>
+      <label class="f">O que queres melhorar no campo? <small>(opcional)</small><input type="text" name="melhorar"></label>
+      <div class="row">
+        <label class="f">Tamanho do equipamento
+          <select name="tamanho" required><option value="">Escolher</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select></label>
+        <label class="f">Número na camisola<input type="number" name="numero" required min="0" max="99"></label>
+        <label class="f">Nome na camisola<input type="text" name="nome_camisola" required maxlength="14"></label>
+      </div>
+    </fieldset>
+
+    <fieldset data-step="Saúde" hidden>
+      <legend>Saúde</legend>
+      <p class="hint">Só usamos esta informação durante o campo, para cuidar do atleta.</p>
+      <div id="saude"></div>
+    </fieldset>
+
+    <fieldset data-step="Encarregado" hidden>
+      <legend>Encarregado de educação</legend>
+      <label class="f">Nome<input type="text" name="ee_nome" required autocomplete="name"></label>
+      <div class="row">
+        <label class="f">Email<input type="email" name="ee_email" required autocomplete="email"></label>
+        <label class="f">Telemóvel<input type="tel" name="telemovel" required autocomplete="tel"></label>
+      </div>
+      <label class="f">Contacto de emergência <small>(se for outro número)</small><input type="tel" name="emergencia"></label>
+      <div class="q"><span class="lbl">Como conheceu o CFT?</span>
+        <select name="conhecimento" required><option value="">Escolher</option><option>Treinador</option><option>Clube</option><option>Colega de equipa/Amigo</option><option>Redes Sociais</option><option>Já participou antes</option></select>
+      </div>
+      <label class="f" id="treinador-wrap" hidden>Nome do treinador<input type="text" name="treinador_nome"></label>
+    </fieldset>
+
+    <fieldset data-step="Autorizações" hidden>
+      <legend>Autorizações</legend>
+      <label class="check"><input type="checkbox" name="decl_responsabilidade" value="Sim" required><span>Autorizo a inscrição do atleta no Campo de Formação Técnica 2027 e declaro que li e aceito o <a href="regulamento.html" target="_blank" rel="noopener">regulamento</a>, incluindo as regras de pagamento, desistência, seguro e captação de imagens.</span></label>
+      <div class="q"><span class="lbl">Autoriza a saída do atleta do campo sem a presença do encarregado de educação?</span><div class="yn" data-yn="decl_saida"></div></div>
+      <div class="note">O sinal não é devolvido em caso de desistência. O restante valor é devolvido a quem desistir até 21 de junho de 2027. Depois dessa data, só com atestado médico.</div>
+      <label class="f">IBAN para devoluções
+        <input type="text" name="iban_devolucao" required autocomplete="off" placeholder="PT50 …" pattern="[A-Za-z]{2}[0-9A-Za-z ]{13,40}">
+        <small>Usamos só se houver valor a devolver. Por exemplo: se o clube do atleta chegar a 8 inscritos e já tiver pago tudo, devolvemos a diferença para este IBAN.</small></label>
+    </fieldset>
+
+    <fieldset data-step="Pagamento" hidden>
+      <legend>Pagamento</legend>
+      <div class="pay" id="pay"></div>
+      <div class="q"><span class="lbl">Comprovativo da transferência</span>
+        <div class="drop"><input type="file" name="comprovativo" id="comprovativo" accept="image/*,application/pdf" required></div>
+        <span class="hint" style="margin:0">Pode ser uma fotografia ou o PDF do banco.</span>
+      </div>
+    </fieldset>
+
+    <div id="ok" class="done-box" hidden>
+      <div class="big">Inscrição enviada</div>
+      <p>Obrigado! Vais receber já um email com o resumo da inscrição e o IBAN.</p>
+      <p><a href="/">Voltar ao site</a></p>
+    </div>
+
+    <div class="nav" id="navbtns">
+      <button type="button" class="back" id="back" hidden>Voltar</button>
+      <button type="button" class="next" id="next">Continuar</button>
+    </div>
+    <p class="err" id="submit-err" role="alert" hidden></p>
+  </form>
+</main>
+
+
+<script>
+(function(){
+  const C = window.CFT_INSC, f = document.getElementById('f');
+  const sets = [...f.querySelectorAll('fieldset')];
+  let step = 0;
+
+  // semanas
+  const sw = document.getElementById('semanas');
+  C.SEMANAS.forEach(s => { sw.insertAdjacentHTML('beforeend', `<label class="choice"><input type="checkbox" name="semanas" value="${s.v}"><span><b>${s.t}</b><small>${s.d}</small></span></label>`); });
+  // clubes
+  const cs = document.getElementById('clube_sel');
+  C.CLUBES.concat(['Outro']).forEach(c => { const o = document.createElement('option'); o.textContent = c; cs.appendChild(o); });
+  // sim / não
+  document.querySelectorAll('[data-yn]').forEach(el => { const n = el.dataset.yn; el.innerHTML = ['Sim','Não'].map(v => `<label class="choice"><input type="radio" name="${n}" value="${v}" required><span><b>${v}</b></span></label>`).join(''); });
+  // saúde
+  const S = [['alergia_alim','Tem alguma alergia alimentar?'],['medicacao','Faz alguma medicação regularmente?'],['doenca','Tem alguma doença?'],['alergia_med','Tem alguma alergia a medicamentos?']];
+  document.getElementById('saude').innerHTML = S.map(([n,t]) => `<div class="q"><span class="lbl">${t}</span><div class="yn">${['Não','Sim'].map(v=>`<label class="choice"><input type="radio" name="${n}" value="${v}" required><span><b>${v}</b></span></label>`).join('')}</div><label class="f" data-qual="${n}" hidden>Qual?<input type="text" name="${n}_qual"></label></div>`).join('');
+  f.addEventListener('change', e => {
+    const n = e.target.name;
+    if (S.some(s => s[0] === n)) { const w = f.querySelector(`[data-qual="${n}"]`); w.hidden = e.target.value !== 'Sim'; w.querySelector('input').required = !w.hidden; }
+    if (n === 'clube_sel') { const w = document.getElementById('clube-outro-wrap'); w.hidden = e.target.value !== 'Outro'; w.querySelector('input').required = !w.hidden; }
+    if (n === 'conhecimento') { const w = document.getElementById('treinador-wrap'); w.hidden = e.target.value !== 'Treinador'; }
+  });
+
+  const steps = document.getElementById('steps');
+  function drawSteps(){ steps.innerHTML = sets.map((s,i) => `<span class="${i===step?'on':i<step?'done':''}">${s.dataset.step}</span>`).join(''); }
+
+  function val(n){ const els = f.elements[n]; if (!els) return ''; if (els instanceof RadioNodeList) { const c = [...els].filter(x=>x.checked).map(x=>x.value); return els[0].type === 'checkbox' ? c : (c[0] || ''); } return els.type === 'checkbox' ? (els.checked ? els.value : '') : els.value.trim(); }
+
+  function validate(i){
+    const fs = sets[i]; let ok = true;
+    fs.querySelectorAll('.err').forEach(e => e.hidden = true);
+    fs.querySelectorAll('.bad').forEach(e => e.classList.remove('bad'));
+    if (fs.dataset.step === 'Pagamento' && !pag) { ok = false; fs.querySelector('[data-err=pagamento]').hidden = false; }
+    if (i === 0) {
+      if (!val('semanas').length) { ok = false; fs.querySelector('[data-err=semanas]').hidden = false; }
+      if (!val('opcao')) { ok = false; fs.querySelector('[data-err=opcao]').hidden = false; }
+    }
+    const seen = new Set();
+    fs.querySelectorAll('input[required],select[required]').forEach(el => {
+      if (el.closest('[hidden]') && el.closest('[hidden]') !== fs) return;
+      if (el.type === 'radio') { if (seen.has(el.name)) return; seen.add(el.name); if (!val(el.name)) { ok = false; el.closest('.q').querySelectorAll('.choice span').forEach(s => s.classList.add('bad')); } return; }
+      if (el.type === 'checkbox') { if (!el.checked) { ok = false; el.classList.add('bad'); } return; }
+      if (el.type === 'file') { if (!el.files.length) { ok = false; el.closest('.drop').classList.add('bad'); } return; }
+      if (!el.checkValidity() || !el.value.trim()) { ok = false; el.classList.add('bad'); }
+    });
+    if (!ok) { const b = fs.querySelector('.bad, .err:not([hidden])'); b && b.scrollIntoView({behavior:'smooth', block:'center'}); }
+    return ok;
+  }
+
+  function preco(){
+    const n = val('semanas').length || 1, externo = val('opcao') === 'Externo';
+    const hoje = new Date(); const esc = C.ESCALOES.find(e => !e.ate || hoje <= new Date(e.ate + 'T23:59:59'));
+    const desc = n >= 2 || val('irmao') === 'Sim';
+    const P = C.PRECO;
+    const porSemana = externo ? P.externo : (desc ? esc.desc : esc.preco);
+    const total = porSemana * n, sinal = Math.min(P.sinal * n, total);
+    return { n, externo, esc, desc, porSemana, total, sinal };
+  }
+  let pag = '';
+  let clubeCache = {};
+  async function clubeInfo(p){
+    const clube = val('clube_sel') === 'Outro' ? val('clube_outro') : val('clube_sel');
+    const box = document.getElementById('clubebox');
+    if (!clube || !C.API_URL || p.desc) return;  // descontos não acumulam: se já tem desconto, não interessa
+    try {
+      if (!(clube in clubeCache)) {
+        const r = await fetch(C.API_URL + '?action=clube_contagem&clube=' + encodeURIComponent(clube));
+        const j = await r.json(); if (!j.ok) return; clubeCache[clube] = j.data.inscritos;
+      }
+      const ja = clubeCache[clube], comEsta = ja + p.n, falta = Math.max(0, 8 - comEsta);
+      const nome = clube.replace(/[<>&]/g, '');
+      box.innerHTML = falta > 0
+        ? `<b>${nome}</b>: com esta inscrição ficam <b>${comEsta}</b> inscrições. Faltam <b>${falta}</b> para o desconto de clube (8). Se chegarem lá, o desconto é descontado no resto a pagar ou devolvido. Fala com os colegas de equipa!`
+        : `<b>${nome}</b> já chega às 8 inscrições: tens direito ao desconto de clube. É descontado no resto a pagar, ou devolvido se pagares tudo.`;
+    } catch (e) { /* sem contador: fica a frase geral */ }
+  }
+  function drawPay(){
+    const p = preco();
+    document.getElementById('pay').innerHTML = `
+      <div class="eyebrow">Valor da inscrição</div>
+      <div class="big">${p.total} €</div>
+      <div class="lines">
+        <div><span>${p.n} semana${p.n>1?'s':''} · ${p.externo?'externo':'interno'}</span><span>${p.porSemana} € / semana</span></div>
+        ${!p.externo ? `<div><span>${p.esc.txt}${p.desc ? ', com desconto' : ''}</span><span></span></div>` : ''}
+      </div>
+      <div class="eyebrow">O que vais pagar agora?</div>
+      <div class="paychoice">
+        <label><input type="radio" name="pagamento" value="sinal" ${pag === 'sinal' ? 'checked' : ''}><span><b>Só o sinal: ${p.sinal} €</b><small>${p.total > p.sinal ? `Faltam ${p.total - p.sinal} € até ${C.PRAZO_RESTO}` : 'Corresponde ao valor total'}</small></span></label>
+        <label><input type="radio" name="pagamento" value="total" ${pag === 'total' ? 'checked' : ''}><span><b>A totalidade: ${p.total} €</b><small>Fica tudo pago</small></span></label>
+      </div>
+      <span class="err" data-err="pagamento" hidden>Escolhe se pagas o sinal ou a totalidade.</span>
+      <div id="transf" ${pag ? '' : 'hidden'}>Transfere <b>${pag === 'total' ? p.total : p.sinal} €</b> para ${C.TITULAR}</div>
+      <div class="iban" id="iban">${C.IBAN}</div>
+      <button type="button" class="copy" id="copy">Copiar IBAN</button>
+      <div id="clubebox" style="font-size:13px;color:rgba(250,247,242,.75)">Se o clube do atleta chegar a 8 inscritos, o desconto de clube é descontado no resto a pagar (ou devolvido, se já tiver pago tudo).</div>`;
+    f.querySelectorAll('input[name=pagamento]').forEach(r => r.onchange = () => { pag = r.value; drawPay(); });
+    clubeInfo(p);
+    document.getElementById('copy').onclick = async () => { try { await navigator.clipboard.writeText(C.IBAN.replace(/\s/g,'')); document.getElementById('copy').textContent = 'Copiado'; } catch(e) { const r = document.createRange(); r.selectNodeContents(document.getElementById('iban')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } };
+  }
+
+  function show(i){
+    step = i; sets.forEach((s,k) => s.hidden = k !== i);
+    document.getElementById('back').hidden = i === 0;
+    document.getElementById('next').textContent = i === sets.length - 1 ? 'Enviar inscrição' : 'Continuar';
+    if (sets[i].dataset.step === 'Pagamento') drawPay();
+    drawSteps(); window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  document.getElementById('back').onclick = () => show(step - 1);
+  document.getElementById('next').onclick = async () => {
+    if (!validate(step)) return;
+    if (step < sets.length - 1) return show(step + 1);
+    await submit();
+  };
+
+  function toB64(file){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(file); }); }
+
+  function semanaForm(){ const v = val('semanas'); return v.length >= 2 ? 'Semana 1 e semana 2' : (v[0] || ''); }
+
+  async function submit(){
+    const btn = document.getElementById('next'), er = document.getElementById('submit-err');
+    er.hidden = true; btn.disabled = true; btn.textContent = 'A enviar…';
+    try {
+      if (!C.ABERTO || !C.API_URL) throw new Error('As inscrições abrem a 27 de novembro. Esta página ainda está em teste.');
+      const file = document.getElementById('comprovativo').files[0];
+      let ficheiro = null;
+      if (file) {
+        if (file.size > 8 * 1024 * 1024) throw new Error('O comprovativo tem mais de 8 MB. Envia uma fotografia mais pequena ou o PDF.');
+        ficheiro = { nome: file.name, mime: file.type || 'application/octet-stream', base64: await toB64(file) };
+      }
+      const respostas = {
+        semanas: semanaForm(), opcao: val('opcao'), irmao: val('irmao') || 'Não',
+        atleta: val('nome'), dataNasc: val('nascimento'), cc: val('cc'), nif: val('nif'),
+        clube: val('clube_sel') === 'Outro' ? val('clube_outro') : val('clube_sel'), posicao: val('posicao'), melhorar: val('melhorar'),
+        tshirt: val('tamanho'), tshirt_num: val('numero'), tshirt_nome: val('nome_camisola'),
+        alergia_alim: val('alergia_alim'), alergia_alim_qual: val('alergia_alim_qual'), medicacao: val('medicacao'), medicacao_qual: val('medicacao_qual'),
+        doenca: val('doenca'), doenca_qual: val('doenca_qual'), alergia_med: val('alergia_med'), alergia_med_qual: val('alergia_med_qual'),
+        encarregado: val('ee_nome'), email_ee: val('ee_email'), telefone: val('telemovel'), contacto_emerg: val('emergencia') || val('telemovel'),
+        como_conheceu: val('conhecimento'), treinador_indicou: val('treinador_nome'),
+        decl_resp: val('decl_responsabilidade') ? 'Sim' : '', decl_imagem: 'Sim (regulamento)', decl_saida: val('decl_saida'), pagamento: pag,
+        iban: val('iban_devolucao')
+      };
+      const r = await fetch(C.API_URL, {
+        method: 'POST', redirect: 'follow',
+        // text/plain evita o pedido CORS prévio no Apps Script
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'inscricao_submit', website: val('website'), respostas, ficheiro })
+      });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || 'erro desconhecido');
+      sets.forEach(s => s.hidden = true); document.getElementById('navbtns').hidden = true; steps.hidden = true;
+      document.getElementById('ok').hidden = false; window.scrollTo({top: 0});
+    } catch (e) {
+      er.textContent = 'Não conseguimos enviar a inscrição (' + e.message + '). Tenta de novo dentro de momentos, ou escreve para geral@camposft.com.';
+      er.hidden = false; btn.disabled = false; btn.textContent = 'Enviar inscrição';
+    }
+  }
+  show(0);
+})();
+</script>
+</body>
+</html>
