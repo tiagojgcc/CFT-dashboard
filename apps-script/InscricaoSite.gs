@@ -137,7 +137,8 @@ const InscricaoSite = {
       semanas: String(r.semanas || ''), opcao: String(r.opcao || ''),
       total: eur(p.prontoTotal), sinal: eur(p.prest1), resto: eur(p.prest2), desconto: !!p.desc,
       comprovativo: !!temComprovativo,
-      pagamento: String(r.pagamento) === 'sinal' ? 'sinal' : 'total'
+      pagamento: String(r.pagamento) === 'sinal' ? 'sinal' : 'total',
+      postal_natal: this.postalNatalAtivo_()
     };
     const { subject, html } = EmailTemplates.render('inscricaoRecebida', data);
     const plain = EmailDraft._plainFallback(html);
@@ -159,6 +160,15 @@ const InscricaoSite = {
       Emails.log({ template: 'inscricaoRecebida', assunto: subject, corpo: '', destinatarios: [to], ids_atletas: id ? [id] : [] }, 'site');
     } catch (e) { Logger.log('Emails.log falhou: ' + e.message); }
     return 'enviado';
+  },
+
+  // Postal de Natal no email de confirmação: só até 24/12/2026 (hora de Lisboa).
+  // Desliga-se pondo postal_natal = nao no Config.
+  postalNatalAtivo_() {
+    const flag = String(Config.get('postal_natal') || 'sim').trim().toLowerCase();
+    if (flag === 'nao' || flag === 'não' || flag === 'false') return false;
+    const hoje = Utilities.formatDate(new Date(), 'Europe/Lisbon', 'yyyy-MM-dd');
+    return hoje <= '2026-12-24';
   },
 
   // Público: quantas inscrições tem um clube (para o contador do desconto de clube no site).

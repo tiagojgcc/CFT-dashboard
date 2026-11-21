@@ -907,6 +907,44 @@ const EmailTemplates = {
     return { subject, html: this._wrap(body, headerEd) };
   },
 
+  // Postal de Natal personalizado com o nome do atleta. Entra no email
+  // "Inscrição feita" de quem se inscreve até 24/12/2026 (ver InscricaoSite).
+  // O nome é texto do próprio email (não é imagem gerada), por isso não falha
+  // nem atrasa o envio. O botão abre camposft.com/postal.html, onde a família
+  // pode guardar o postal como imagem ou imprimir.
+  POSTAL_IMG_URL: 'https://camposft.com/assets/postal-natal-topo.jpg',
+  POSTAL_PAGE_URL: 'https://camposft.com/postal.html',
+  _postalNatal(data) {
+    const C = this.C;
+    const gold = '#e8b84a';
+    const nome = this.firstName(data.atleta);
+    const sems = String(data.semanas || '').split(/[.,;+\s]+/).map(x => parseInt(x, 10)).filter(n => n === 1 || n === 2);
+    const datas = { 1: '11 a 17 de julho', 2: '18 a 24 de julho' };
+    const quando = sems.length ? sems.map(n => datas[n]).join(' e ') + ' de 2027' : 'julho de 2027';
+    const url = this.POSTAL_PAGE_URL + '?n=' + encodeURIComponent(nome) + '&s=' + encodeURIComponent(sems.join(','));
+    return `
+      <div style="padding:28px 40px 0 40px;">
+        ${this._over('Um presente para pôr debaixo da árvore', C.greenDark)}
+        ${this._para(`Se quiser fazer surpresa no Natal, este postal já tem o nome ${data.gen_atleta === 'f' ? 'da' : 'do'} ${this._esc(nome)}. Pode imprimir ou enviar por WhatsApp.`)}
+      </div>
+      <div style="padding:8px 40px 0 40px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.nearBlack};border-radius:10px;overflow:hidden;">
+          <tr><td style="padding:0;line-height:0;font-size:0;">
+            <a href="${url}" style="text-decoration:none;"><img src="${this.POSTAL_IMG_URL}" width="520" alt="Bola de basquetebol com um laço, ao lado de uma árvore de Natal" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:10px 10px 0 0;"></a>
+          </td></tr>
+          <tr><td style="padding:26px 28px 28px 28px;background:${C.nearBlack};">
+            <div style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${gold};">${this._esc(nome)}, tens um presente à tua espera em julho</div>
+            <div style="font-family:'Bebas Neue','Arial Narrow',Impact,sans-serif;font-size:54px;line-height:0.95;letter-spacing:0.01em;color:${C.offWhite};text-transform:uppercase;margin:12px 0 14px 0;">Este verão<br>vais ao <span style="color:${gold};">CFT!</span></div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:${C.offWhite};">Uma semana de basquetebol e amigos para a vida.</div>
+            <div style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:${C.sand};margin-top:16px;">${this._esc(quando)} · Ponte da Barca · 5ª edição</div>
+          </td></tr>
+        </table>
+      </div>
+      <div style="padding:16px 40px 0 40px;">
+        <a href="${url}" style="display:inline-block;background:${C.charcoal};color:${C.offWhite};font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;text-decoration:none;padding:13px 22px;border-radius:4px;">Abrir o postal para imprimir ou enviar</a>
+      </div>`;
+  },
+
   // 11. Inscrição recebida pelo site — enviado automaticamente logo após a
   //     inscrição (InscricaoSite). Resumo com o valor, o sinal e o prazo.
   inscricaoRecebida(data) {
@@ -937,6 +975,7 @@ const EmailTemplates = {
         ${this._para(`Recebemos o comprovativo da transferência. Só voltamos a contactar se houver algum problema com o pagamento.`)}
       </div>
       ${this._infoBox(rows, 'Resumo da inscrição')}
+      ${data.postal_natal ? this._postalNatal(data) : ''}
       <div style="padding:24px 40px 8px 40px;">
         ${sinal ? this._para(`O resto (<b>${this._esc(data.resto)}</b>) é pago até <b>21 de junho de 2027</b>, por transferência para o mesmo IBAN, com o nome ${a.doA} atleta na descrição. Perto da data enviamos um lembrete.`) : ''}
         ${this._para(`Se o clube ${a.doA} atleta chegar a 8 inscritos, o desconto de clube é descontado no valor que falta pagar ou devolvido para o IBAN indicado na inscrição.`)}
