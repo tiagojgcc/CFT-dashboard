@@ -1216,6 +1216,106 @@
     /* Esconde colunas mais detalhadas no celular */
     .col-extra-hidden-mobile { display: none; }
   }
+
+  /* ============ VISÃO GERAL · versão calma ============
+     Uma frase no topo, linhas finas em vez de caixas, cor só onde há algo a tratar. */
+  body:has(#panel-overview.active) { background: var(--off-white); }
+  body:has(#panel-overview.active) #ab-stats { visibility: hidden; }
+  #panel-overview { max-width: 1120px; margin: 0 auto; }
+  #panel-overview .hoje { grid-template-columns: minmax(280px, 1fr) 1.25fr; gap: 48px; margin: 26px 0 44px 0; align-items: end; }
+  #panel-overview .hoje-main { background: none; color: var(--charcoal); padding: 0; border-radius: 0; gap: 0; display: block; }
+  .brief-date { font-size: 13px; color: var(--mid-gray); }
+  .brief-line { display: flex; align-items: baseline; gap: 12px; margin: 6px 0 14px 0; }
+  .brief-line b { font-family: var(--font-display); font-weight: 400; font-size: 96px; line-height: 0.86; letter-spacing: 0.01em; }
+  .brief-line .of { font-size: 17px; color: var(--mid-gray); }
+  #panel-overview .hoje-bar { height: 3px; background: var(--light-gray); border-radius: 2px; }
+  #panel-overview .hoje-bar > div { background: var(--green-dark); border-radius: 2px; }
+  .brief-sub { margin-top: 14px; font-size: 15px; line-height: 1.5; color: var(--charcoal); }
+  .brief-sub a { color: var(--charcoal); text-decoration: underline; text-decoration-color: #c0392b; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+  .brief-sub a:hover { color: #c0392b; }
+  #panel-overview .hoje-chart { display: block; }
+  #panel-overview .ritmo-wrap { min-height: 132px; }
+  #panel-overview #ritmo-meta { margin-top: 2px; }
+  #panel-overview .ov-grid { gap: 48px; margin-bottom: 44px; }
+  #panel-overview .card { background: none; border: 0; border-top: 1px solid var(--light-gray); border-radius: 0; padding: 14px 0 0 0; box-shadow: none; }
+  #panel-overview .card-head { margin-bottom: 14px; }
+  #panel-overview .card-title { font-size: 11px; font-weight: 600; color: var(--mid-gray); letter-spacing: 0.18em; }
+  #panel-overview .card-meta { font-size: 10px; color: var(--sand-dark); }
+  /* alertas: ponto em vez de ícone, ligação em vez de botão */
+  #panel-overview .actions-mini-row { padding: 9px 0; border-bottom: 0; align-items: baseline; }
+  #panel-overview .am-icon { width: 6px; height: 6px; border-radius: 50%; font-size: 0; background: var(--light-gray); transform: translateY(-2px); }
+  #panel-overview .am-icon.warn { background: #c0392b; }
+  #panel-overview .am-icon.promo { background: var(--green-mid); }
+  #panel-overview .am-icon.info { background: var(--sand-dark); }
+  #panel-overview .am-text { font-size: 13.5px; }
+  #panel-overview .am-text b { font-family: inherit; letter-spacing: 0; font-weight: 600; }
+  #panel-overview .am-cta, #panel-overview .am-cta.primary { border: 0; background: none; color: var(--mid-gray); padding: 2px 0; font-size: 11px; letter-spacing: 0.1em; white-space: nowrap; }
+  #panel-overview .am-cta::after { content: " \2192"; }
+  #panel-overview .am-cta:hover, #panel-overview .am-cta.primary:hover { background: none; color: var(--green-dark); }
+  #panel-overview .actions-mini-clean { text-align: left; padding: 6px 0; font-family: var(--font-body); font-size: 13.5px; letter-spacing: 0; text-transform: none; color: var(--mid-gray); }
+  /* vagas e pagamentos: barras finas */
+  #panel-overview .weeks-card .weeks { justify-content: flex-start; flex: none; gap: 16px; }
+  #panel-overview .week-bar { height: 6px; background: var(--light-gray); }
+  #panel-overview .week:hover, #panel-overview .pag-row:hover, #panel-overview .ov-row:hover { background: none; }
+  #panel-overview .week:hover .week-name, #panel-overview .pag-row:hover .lbl, #panel-overview .ov-row:hover .who b { color: var(--green-dark); }
+  #panel-overview .weeks-foot { display: none; }
+  #panel-overview .esc-legend { margin-top: 18px; }
+  #panel-overview .esc-legend i, #panel-overview .pag-row .dot { width: 7px; height: 7px; border-radius: 50%; }
+  #panel-overview .pag-big { font-size: 34px; }
+  #panel-overview .pag-stack { height: 6px; margin: 14px 0 10px 0; }
+  #panel-overview .pag-row, #panel-overview .ov-row, #panel-overview .preco-tbl td { border-bottom: 0; }
+  #panel-overview .pag-row { padding: 5px 0; }
+  #panel-overview .ov-row { padding: 7px 0; }
+  #panel-overview .ov-row .who b { font-family: var(--font-body); font-size: 13.5px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+  #panel-overview .ov-more { color: var(--mid-gray); font-weight: 600; }
+  #panel-overview .preco-now .p { font-size: 34px; }
+  #panel-overview .preco-count { background: none; border: 0; padding: 0; margin: 10px 0 6px 0; color: var(--mid-gray); }
+  #panel-overview .preco-tbl td { padding: 4px 0; color: var(--mid-gray); }
+  #panel-overview .preco-tbl tr.cur td { color: var(--charcoal); font-weight: 600; }
+  /* calendário e clubes: recolhidos */
+  .ov-mais { border-top: 1px solid var(--light-gray); padding: 14px 0 30px 0; }
+  .ov-mais > summary { cursor: pointer; list-style: none; font-family: var(--font-condensed); font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mid-gray); }
+  .ov-mais > summary::-webkit-details-marker { display: none; }
+  .ov-mais > summary::after { content: " +"; }
+  .ov-mais[open] > summary::after { content: " \2212"; }
+  .ov-mais > summary:hover { color: var(--charcoal); }
+  .ov-mais[open] > summary { margin-bottom: 26px; }
+  #panel-overview .ov-mais .card { border-top: 0; padding-top: 0; }
+  @media (max-width: 900px) {
+    #panel-overview .hoje { grid-template-columns: 1fr; gap: 22px; margin: 16px 0 34px 0; }
+    #panel-overview .ov-grid { gap: 34px; margin-bottom: 34px; }
+    .brief-line b { font-size: 76px; }
+  }
+
+  /* volta 2 · clubes numa só tabela: nome, barra (semana 1 + semana 2), números em colunas certas */
+  #panel-overview .clubes-card { margin-bottom: 44px; }
+  #panel-overview .clubes { gap: 0; }
+  #panel-overview .clube-row { grid-template-columns: minmax(120px, 240px) 1fr 52px 52px 52px; gap: 16px; padding: 7px 0; align-items: center; }
+  #panel-overview .clube-row > * { min-width: 0; }
+  #panel-overview .clube-head { font-family: var(--font-condensed); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sand-dark); padding-top: 0; }
+  #panel-overview .clube-head > div:nth-child(n+3), #panel-overview .clube-n, #panel-overview .clube-count { text-align: right; font-variant-numeric: tabular-nums; }
+  #panel-overview .clube-name { text-align: left; font-family: var(--font-body); font-size: 13.5px; font-weight: 500; letter-spacing: 0; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #panel-overview .clube-8 { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green-bright); margin-left: 8px; vertical-align: 2px; }
+  #panel-overview .clube-bar { height: 6px; background: none; display: flex; gap: 2px; border-radius: 0; overflow: visible; }
+  #panel-overview .clube-bar-fill { background: var(--green-dark) !important; border-radius: 3px; min-width: 0; }
+  #panel-overview .clube-bar-fill.s2 { background: #9cc29a !important; }
+  #panel-overview .clube-bar-fill[style*="width:0.00%"] { display: none; }
+  #panel-overview .clube-n { font-size: 13px; color: var(--mid-gray); }
+  #panel-overview .clube-n .zero { color: var(--light-gray); }
+  #panel-overview .clube-count { font-family: var(--font-body); font-size: 13.5px; font-weight: 600; min-width: 0; }
+  #panel-overview .clube-head > div:nth-child(3)::before, #panel-overview .clube-head > div:nth-child(4)::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green-dark); margin-right: 6px; }
+  #panel-overview .clube-head > div:nth-child(4)::before { background: #9cc29a; }
+  @media (max-width: 720px) { #panel-overview .clube-row { grid-template-columns: minmax(0, 1fr) 60px 30px 30px 34px; gap: 10px; } #panel-overview .clube-head > div::before { display: none !important; } }
+  /* as três colunas de baixo acabam à mesma altura: «ver na Lista» fica sempre ao fundo */
+  #panel-overview .ov-grid--3 { align-items: stretch; }
+  #panel-overview .ov-row .who span > * { background: none !important; color: var(--mid-gray) !important; padding: 0 !important; border: 0 !important; font-weight: 600; }
+  /* volta 3 · novidades desde a última visita */
+  .brief-novo { margin-top: 8px; font-size: 13.5px; color: var(--mid-gray); }
+  .brief-novo i, #panel-overview .ov-row .who i.novo { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green-bright); }
+  .brief-novo i { margin-right: 8px; vertical-align: 2px; }
+  #panel-overview .ov-row .who b { display: inline; }
+  #panel-overview .ov-row .who i.novo { margin-left: 7px; vertical-align: 2px; }
+  #panel-overview .ov-row .who > span { display: block; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
@@ -1325,12 +1425,9 @@
     <!-- Linha 1: HOJE · inscritos vs meta + ritmo de inscrições -->
     <div class="hoje">
       <div class="hoje-main" id="hoje-main"></div>
-      <div class="card hoje-chart">
-        <div class="card-head">
-          <div class="card-title">Ritmo das inscrições</div>
-          <div class="card-meta" id="ritmo-meta">—</div>
-        </div>
+      <div class="hoje-chart">
         <div class="ritmo-wrap" id="ritmo"></div>
+        <div class="card-meta" id="ritmo-meta">—</div>
       </div>
     </div>
 
@@ -1388,7 +1485,19 @@
       </div>
     </div>
 
-    <!-- Linha 4: Timeline em toda a largura -->
+    <!-- Clubes: uma só tabela, com as colunas alinhadas -->
+    <div class="card clubes-card">
+      <div class="card-head">
+        <div class="card-title">Clubes</div>
+        <div class="card-meta" id="clube-meta">— clubes</div>
+      </div>
+      <div class="clubes" id="clubes"></div>
+      <div class="clubes-foot" id="clubes-foot"></div>
+    </div>
+
+    <!-- Calendário: recolhido, abre com um clique -->
+    <details class="ov-mais" id="ov-mais" ontoggle="if(this.open){try{renderTimeline();}catch(e){}}">
+    <summary>Calendário do CFT</summary>
     <div class="card tl-card" style="margin-bottom:14px;">
       <div class="card-head">
         <div class="card-title">Linha do tempo · CFT <span class="ed-ano">2027</span></div>
@@ -1398,24 +1507,7 @@
       <div class="tl-next" id="tl-next"></div>
     </div>
 
-    <!-- Linha 3: Clubes encurtado + logo CFT à direita -->
-    <div class="ov-grid ov-grid--clubes">
-      <div class="card clubes-card">
-        <div class="card-head">
-          <div class="card-title">Distribuição por clube</div>
-          <div class="card-meta" id="clube-meta">— clubes</div>
-        </div>
-        <div class="clubes" id="clubes"></div>
-        <div class="clubes-foot" id="clubes-foot"></div>
-      </div>
-      <div class="card clubes-week-card">
-        <div class="card-head">
-          <div class="card-title">Por semana</div>
-          <div class="card-meta" id="clubes-week-meta">—</div>
-        </div>
-        <div class="clubes-week" id="clubes-week"></div>
-      </div>
-    </div>
+    </details>
   </div>
 
   <!-- Trabalho — antigo separador removido. Items de trabalho passaram a aparecer
@@ -2474,6 +2566,23 @@ function tsDate(r){
   const d = raw ? new Date(raw) : (r.ts ? new Date(r.ts) : null);
   return d && !isNaN(d.getTime()) ? d : null;
 }
+// Novidades desde a última visita: guarda (só neste browser) a hora em que o
+// Dashboard foi aberto pela última vez, por edição. Na primeira visita não mostra nada.
+const VISTO = { antes: null, feito: null };
+function vistoMarcar(){
+  if (!data.length) return false;
+  const ed = edAno();
+  if (VISTO.feito !== ed) {
+    VISTO.feito = ed; VISTO.antes = null;
+    try {
+      const k = 'cft_visto_' + ed, v = Number(localStorage.getItem(k));
+      if (v > 0) VISTO.antes = v;
+      localStorage.setItem(k, String(Date.now()));
+    } catch (e) {}
+  }
+  return !!VISTO.antes;
+}
+function ehNovaDesdeVisita(r){ const d = tsDate(r); return !!(VISTO.antes && d && d.getTime() > VISTO.antes); }
 function renderHoje(){
   const host = document.getElementById('hoje-main');
   if (!host) return;
@@ -2484,20 +2593,17 @@ function renderHoje(){
   const hoje0 = new Date(); hoje0.setHours(0, 0, 0, 0);
   const nDesde = dias => data.filter(r => { const d = tsDate(r); return d && d >= new Date(hoje0.getTime() - dias * 86400000); }).length;
   const novasHoje = nDesde(0), novas7 = nDesde(6);
+  const novasVisita = vistoMarcar() ? data.filter(r => ehNovaDesdeVisita(r)).length : 0;
+  const dCampo = daysUntil(CFT_START_DATE);
+  const hojeTxt = new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' });
+  const ritmoTxt = novasHoje > 0 ? `Mais ${novasHoje} hoje, ${novas7} nos últimos 7 dias.`
+    : (novas7 > 0 ? `Mais ${novas7} nos últimos 7 dias.` : (inscricoes === 0 ? 'Ainda sem inscrições.' : 'Sem inscrições novas esta semana.'));
   host.innerHTML = `
-    <div>
-      <div class="hoje-over">Inscritos vs meta · CFT ${edAno()}</div>
-      <div class="hoje-num">${inscricoes}<span class="of">/ ${meta}</span></div>
-    </div>
-    <div>
-      <div class="hoje-bar" title="${pct}% da meta"><div style="width:${Math.min(100, pct)}%"></div></div>
-      <div class="hoje-sub" style="margin-top:8px;"><b>${pct}%</b> da meta · faltam <b>${Math.max(0, meta - inscricoes)}</b> · ${data.length} atleta${data.length === 1 ? '' : 's'}</div>
-    </div>
-    <div class="hoje-chips">
-      <div class="hoje-chip"><div class="l">Hoje</div><div class="v">+${novasHoje}</div></div>
-      <div class="hoje-chip"><div class="l">Últimos 7 dias</div><div class="v">+${novas7}</div></div>
-      <div class="hoje-chip"><div class="l">Dias até ao campo</div><div class="v">${(d => d === null ? '—' : (d < 0 ? '0' : d))(daysUntil(CFT_START_DATE))}</div></div>
-    </div>`;
+    <div class="brief-date">${hojeTxt.charAt(0).toUpperCase() + hojeTxt.slice(1)}${dCampo !== null && dCampo >= 0 ? ` · faltam ${dCampo} dias para o campo` : ''}</div>
+    <p class="brief-line"><b>${inscricoes}</b><span class="of">de ${meta} lugares</span></p>
+    <div class="hoje-bar" title="${pct}% da meta"><div style="width:${Math.min(100, pct)}%"></div></div>
+    <p class="brief-sub">${ritmoTxt} <span id="brief-att"></span></p>
+    ${novasVisita > 0 ? `<p class="brief-novo"><i></i>${novasVisita === 1 ? '1 inscrição nova' : novasVisita + ' inscrições novas'} desde a tua última visita${VISTO.antes ? ' (' + quandoCal(new Date(VISTO.antes)) + ')' : ''}.</p>` : ''}`;
 }
 
 // ============ RITMO · inscrições acumuladas por dia ============
@@ -2517,28 +2623,28 @@ function renderRitmo(){
     const d = new Date(t + 43200000); const k = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
     acc += dias[k] || 0; pts.push({ t: k, n: dias[k] || 0, acc });
   }
-  const W = Math.max(280, Math.round(host.clientWidth || 640)), H = 190, L = 34, R = 46, T = 14, B = 24;
+  const W = Math.max(280, Math.round(host.clientWidth || 640)), H = 132, L = 2, R = 34, T = 12, B = 22;
   const maxY = Math.max(4, Math.ceil(acc * 1.15 / 4) * 4);
   const x = i => L + (pts.length === 1 ? 0 : i / (pts.length - 1) * (W - L - R));
   const y = v => T + (1 - v / maxY) * (H - T - B);
   const line = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.acc).toFixed(1)).join(' ');
   const area = line + ` L${x(pts.length - 1).toFixed(1)} ${y(0)} L${x(0).toFixed(1)} ${y(0)} Z`;
-  const grid = [0, maxY / 2, maxY].map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e5d9c4" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 3.5}" text-anchor="end" font-size="10" fill="#6b6b65" font-family="Barlow Condensed, sans-serif">${Math.round(v)}</text>`).join('');
+  const grid = [0].map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#d8d2c8" stroke-width="1"/>`).join('');
   const fd = t => _fmtDateShort(new Date(t));
   const last = pts[pts.length - 1];
   host.innerHTML = `
     <svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Inscrições acumuladas por dia">
       ${grid}
-      <path d="${area}" fill="#2d6b3c" opacity="0.10"/>
-      <path d="${line}" fill="none" stroke="#2d6b3c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      <path d="${area}" fill="#2d6b3c" opacity="0.05"/>
+      <path d="${line}" fill="none" stroke="#2d6b3c" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
       <line id="ritmo-cross" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#1c1c18" stroke-width="1" stroke-dasharray="3 3" visibility="hidden" vector-effect="non-scaling-stroke"/>
-      <circle id="ritmo-dot" r="4.5" cx="${x(pts.length - 1)}" cy="${y(last.acc)}" fill="#2d6b3c" stroke="#fff" stroke-width="2"/>
+      <circle id="ritmo-dot" r="3.5" cx="${x(pts.length - 1)}" cy="${y(last.acc)}" fill="#2d6b3c" stroke="#fff" stroke-width="2"/>
       <text x="${L}" y="${H - 6}" font-size="10" fill="#6b6b65" font-family="Barlow Condensed, sans-serif">${fd(pts[0].t)}</text>
       <text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10" fill="#6b6b65" font-family="Barlow Condensed, sans-serif">${fd(last.t)}</text>
       <text x="${W - R + 8}" y="${y(last.acc) + 5}" font-size="15" fill="#1c1c18" font-family="Bebas Neue, sans-serif">${last.acc}</text>
     </svg>
     <div class="ritmo-tip" id="ritmo-tip"></div>`;
-  if (meta) meta.textContent = `inscrições acumuladas · ${pts.length} dia${pts.length === 1 ? '' : 's'}`;
+  if (meta) meta.textContent = 'inscrições acumuladas';
   const svg = host.querySelector('svg'), tip = host.querySelector('#ritmo-tip'), cross = host.querySelector('#ritmo-cross'), dot = host.querySelector('#ritmo-dot');
   const move = ev => {
     const rc = svg.getBoundingClientRect();
@@ -2567,7 +2673,7 @@ function renderUltimas(){
     const st = paymentStatus(r).st;
     const stTxt = { pago: 'pago', parcial: 'sinal pago', pendente: 'sem pagamento', problema: 'valor errado', devolver: 'a devolver' }[st] || st;
     return `<div class="ov-row" onclick="abrirAtletaNaLista('${escAttr(r.id)}')" title="Abrir na Lista">
-      <div class="who"><b class="anon-nome">${escHtml(r.nome)}</b><span>${escHtml(r.clube || 'sem clube')} · ${semBadge(r.semana)}</span></div>
+      <div class="who"><b class="anon-nome">${escHtml(r.nome)}</b>${ehNovaDesdeVisita(r) ? '<i class="novo" title="Nova desde a tua última visita"></i>' : ''}<span>${escHtml(r.clube || 'sem clube')} · ${semBadge(r.semana)}</span></div>
       <div class="right"><b>${quandoCal(d)}</b>${stTxt}</div>
     </div>`;
   }).join('') + `<div class="ov-more" onclick="showTab('list'); setSortDesc('num');">Ver todas na Lista →</div>`;
@@ -2672,21 +2778,29 @@ function renderClubes(){
   const cc = {};
   data.forEach(r => { const n = parseSems(r.semana).length; if (n) cc[r.clube] = (cc[r.clube] || 0) + n; });
   const sorted = Object.entries(cc).sort((a,b) => b[1] - a[1]);
-  document.getElementById('clube-meta').textContent = sorted.length + ' clubes · inscrições';
+  document.getElementById('clube-meta').textContent = sorted.length + ' clubes · inscrições por semana';
   if (!sorted.length) {
     document.getElementById('clubes').innerHTML = '';
     const foot0 = document.getElementById('clubes-foot'); if (foot0) foot0.textContent = '';
     renderEstadoDonut(); renderClubesPorSemana(); return;
   }
   const max = sorted[0][1];
-  // Mostra todos os clubes no gráfico
-  document.getElementById('clubes').innerHTML = sorted.map(([name, count]) => `
-    <div class="clube-row" title="${name}: ${count} inscriç${count === 1 ? 'ão' : 'ões'}${count >= 8 ? ' · desconto de volume' : ''}">
-      <div class="clube-name">${name}</div>
-      <div class="clube-bar"><div class="clube-bar-fill" style="width:${count/max*100}%; background:${count >= 8 ? 'var(--green-dark)' : 'var(--sage)'};"></div></div>
+  const porSem = {};
+  data.forEach(r => parseSems(r.semana).forEach(n => { if (n === 1 || n === 2) { (porSem[r.clube] = porSem[r.clube] || {1:0, 2:0})[n]++; } }));
+  const TOP = 8, aberto = window._clubesTodos || sorted.length <= TOP + 1;
+  const vis = aberto ? sorted : sorted.slice(0, TOP);
+  const z = n => n ? n : '<span class="zero">·</span>';
+  document.getElementById('clubes').innerHTML = `
+    <div class="clube-row clube-head"><div>Clube</div><div></div><div>Sem 1</div><div>Sem 2</div><div>Total</div></div>` + vis.map(([name, count]) => {
+    const ps = porSem[name] || {1:0, 2:0};
+    return `
+    <div class="clube-row" title="${escAttr(name)}: ${count} inscriç${count === 1 ? 'ão' : 'ões'}${count >= 8 ? ' · desconto de clube' : ''}">
+      <div class="clube-name">${escHtml(name)}${count >= 8 ? '<i class="clube-8" title="8 ou mais inscrições: desconto de clube"></i>' : ''}</div>
+      <div class="clube-bar"><div class="clube-bar-fill" style="width:${(ps[1]/max*100).toFixed(2)}%"></div><div class="clube-bar-fill s2" style="width:${(ps[2]/max*100).toFixed(2)}%"></div></div>
+      <div class="clube-n">${z(ps[1])}</div><div class="clube-n">${z(ps[2])}</div>
       <div class="clube-count">${count}</div>
-    </div>
-  `).join('');
+    </div>`; }).join('') + (sorted.length > vis.length || (window._clubesTodos && sorted.length > TOP + 1)
+      ? `<div class="ov-more" onclick="window._clubesTodos = !window._clubesTodos; renderClubes();">${aberto ? 'Mostrar menos' : 'Ver os ' + sorted.length + ' clubes'} →</div>` : '');
   const foot = document.getElementById('clubes-foot');
   if (foot) foot.textContent = '';
   renderEstadoDonut();
@@ -5358,7 +5472,7 @@ function renderActionsMini(){
     const semPromo = eleg.filter(r => !recentlySentKind(r.id, 'descontoClube', 30));
     const falta = 8 - n;
     if (semPromo.length) add('promo', '⊕', `<b>${escHtml(clube)}</b> está a ${falta} ${pl(falta, 'inscrição', 'inscrições')} do desconto de clube`,
-      `<button class="am-cta primary" onclick='enviarPromoClube(${JSON.stringify(semPromo.map(r => r.id))})' title="Cria os rascunhos no Gmail; nada é enviado sem ser revisto">✉ avisar ${semPromo.length}</button>`);
+      `<button class="am-cta primary" onclick='enviarPromoClube(${JSON.stringify(semPromo.map(r => r.id))})' title="Cria os rascunhos no Gmail; nada é enviado sem ser revisto">avisar ${semPromo.length}</button>`);
     else add('promo', '⊕', `<b>${escHtml(clube)}</b> está a ${falta} ${pl(falta, 'inscrição', 'inscrições')} do desconto de clube (famílias já avisadas)`);
   });
 
@@ -5377,9 +5491,13 @@ function renderActionsMini(){
   const semIban = ativos.filter(r => r.iban === false);
   if (semIban.length) add('', 'i', `<b>${semIban.length}</b> sem IBAN para devoluções`, `<button class="am-cta" onclick="showTab('list')">ver</button>`);
 
+  const att = document.getElementById('brief-att');
+  const nUrg = rows.filter(h => h.indexOf('am-icon warn') !== -1).length;
+  if (att) att.innerHTML = nUrg === 0 ? 'Está tudo em dia.'
+    : `<a href="#" onclick="document.getElementById('actions-mini-card').scrollIntoView({behavior:'smooth',block:'center'});return false;">${nUrg === 1 ? '1 coisa pede' : nUrg + ' coisas pedem'} a tua atenção.</a>`;
   if (rows.length === 0) {
-    body.innerHTML = '<div class="actions-mini-clean">✓ nada para tratar hoje</div>';
-    if (meta) meta.textContent = '0 alertas';
+    body.innerHTML = '<div class="actions-mini-clean">Nada para tratar hoje.</div>';
+    if (meta) meta.textContent = '';
     return;
   }
   body.innerHTML = rows.join('');

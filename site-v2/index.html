@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CFT 2027 · Campo de basquetebol em Ponte da Barca · 11 a 24 de julho</title>
+<meta name="description" content="Campo de Formação Técnica: uma semana de basquetebol para atletas dos 8 aos 16 anos, em Ponte da Barca. Semanas de 11 a 17 e de 18 a 24 de julho de 2027. 60 vagas por semana." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://camposft.com/" />
+<meta property="og:title" content="CFT 2027 · Campo de basquetebol em Ponte da Barca" />
+<meta property="og:description" content="Atletas dos 8 aos 16 anos. Semanas de 11 a 17 e de 18 a 24 de julho de 2027. 60 vagas por semana." />
+<meta property="og:image" content="https://camposft.com/assets/partilha.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" type="image/png" href="assets/logo_CFT.png" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" />
+<style>
+/* Uma coluna calma: texto grande, linhas finas, uma só cor de destaque (verde CFT). */
+:root {
+  --papel: #faf7f2; --tinta: #1c1c18; --cinza: #6b6b65; --linha: #dcd6cb; --verde: #2d6b3c; --verde-vivo: #78c832; --areia: #efe9df;
+  --titulo: 'Barlow Condensed', 'Arial Narrow', sans-serif; --texto: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--papel); color: var(--tinta); font-family: var(--texto); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+.w { max-width: 1040px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.estreito { max-width: 640px; }
+h1, h2 { font-family: var(--titulo); font-weight: 600; line-height: 1.02; letter-spacing: -0.01em; text-wrap: balance; }
+h1 { font-size: clamp(52px, 9.5vw, 116px); }
+h2 { font-size: clamp(34px, 5vw, 56px); margin-bottom: 22px; }
+.rot { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cinza); margin-bottom: 18px; }
+section { padding-block: clamp(64px, 10vw, 128px); }
+section + section { border-top: 1px solid var(--linha); }
+p + p { margin-top: 14px; }
+.suave { color: var(--cinza); }
+
+/* topo */
+.topo { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: rgba(250,247,242,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid transparent; transition: border-color .2s; }
+.topo.on { border-bottom-color: var(--linha); }
+.topo .w { display: flex; align-items: center; gap: 28px; height: 60px; }
+.topo img { height: 26px; width: auto; }
+.topo nav { margin-left: auto; display: flex; gap: 26px; font-size: 14px; }
+.topo nav a { text-decoration: none; color: var(--cinza); }
+.topo nav a:hover { color: var(--tinta); }
+.topo .ir { font-size: 14px; font-weight: 600; text-decoration: none; border-bottom: 2px solid var(--verde-vivo); padding-bottom: 1px; }
+@media (max-width: 640px) { .topo nav { display: none; } .topo .ir { margin-left: auto; } }
+
+/* abertura */
+.abre { padding-block: clamp(44px, 8vw, 96px) 0; border: 0; }
+.abre h1 em { font-style: normal; color: var(--verde); }
+.abre .sub { font-size: clamp(18px, 2.2vw, 21px); max-width: 30em; margin-top: 26px; color: var(--tinta); }
+.factos { display: flex; flex-wrap: wrap; gap: 10px 34px; margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--linha); font-size: 15px; }
+.factos span b { font-weight: 600; }
+.factos small { display: block; font-size: 12px; color: var(--cinza); letter-spacing: 0.04em; }
+.agir { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin-top: 34px; }
+.botao { display: inline-block; background: var(--tinta); color: var(--papel); text-decoration: none; font-weight: 600; font-size: 16px; padding: 15px 28px; border-radius: 999px; transition: background .15s; }
+.botao:hover { background: var(--verde); }
+.botao:focus-visible, a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--verde); outline-offset: 3px; }
+.estado { font-size: 14px; color: var(--cinza); }
+.estado i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--linha); margin-right: 8px; vertical-align: 1px; }
+.estado.aberto i { background: var(--verde-vivo); }
+.foto-larga { margin-top: clamp(40px, 7vw, 80px); }
+.foto-larga img { width: 100%; aspect-ratio: 16 / 8; object-fit: cover; object-position: 50% 62%; border-radius: 6px; }
+@media (max-width: 640px) { .foto-larga img { aspect-ratio: 4 / 3; } }
+
+/* a semana */
+.lista { display: grid; grid-template-columns: 1fr 1fr; gap: 0 56px; margin-top: 36px; }
+.lista div { padding: 18px 0; border-top: 1px solid var(--linha); min-width: 0; }
+.lista b { display: block; font-weight: 600; }
+.lista span { color: var(--cinza); font-size: 15.5px; }
+@media (max-width: 720px) { .lista { grid-template-columns: 1fr; } }
+.duas { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: clamp(28px, 6vw, 80px); align-items: center; }
+.duas > * { min-width: 0; }
+.duas img { border-radius: 6px; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+@media (max-width: 800px) { .duas { grid-template-columns: 1fr; } .duas img { aspect-ratio: 4 / 3; } }
+
+/* testemunhos: um de cada vez */
+.voz blockquote { font-family: var(--titulo); font-weight: 500; font-size: clamp(26px, 3.6vw, 40px); line-height: 1.18; letter-spacing: -0.005em; min-height: 4.8em; text-wrap: pretty; }
+.voz .quem { margin-top: 22px; font-size: 14.5px; color: var(--cinza); }
+.voz .quem b { color: var(--tinta); font-weight: 600; }
+.voz .nav { margin-top: 26px; display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--cinza); }
+.voz button { background: none; border: 1px solid var(--linha); color: var(--tinta); width: 40px; height: 40px; border-radius: 50%; font-size: 16px; cursor: pointer; transition: border-color .15s; }
+.voz button:hover { border-color: var(--tinta); }
+
+/* contas */
+.contas { background: #fff; border: 1px solid var(--linha); border-radius: 10px; padding: clamp(20px, 4vw, 36px); margin-top: 34px; }
+.contas fieldset { border: 0; }
+.contas fieldset + fieldset { margin-top: 22px; }
+.contas legend { font-size: 13px; color: var(--cinza); margin-bottom: 10px; }
+.opcoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.opcoes label { position: relative; cursor: pointer; }
+.opcoes input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.opcoes span { display: block; border: 1px solid var(--linha); border-radius: 999px; padding: 10px 18px; font-size: 15px; transition: all .15s; }
+.opcoes small { color: var(--cinza); margin-left: 6px; }
+.opcoes input:checked + span { background: var(--tinta); border-color: var(--tinta); color: var(--papel); }
+.opcoes input:checked + span small { color: #c9c4ba; }
+.opcoes input:focus-visible + span { outline: 2px solid var(--verde); outline-offset: 3px; }
+.resultado { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--linha); display: grid; grid-template-columns: auto 1fr; gap: 8px 40px; align-items: end; }
+.resultado > * { min-width: 0; }
+.total { font-family: var(--titulo); font-weight: 600; font-size: clamp(56px, 8vw, 84px); line-height: 0.9; font-variant-numeric: tabular-nums; }
+.total small { font-family: var(--texto); font-weight: 400; font-size: 14px; color: var(--cinza); display: block; margin-top: 10px; letter-spacing: 0; line-height: 1.4; }
+.passos { font-size: 15.5px; }
+.passos b { font-weight: 600; }
+@media (max-width: 640px) { .resultado { grid-template-columns: 1fr; gap: 18px; } }
+.tabela { width: 100%; border-collapse: collapse; margin-top: 40px; font-size: 15.5px; font-variant-numeric: tabular-nums; }
+.tabela th { text-align: left; font-weight: 400; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cinza); padding: 0 0 10px 0; }
+.tabela td { padding: 14px 0; border-top: 1px solid var(--linha); }
+.tabela td:nth-child(n+2), .tabela th:nth-child(n+2) { text-align: right; padding-left: 16px; white-space: nowrap; }
+.tabela tr.agora td:first-child::after { content: "agora"; margin-left: 10px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--verde); border: 1px solid var(--verde); border-radius: 999px; padding: 2px 8px; }
+.tabela tr.passou td { color: #a9a49b; text-decoration: line-through; }
+.nota { font-size: 14.5px; color: var(--cinza); margin-top: 18px; }
+
+/* perguntas */
+.perguntas { margin-top: 30px; }
+.perguntas details { border-top: 1px solid var(--linha); }
+.perguntas details:last-child { border-bottom: 1px solid var(--linha); }
+.perguntas summary { cursor: pointer; list-style: none; padding: 20px 36px 20px 0; font-weight: 500; position: relative; }
+.perguntas summary::-webkit-details-marker { display: none; }
+.perguntas summary::after { content: "+"; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 22px; font-weight: 400; color: var(--cinza); }
+.perguntas details[open] summary::after { content: "\2212"; }
+.perguntas .r { padding: 0 0 22px 0; color: #45453f; max-width: 38em; font-size: 16px; }
+.perguntas .r a { color: var(--verde); }
+
+/* fecho */
+.fecho { text-align: left; }
+.fecho h2 { font-size: clamp(44px, 8vw, 96px); margin-bottom: 30px; }
+.contactos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px 40px; margin-top: clamp(48px, 8vw, 88px); padding-top: 24px; border-top: 1px solid var(--linha); font-size: 15px; }
+.contactos > * { min-width: 0; }
+.contactos small { display: block; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cinza); margin-bottom: 6px; }
+.contactos a { text-decoration-color: var(--linha); text-underline-offset: 4px; }
+.contactos a:hover { text-decoration-color: var(--tinta); }
+@media (max-width: 720px) { .contactos { grid-template-columns: 1fr; } }
+footer { padding-block: 28px calc(28px + env(safe-area-inset-bottom, 0px)); font-size: 13px; color: var(--cinza); }
+@media (max-width: 640px) { footer { padding-bottom: 96px; } }
+
+/* barra fixa no telemóvel */
+.barra { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: none; align-items: center; justify-content: space-between; gap: 12px; background: rgba(250,247,242,0.96); backdrop-filter: blur(8px); border-top: 1px solid var(--linha); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); transform: translateY(110%); transition: transform .25s; }
+.barra.on { transform: none; }
+.barra div { font-size: 14px; font-weight: 600; line-height: 1.25; }
+.barra small { display: block; font-weight: 400; font-size: 12px; color: var(--cinza); }
+.barra .botao { padding: 11px 20px; font-size: 15px; white-space: nowrap; }
+@media (max-width: 640px) { .barra { display: flex; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="topo" id="topo">
+  <div class="w">
+    <a href="#inicio" aria-label="CFT, início"><img src="assets/logo_CFT.png" alt="CFT · Campo de Formação Técnica" /></a>
+    <nav aria-label="Secções">
+      <a href="#semana">A semana</a>
+      <a href="#preco">Preço</a>
+      <a href="#pais">Para os pais</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <a class="ir" href="inscricao.html">Inscreve-te</a>
+  </div>
+</header>
+
+<main id="inicio">
+  <section class="abre">
+    <div class="w">
+      <p class="rot">CFT 2027 · 5ª edição · Ponte da Barca</p>
+      <h1>Uma semana de basquetebol.<br /><em>Amigos para a vida.</em></h1>
+      <p class="sub">Treinos de manhã à tarde, jogos, conversas com atletas e uma semana fora de casa com gente que gosta do mesmo que tu.</p>
+      <div class="factos">
+        <span><b>11 a 17 de julho</b><small>Semana 1</small></span>
+        <span><b>18 a 24 de julho</b><small>Semana 2</small></span>
+        <span><b>8 aos 16 anos</b><small>nascidos entre 2011 e 2019</small></span>
+        <span><b>60 vagas</b><small>por semana</small></span>
+      </div>
+      <div class="agir">
+        <a class="botao" href="inscricao.html">Inscreve-te</a>
+        <span class="estado" id="estado"><i></i><span id="estado-txt">As inscrições abrem a 27 de novembro.</span></span>
+      </div>
+      <figure class="foto-larga"><img src="assets/photo2.jpg" alt="Atletas do CFT em Ponte da Barca" /></figure>
+    </div>
+  </section>
+
+  <section id="semana">
+    <div class="w">
+      <p class="rot">A semana</p>
+      <h2 class="estreito">Sete dias a jogar, a aprender e a conviver.</h2>
+      <p class="estreito suave">Para quem quer levar o seu jogo mais longe. Os grupos são feitos por idade e nível, para que a semana seja sempre adequada e desafiante.</p>
+      <div class="lista">
+        <div><b>Técnica individual</b><span>Drible, passe, lançamento e posicionamento, com trabalho ao ritmo de cada atleta.</span></div>
+        <div><b>Tática coletiva</b><span>Sistemas de jogo, leitura defensiva e transições, adaptados à idade de cada grupo.</span></div>
+        <div><b>Competição</b><span>Jogos todos os dias e um torneio final entre os grupos da semana.</span></div>
+        <div><b>Conversas com atletas</b><span>Jogadores de referência nacional contam o que é preciso para chegar ao mais alto nível.</span></div>
+        <div><b>Análise de jogo</b><span>Sessões de vídeo para perceber o jogo para além das quatro linhas.</span></div>
+        <div><b>Vida de campo</b><span>Dormir, comer e conviver com atletas de clubes de todo o país.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="voz" aria-label="Quem já cá esteve">
+    <div class="w duas">
+      <div>
+        <p class="rot">Quem já cá esteve</p>
+        <blockquote id="voz-txt" aria-live="polite"></blockquote>
+        <p class="quem" id="voz-quem"></p>
+        <div class="nav">
+          <button type="button" id="voz-ant" aria-label="Testemunho anterior">←</button>
+          <button type="button" id="voz-seg" aria-label="Testemunho seguinte">→</button>
+          <span id="voz-n"></span>
+        </div>
+      </div>
+      <img src="assets/photo3.jpg" alt="Dois atletas abraçados no pavilhão" loading="lazy" />
+    </div>
+  </section>
+
+  <section id="preco">
+    <div class="w">
+      <p class="rot">Preço</p>
+      <h2 class="estreito">Quanto mais cedo, menos pagas.</h2>
+      <p class="estreito suave">O preço depende só da data de inscrição. Escolhe as semanas e vê quanto fica.</p>
+
+      <form class="contas" id="contas" onsubmit="return false">
+        <fieldset>
+          <legend>Em que semanas?</legend>
+          <div class="opcoes">
+            <label><input type="checkbox" id="c-s1" checked /><span>Semana 1<small>11 a 17 jul</small></span></label>
+            <label><input type="checkbox" id="c-s2" /><span>Semana 2<small>18 a 24 jul</small></span></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Alguma destas é verdade?</legend>
+          <div class="opcoes">
+            <label><input type="checkbox" id="c-irmao" /><span>Tenho um irmão inscrito</span></label>
+            <label><input type="checkbox" id="c-clube" /><span>O meu clube tem 8 ou mais inscritos</span></label>
+          </div>
+        </fieldset>
+        <div class="resultado" aria-live="polite">
+          <div class="total"><span id="r-total">350 €</span><small id="r-sub">350 € por semana</small></div>
+          <div class="passos" id="r-passos"></div>
+        </div>
+      </form>
+
+      <table class="tabela" aria-label="Preços por semana, internos">
+        <thead><tr><th>Data de inscrição</th><th>Preço</th><th>Com desconto</th></tr></thead>
+        <tbody id="t-precos">
+          <tr data-ate="2026-12-24T23:59:59Z"><td>Até 24 de dezembro</td><td>350 €</td><td>315 €</td></tr>
+          <tr data-ate="2027-03-31T23:59:59Z"><td>De 25 de dezembro a 31 de março</td><td>375 €</td><td>335 €</td></tr>
+          <tr><td>A partir de 1 de abril</td><td>395 €</td><td>355 €</td></tr>
+        </tbody>
+      </table>
+      <p class="nota">Preços por semana para atletas internos. Tens desconto se tiveres um irmão inscrito, se vieres nas duas semanas ou se o teu clube inscrever 8 ou mais atletas. Os descontos não se somam. Externos (dormem em casa): 290 € por semana, com almoço e lanches.</p>
+    </div>
+  </section>
+
+  <section id="pais">
+    <div class="w">
+      <p class="rot">Para os pais</p>
+      <h2 class="estreito">O que costuma querer saber quem inscreve um filho.</h2>
+      <div class="perguntas estreito" style="max-width:760px">
+        <details>
+          <summary>Como se paga?</summary>
+          <div class="r"><p>Pode pagar tudo de uma vez na inscrição, ou um sinal de 130 € por semana na inscrição e o resto até 21 de junho. O total é o mesmo nas duas formas.</p></div>
+        </details>
+        <details>
+          <summary>E se tivermos de desistir?</summary>
+          <div class="r"><p>O sinal de 130 € garante o lugar e não é devolvido. O resto é devolvido a quem desistir até 21 de junho. Depois dessa data, só com atestado médico.</p></div>
+        </details>
+        <details>
+          <summary>O que é preciso levar?</summary>
+          <div class="r"><p>Roupa de treino e sapatilhas para seis dias, almofada e saco-cama ou lençóis (os colchões são do CFT), chinelos, calções de banho, toalha de praia, protetor solar, produtos de higiene e a medicação habitual, se houver.</p></div>
+        </details>
+        <details>
+          <summary>O meu filho toma medicação. Como funciona?</summary>
+          <div class="r"><p>A medicação é entregue à organização no primeiro dia, com as indicações de toma. As alergias e os problemas de saúde são indicados na inscrição.</p></div>
+        </details>
+        <details>
+          <summary>Em que grupo e em que quarto fica?</summary>
+          <div class="r"><p>Os grupos de treino são feitos por idade e nível, e os quartos são organizados pela equipa do campo. Não é preciso escolher nada na inscrição.</p></div>
+        </details>
+        <details>
+          <summary>E se a semana já estiver cheia?</summary>
+          <div class="r"><p>Cada semana tem 60 vagas. Quando enche, as inscrições seguintes ficam em lista de espera, pela ordem de chegada.</p></div>
+        </details>
+        <details>
+          <summary>Quem organiza?</summary>
+          <div class="r"><p>A APDFE, Associação de Promoção do Desporto em Férias Escolares. O CFT vai na 5ª edição e junta todos os verões, em Ponte da Barca, jovens de clubes de todo o país. As regras completas estão no <a href="regulamento.html">regulamento</a>.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="fecho" id="contacto">
+    <div class="w">
+      <p class="rot">Julho de 2027</p>
+      <h2>Vemo-nos em Ponte da Barca.</h2>
+      <div class="agir" style="margin-top:0">
+        <a class="botao" href="inscricao.html">Inscreve-te</a>
+        <span class="estado" id="estado2"><i></i><span id="estado2-txt">As inscrições abrem a 27 de novembro.</span></span>
+      </div>
+      <div class="contactos">
+        <div><small>Dúvidas</small><span>geral@camposft.com</span></div>
+        <div><small>Onde</small>Escola Básica Integrada de Diogo Bernardes, Ponte da Barca<br /><a href="https://maps.app.goo.gl/wrV2fgbT4bcz6bzG8" target="_blank" rel="noopener">Ver no mapa</a></div>
+        <div><small>Fotografias e novidades</small><a href="https://www.instagram.com/campoft/" target="_blank" rel="noopener">Instagram @campoft</a></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="w">© 2027 APDFE · Campo de Formação Técnica · <a href="regulamento.html">Regulamento</a></div></footer>
+
+<div class="barra" id="barra">
+  <div id="barra-preco">350 € · 315 € com desconto<small>por semana, até 24 de dezembro</small></div>
+  <a class="botao" href="inscricao.html">Inscreve-te</a>
+</div>
+
+<script>
+(function () {
+  // Preços oficiais 2027, por data de inscrição: [até, preço, com desconto, texto]
+  var E = [['2026-12-24T23:59:59Z', 350, 315, 'até 24 de dezembro'], ['2027-03-31T23:59:59Z', 375, 335, 'até 31 de março'], [null, 395, 355, '']];
+  var SINAL = 130, now = Date.now();
+  var e = E.filter(function (x) { return !x[0] || now <= Date.parse(x[0]); })[0];
+  var $ = function (id) { return document.getElementById(id); };
+
+  // Tabela: marca o preço de agora e risca os que já passaram
+  [].forEach.call(document.querySelectorAll('#t-precos tr'), function (tr, i) {
+    if (E[i] === e) tr.className = 'agora';
+    else if (E[i][0] && now > Date.parse(E[i][0])) tr.className = 'passou';
+  });
+  $('barra-preco').innerHTML = e[1] + ' € · ' + e[2] + ' € com desconto<small>por semana' + (e[3] ? ', ' + e[3] : '') + '</small>';
+
+  // Estado das inscrições
+  if (now >= Date.parse('2026-11-27T20:00:00Z')) {
+    ['estado', 'estado2'].forEach(function (id) { $(id).className = 'estado aberto'; $(id + '-txt').textContent = 'Inscrições abertas.'; });
+  }
+
+  // Contas
+  function contas() {
+    var n = ($('c-s1').checked ? 1 : 0) + ($('c-s2').checked ? 1 : 0);
+    if (n === 0) { $('r-total').textContent = '—'; $('r-sub').textContent = 'Escolhe pelo menos uma semana.'; $('r-passos').innerHTML = ''; return; }
+    var motivo = n === 2 ? 'por vires nas duas semanas' : ($('c-irmao').checked ? 'por teres um irmão inscrito' : ($('c-clube').checked ? 'pelo teu clube' : ''));
+    var porSem = motivo ? e[2] : e[1], total = porSem * n, sinal = SINAL * n;
+    $('r-total').textContent = total + ' €';
+    $('r-sub').innerHTML = porSem + ' € por semana' + (motivo ? ', com desconto ' + motivo : '') + (e[3] ? '.<br />Preço para inscrições ' + e[3] + '.' : '.');
+    $('r-passos').innerHTML = '<p>Na inscrição pagas o sinal: <b>' + sinal + ' €</b>.</p><p>O resto, <b>' + (total - sinal) + ' €</b>, até 21 de junho.</p><p class="suave">Ou tudo de uma vez. O total é o mesmo.</p>'
+      + (!motivo ? '<p class="suave">Sem desconto: ' + e[1] + ' €. Com desconto seriam ' + e[2] + ' € por semana.</p>' : '')
+      + ($('c-clube').checked && motivo === 'pelo teu clube' ? '<p class="suave">O desconto de clube é aplicado quando o clube chega aos 8 inscritos.</p>' : '');
+  }
+  ['c-s1', 'c-s2', 'c-irmao', 'c-clube'].forEach(function (id) { $(id).addEventListener('change', contas); });
+  contas();
+
+  // Testemunhos, um de cada vez
+  var V = [
+    ['Adorei as amizades que fiz, a evolução pessoal e o espírito de equipa que ganhei.', 'Rafael Oliveira', 'Basquete Clube de Barcelos'],
+    ['Os pequenos detalhes dados pelos treinadores são os mais importantes, são os que criam a evolução.', 'Daniel Sotelo', 'Futebol Clube do Porto'],
+    ['Fizemos muitos amigos e conhecemos pessoas novas, criando memórias para a vida.', 'Natália Martins', 'Clube de Basquete de Viana'],
+    ['A experiência ajudou-me a evoluir tanto a nível de basquetebol como a nível pessoal.', 'Eduardo Pereira', 'Clube de Basquete de Viana'],
+    ['Um ambiente de camaradagem entre todos. Uma experiência a repetir.', 'Maria Pequeno', 'Atleta'],
+    ['Foi muito estimulante ouvir os jogadores da liga a falarem do seu trajeto.', 'Francesco Melica', 'Atleta']
+  ], vi = 0;
+  function voz(d) {
+    vi = (vi + d + V.length) % V.length;
+    $('voz-txt').textContent = '“' + V[vi][0] + '”';
+    $('voz-quem').innerHTML = '<b>' + V[vi][1] + '</b> · ' + V[vi][2];
+    $('voz-n').textContent = (vi + 1) + ' de ' + V.length;
+  }
+  $('voz-ant').addEventListener('click', function () { voz(-1); });
+  $('voz-seg').addEventListener('click', function () { voz(1); });
+  voz(0);
+
+  // Topo e barra do telemóvel
+  var topo = $('topo'), barra = $('barra');
+  window.addEventListener('scroll', function () { topo.classList.toggle('on', window.scrollY > 8); barra.classList.toggle('on', window.scrollY > 520); }, { passive: true });
+})();
+</script>
+</body>
+</html>
