@@ -1,7 +1,9 @@
 /**
  * Router. Substituir SHEET_ID pela cópia de teste primeiro.
  */
-const SHEET_ID = '1LXOqqTt2Ct7xNtRvv_Nu38z5V3pza0NtacgxBM3_WSY';  // Sheet real ligado ao Forms (em geral@camposft.com)
+// CFT 2027: Sheet "CFT 2027 (Respostas)", ligado ao Form 2027.
+// O de 2026 era '1LXOqqTt2Ct7xNtRvv_Nu38z5V3pza0NtacgxBM3_WSY' (fica como arquivo).
+const SHEET_ID = '1abTVSDX0-4bBQezHltaVPECSYynQMRWgGi7ryTyqeeM';
 
 function doGet(e)  { return handle_(e, 'GET'); }
 function doPost(e) { return handle_(e, 'POST'); }
@@ -18,6 +20,13 @@ function handle_(e, method) {
     // pelos encarregados. Tudo o resto continua a exigir token de admin.
     if (action === 'survey_submit') {
       return json_({ ok: true, data: Satisfacao.submit(params) });
+    }
+    // Endpoint público: inscrição feita no site (camposft.com/inscricao.html).
+    if (action === 'inscricao_submit') {
+      return json_({ ok: true, data: InscricaoSite.submit(params) });
+    }
+    if (action === 'clube_contagem') {
+      return json_({ ok: true, data: InscricaoSite.clubeContagem(params.clube) });
     }
 
     const user = Auth.verify(params.token);
