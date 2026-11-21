@@ -298,7 +298,7 @@ const EmailTemplates = {
             <div style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:12px;color:${C.charcoal};line-height:1.8;">
               <span style="margin-right:24px;"><b style="color:${C.greenDark};">e</b>&nbsp;geral@camposft.com</span>
               <span style="margin-right:24px;"><b style="color:${C.greenDark};">w</b>&nbsp;camposft.com</span>
-              <span><b style="color:${C.greenDark};">ig</b>&nbsp;@camposft</span>
+              <span><b style="color:${C.greenDark};">ig</b>&nbsp;@campoft</span>
             </div>
           </td>
         </tr></table>
@@ -312,7 +312,7 @@ const EmailTemplates = {
       <div>
         <div>
           <div style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:${C.greenBright};margin-bottom:6px;">Campo de Formação Técnica</div>
-          <div style="color:${C.sand};">APDFE · Associação Promoção e Desporto em Ferias Escolares</div>
+          <div style="color:${C.sand};">APDFE · Associação de Promoção do Desporto em Férias Escolares</div>
         </div>
         <div style="color:${C.sand};font-size:10px;margin-top:10px;">Recebeu este email porque inscreveu o seu educando no CFT.</div>
       </div>
