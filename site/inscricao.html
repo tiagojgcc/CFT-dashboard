@@ -117,6 +117,12 @@ window.CFT_INSC = {
 </div></section>
 
 <main class="main">
+  <div id="fechado" hidden style="text-align:center;padding:48px 8px 64px">
+    <div class="eyebrow" style="color:var(--green-dark)">Ainda não abriram</div>
+    <h2 style="font-family:var(--font-display);font-size:44px;line-height:1;margin:12px 0 16px">As inscrições abrem a 27 de novembro</h2>
+    <p style="max-width:520px;margin:0 auto 28px">Sexta-feira, 27 de novembro de 2026, às 00:00. Volta aqui nesse dia para inscrever o teu atleta.</p>
+    <a href="/" class="next" style="display:inline-block;padding:14px 28px;border-radius:8px;text-decoration:none;font-family:var(--font-condensed);font-weight:700;letter-spacing:.08em;text-transform:uppercase">Ver o site</a>
+  </div>
   <div class="steps" id="steps"></div>
   <form id="f" novalidate>
     <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
@@ -213,6 +219,13 @@ window.CFT_INSC = {
     <p class="err" id="submit-err" role="alert" hidden></p>
   </form>
 </main>
+<script>
+if (!window.CFT_INSC.ABERTO) {
+  document.getElementById('fechado').hidden = false;
+  document.getElementById('steps').style.display = 'none';
+  document.getElementById('f').style.display = 'none';
+}
+</script>
 
 
 <script>
