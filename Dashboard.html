@@ -6265,8 +6265,17 @@ function renderFinancas(){
 const EDICAO_KEY = 'cft_edicao_v1';
 function setEdicao(ano){
   ano = ano === '2026' ? '2026' : '2027';
+  const mudou = document.body.dataset.edicao && document.body.dataset.edicao !== ano;
   try { localStorage.setItem(EDICAO_KEY, ano); } catch (e) {}
   document.body.dataset.edicao = ano;
+  // Cada edição lê a sua Sheet: ao trocar, volta a carregar os dados dessa edição.
+  if (mudou && typeof Auth !== 'undefined' && Auth.token) {
+    const cached = Api.getCachedSync();
+    dataAll = cached ? cached.atletas : []; data = dataAll.filter(a => a.ativo);
+    if (cached) { historicoBackend = cached.historico; emailsBackend = cached.emails; configBackend = cached.config; }
+    try { renderAll(); } catch (e) {}
+    refreshNow();
+  }
   const p26 = document.getElementById('ed-pill-2026');
   const p27 = document.getElementById('ed-pill-2027');
   if (p26) p26.classList.toggle('active', ano === '2026');
