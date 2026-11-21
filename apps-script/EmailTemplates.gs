@@ -277,8 +277,8 @@ const EmailTemplates = {
     // mostrada à direita — usado pelo agradecimento pós-edição.
     const C = this.C;
     return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.nearBlack}" style="background-color:${C.nearBlack};border-collapse:collapse;width:100%;"><tr>
-      <td bgcolor="${C.nearBlack}" width="50%" align="left" style="background-color:${C.nearBlack};padding:26px 40px;"><img src="${this.LOGO_DARK_URL}" alt="CFT" width="150" height="55" style="display:block;width:150px;height:55px;" /></td>
-      <td bgcolor="${C.nearBlack}" width="50%" align="right" style="background-color:${C.nearBlack};padding:26px 40px;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;color:${C.sand};text-transform:uppercase;">${edition || this.EDITION}</td>
+      <td bgcolor="${C.nearBlack}" align="left" style="background-color:${C.nearBlack};padding:22px 0 22px 6%;"><img src="${this.LOGO_DARK_URL}" alt="CFT" width="120" height="44" style="display:block;width:120px;height:44px;" /></td>
+      <td bgcolor="${C.nearBlack}" align="right" style="background-color:${C.nearBlack};padding:22px 6% 22px 12px;white-space:nowrap;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;color:${C.sand};text-transform:uppercase;">${edition || this.EDITION}</td>
     </tr></table>`;
   },
 
@@ -309,27 +309,35 @@ const EmailTemplates = {
   _footer() {
     const C = this.C;
     return `<div style="background:${C.charcoal};color:${C.beige};padding:24px 40px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:11px;line-height:1.6;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;">
+      <div>
         <div>
           <div style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:${C.greenBright};margin-bottom:6px;">Campo de Formação Técnica</div>
           <div style="color:${C.sand};">APDFE · Associação Promoção e Desporto em Ferias Escolares</div>
         </div>
-        <div style="color:${C.sand};font-size:10px;">Recebeu este email porque inscreveu o seu educando no CFT.</div>
+        <div style="color:${C.sand};font-size:10px;margin-top:10px;">Recebeu este email porque inscreveu o seu educando no CFT.</div>
       </div>
     </div>`;
   },
 
   _wrap(content, edition) {
     const C = this.C;
-    return `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">${this._googleFontsLink()}<style>body{margin:0;padding:0;}</style></head>
+    return `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">${this._googleFontsLink()}<meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0;padding:0;}
+@media (min-width:620px){.cft-h1{font-size:64px!important}.cft-ph{font-size:54px!important}.cft-l{display:inline-block!important;width:150px!important;vertical-align:top!important;padding-top:3px!important}.cft-v{display:inline-block!important;width:60%!important;vertical-align:top!important;margin-top:0!important}}
+</style></head>
 <body style="margin:0;padding:0;background:#f0eee9;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;color:${C.charcoal};">
-  <div style="max-width:680px;margin:0 auto;background:${C.beige};border:1px solid ${C.beigeMid};">
-    ${this._header(edition)}
-    ${content}
-    ${this._signature()}
-    ${this._footer()}
+  <div style="max-width:680px;margin:0 auto;background:${C.beige};">
+    ${this._fluido(this._header(edition) + content + this._signature() + this._footer())}
   </div>
 </body></html>`;
+  },
+
+  // Margens laterais fixas de 40px passam a 6% (22px no telemóvel, 40px no computador),
+  // para o email caber num ecrã de 375px sem cortar nem desalinhar.
+  _fluido(html) {
+    return html
+      .replace(/padding:(\d+(?:px)?) 40px (\d+(?:px)?) 40px/g, 'padding:$1 6% $2 6%')
+      .replace(/padding:(\d+(?:px)?) 40px;/g, 'padding:$1 6%;')
+      .replace(/margin:0 40px;/g, 'margin:0 6%;');
   },
 
   _over(text, color) {
@@ -339,7 +347,7 @@ const EmailTemplates = {
 
   _display(text, sub) {
     const C = this.C;
-    return `<h1 style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:72px;line-height:0.92;color:${C.nearBlack};margin:0;text-transform:uppercase;letter-spacing:-0.005em;">${this._esc(text)}</h1>${sub ? `<div style="margin-top:16px;font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:18px;color:${C.charcoal};">${this._esc(sub)}</div>` : ''}`;
+    return `<h1 class="cft-h1" style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:38px;line-height:1;color:${C.nearBlack};margin:0;text-transform:uppercase;letter-spacing:-0.005em;">${this._esc(text)}</h1>${sub ? `<div style="margin-top:16px;font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:18px;color:${C.charcoal};">${this._esc(sub)}</div>` : ''}`;
   },
 
   _para(text) {
@@ -349,12 +357,12 @@ const EmailTemplates = {
   _infoBox(rows, title) {
     const C = this.C;
     const rowsHtml = rows.map(([label, value, italic]) =>
-      `<div style="display:flex;align-items:baseline;padding:14px 0;border-bottom:1px solid ${C.beigeMid};gap:24px;">
-        <div style="width:130px;flex-shrink:0;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:${C.midGray};">${this._esc(label)}</div>
-        <div style="flex:1;font-family:${italic ? "'Playfair Display',Georgia,serif" : "'DM Sans','Helvetica Neue',Arial,sans-serif"};font-style:${italic ? 'italic' : 'normal'};font-size:${italic ? '19px' : '15px'};font-weight:${italic ? 400 : 500};color:${C.charcoal};">${value}</div>
+      `<div style="padding:12px 0;border-bottom:1px solid ${C.beigeMid};">
+        <div class="cft-l" style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:${C.midGray};">${this._esc(label)}</div>
+        <div class="cft-v" style="margin-top:3px;font-family:${italic ? "'Playfair Display',Georgia,serif" : "'DM Sans','Helvetica Neue',Arial,sans-serif"};font-style:${italic ? 'italic' : 'normal'};font-size:${italic ? '19px' : '15px'};font-weight:${italic ? 400 : 500};color:${C.charcoal};">${value}</div>
       </div>`
     ).join('');
-    return `<div style="margin:0 40px;background:${C.offWhite};padding:8px 28px 20px 28px;border:1px solid ${C.beigeMid};">
+    return `<div style="margin:0 40px;background:${C.offWhite};padding:8px 5% 16px 5%;border:1px solid ${C.beigeMid};">
       ${title ? `<div style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:${C.greenDark};padding:18px 0 4px 0;">${this._esc(title)}</div>` : ''}
       ${rowsHtml}
     </div>`;
@@ -932,9 +940,9 @@ const EmailTemplates = {
           <tr><td style="padding:0;line-height:0;font-size:0;">
             <a href="${url}" style="text-decoration:none;"><img src="${this.POSTAL_IMG_URL}" width="520" alt="Bola de basquetebol com um laço, ao lado de uma árvore de Natal" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:10px 10px 0 0;"></a>
           </td></tr>
-          <tr><td style="padding:26px 28px 28px 28px;background:${C.nearBlack};">
+          <tr><td style="padding:22px 20px 24px 20px;background:${C.nearBlack};">
             <div style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${gold};">${this._esc(nome)}, tens um presente à tua espera em julho</div>
-            <div style="font-family:'Bebas Neue','Arial Narrow',Impact,sans-serif;font-size:54px;line-height:0.95;letter-spacing:0.01em;color:${C.offWhite};text-transform:uppercase;margin:12px 0 14px 0;">Este verão<br>vais ao <span style="color:${gold};">CFT!</span></div>
+            <div class="cft-ph" style="font-family:'Bebas Neue','Arial Narrow',Impact,sans-serif;font-size:36px;line-height:1;letter-spacing:0.01em;color:${C.offWhite};text-transform:uppercase;margin:12px 0 14px 0;">Este verão<br>vais ao <span style="color:${gold};">CFT!</span></div>
             <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:${C.offWhite};">Uma semana de basquetebol e amigos para a vida.</div>
             <div style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:${C.sand};margin-top:16px;">${this._esc(quando)} · Ponte da Barca · 5ª edição</div>
           </td></tr>
