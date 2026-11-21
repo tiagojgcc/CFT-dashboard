@@ -12,8 +12,8 @@
 // ABERTO: enquanto for false, mostra a mensagem de que as inscrições ainda não abriram.
 window.CFT_INSC = {
   API_URL: 'https://script.google.com/macros/s/AKfycbx3yw0iNCS-oUt5HM0hSg5zw_nEBYz787Uz49YyfiWBgfI801KGXTFCKz8i12-EqPu40w/exec',
-  // Abre sozinho a 27/11/2026 às 00:00 (hora de Lisboa). Para testar antes: ?teste=1
-  ABERTO: Date.now() >= Date.parse('2026-11-27T00:00:00Z') || /[?&]teste=1/.test(location.search),
+  // Abre sozinho a 27/11/2026 às 20:00 (hora de Lisboa; anúncio às 21:00). Para testar antes: ?teste=1
+  ABERTO: Date.now() >= Date.parse('2026-11-27T20:00:00Z') || /[?&]teste=1/.test(location.search),
   CLUBES: ['Académico Futebol Clube', 'Barca Basket Clube', 'Basket Club Limiense', 'Basket Clube de Valença', 'Club 5 Basket', 'Clube Basquete Viana', 'Futebol Clube Porto', 'GDB Leça', 'Guifões Sport Clube', 'Juvemaia', 'Maia Basket Clube', 'Powertogether', 'SC Braga'],
   IBAN: 'PT50 0007 0000 0065 0137 6512 3',
   TITULAR: 'APDFE',
@@ -120,7 +120,7 @@ window.CFT_INSC = {
   <div id="fechado" hidden style="text-align:center;padding:48px 8px 64px">
     <div class="eyebrow" style="color:var(--green-dark)">Ainda não abriram</div>
     <h2 style="font-family:var(--font-display);font-size:44px;line-height:1;margin:12px 0 16px">As inscrições abrem a 27 de novembro</h2>
-    <p style="max-width:520px;margin:0 auto 28px">Sexta-feira, 27 de novembro de 2026, às 00:00. Volta aqui nesse dia para inscrever o teu atleta.</p>
+    <p style="max-width:520px;margin:0 auto 28px">Sexta-feira, 27 de novembro de 2026, às 21:00. Volta aqui nesse dia para inscrever o teu atleta.</p>
     <a href="/" class="next" style="display:inline-block;padding:14px 28px;border-radius:8px;text-decoration:none;font-family:var(--font-condensed);font-weight:700;letter-spacing:.08em;text-transform:uppercase">Ver o site</a>
   </div>
   <div class="steps" id="steps"></div>
