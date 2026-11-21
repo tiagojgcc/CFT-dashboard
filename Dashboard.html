@@ -520,6 +520,7 @@
   /* ============ MODO ANONIMIZADO ============
      Quando body.anonymized está activo, borra nomes/emails/IBANs em toda
      a UI. Útil para apresentações com dados reais sem expor identidades. */
+  body.anonymized .anon-nome,
   body.anonymized .atleta-name,
   body.anonymized .atleta-encarregado,
   body.anonymized .atleta-iban,
@@ -599,8 +600,10 @@
   .donut-legend-row .lbl { flex: none; }
   .donut-legend-row .num { font-family: var(--font-condensed); font-weight: 700; color: var(--charcoal); margin-left: 4px; font-size: 13px; }
   /* Nav "⋯" dropdown menu */
-  .nav-more { position: relative; margin-left: auto; }
-  .nav-more-toggle { font-size: 18px; padding: 8px 14px !important; }
+  .nav-more { position: relative; }
+  .nav-more-toggle { white-space: nowrap; }
+  .ab-refresh--icon { font-size: 15px; padding: 4px 10px; line-height: 1.2; }
+  #btn-anon.active { color: #f4c542; }
   .nav-more-menu {
     position: absolute; top: 100%; right: 0; background: var(--charcoal); color: var(--off-white);
     min-width: 180px; border-radius: 0 0 6px 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.25);
@@ -820,6 +823,84 @@
   @media (max-width: 720px) {
     .ov-grid--3, .ov-grid--clubes { grid-template-columns: 1fr; }
   }
+
+  /* ============ HOJE · herói da Visão geral ============ */
+  .hoje { display: grid; grid-template-columns: minmax(320px, 1fr) 1.6fr; gap: 14px; margin-bottom: 14px; align-items: stretch; }
+  .hoje-main { background: var(--charcoal); color: var(--off-white); border-radius: var(--radius-md); padding: 20px 22px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; }
+  .hoje-over { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--green-bright); }
+  .hoje-num { font-family: var(--font-display); font-size: 84px; line-height: 0.9; letter-spacing: 0.01em; }
+  .hoje-num .of { font-size: 30px; color: var(--sand); margin-left: 6px; }
+  .hoje-bar { height: 12px; background: rgba(255,255,255,0.14); border-radius: 4px; overflow: hidden; }
+  .hoje-bar > div { height: 100%; background: var(--green-bright); border-radius: 4px; transition: width 700ms ease-out; min-width: 3px; }
+  .hoje-sub { font-size: 12.5px; color: var(--sand); line-height: 1.5; }
+  .hoje-sub b { color: var(--off-white); font-weight: 600; }
+  .hoje-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .hoje-chip { border: 1px solid rgba(255,255,255,0.22); border-radius: 4px; padding: 7px 10px; min-width: 84px; }
+  .hoje-chip .l { font-family: var(--font-condensed); font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sand); }
+  .hoje-chip .v { font-family: var(--font-display); font-size: 22px; line-height: 1.1; }
+  .hoje-chart { display: flex; flex-direction: column; min-width: 0; }
+  .ritmo-wrap { position: relative; flex: 1; min-height: 170px; }
+  .ritmo-wrap svg { display: block; width: 100%; overflow: visible; }
+  .ritmo-tip { position: absolute; pointer-events: none; background: var(--charcoal); color: var(--off-white); font-size: 11.5px; padding: 6px 9px; border-radius: 4px; white-space: nowrap; transform: translate(-50%, -120%); display: none; z-index: 3; }
+  .ritmo-tip b { font-family: var(--font-condensed); letter-spacing: 0.04em; }
+  .ritmo-empty { padding: 40px 10px; text-align: center; color: var(--mid-gray); font-family: var(--font-condensed); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+  /* vagas por semana, segmentadas por escalão etário */
+  .week { cursor: pointer; border-radius: 4px; padding: 3px 4px; margin: -3px -4px; }
+  .week:hover { background: var(--beige-light); }
+  .week-bar--seg { display: flex; gap: 2px; overflow: hidden; }
+  .week-bar--seg .seg { height: 100%; border-radius: 3px; min-width: 3px; }
+  .esc-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 12px; font-family: var(--font-condensed); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid-gray); }
+  .esc-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .esc-legend b { color: var(--charcoal); margin-left: 3px; }
+  /* pagamentos: barra única empilhada (substitui o donut) */
+  .pag-big { font-family: var(--font-display); font-size: 40px; line-height: 1; }
+  .pag-big small { font-family: var(--font-body); font-size: 12.5px; color: var(--mid-gray); margin-left: 8px; }
+  .pag-stack { display: flex; gap: 2px; height: 22px; margin: 12px 0 10px 0; }
+  .pag-stack .seg { height: 100%; border-radius: 3px; min-width: 4px; cursor: pointer; }
+  .pag-stack .seg:hover { filter: brightness(1.08); }
+  .pag-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-bottom: 1px solid var(--beige-mid); font-size: 12.5px; cursor: pointer; border-radius: 3px; }
+  .pag-row:last-child { border-bottom: none; }
+  .pag-row:hover { background: var(--beige-light); }
+  .pag-row .dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .pag-row .lbl { flex: 1; }
+  .pag-row .num { font-family: var(--font-condensed); font-weight: 700; font-size: 13px; }
+  .pag-row .eur { color: var(--mid-gray); font-size: 11.5px; min-width: 62px; text-align: right; }
+  /* listas compactas (últimas inscrições, em falta) */
+  .ov-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--beige-mid); cursor: pointer; border-radius: 3px; }
+  .ov-row:last-child { border-bottom: none; }
+  .ov-row:hover { background: var(--beige-light); }
+  .ov-row .who { flex: 1; min-width: 0; }
+  .ov-row .who b { display: block; font-family: var(--font-condensed); font-size: 13.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ov-row .who span { font-size: 11.5px; color: var(--mid-gray); }
+  .ov-row .right { text-align: right; font-size: 11.5px; color: var(--mid-gray); white-space: nowrap; }
+  .ov-row .right b { display: block; font-family: var(--font-condensed); font-size: 14px; color: var(--charcoal); }
+  .ov-more { margin-top: auto; padding-top: 10px; font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green-dark); cursor: pointer; }
+  .ov-more:hover { text-decoration: underline; }
+  .ov-note { font-size: 12px; color: var(--mid-gray); padding: 9px 4px 0 4px; line-height: 1.5; }
+  .ov-empty { padding: 22px 4px; font-family: var(--font-condensed); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mid-gray); text-align: center; }
+  /* preço em vigor */
+  .preco-now { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .preco-now .p { font-family: var(--font-display); font-size: 40px; line-height: 1; }
+  .preco-now .p small { display: block; font-family: var(--font-condensed); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mid-gray); margin-top: 4px; }
+  .preco-count { margin: 12px 0 4px 0; padding: 9px 11px; background: var(--beige-mid); border-left: 3px solid var(--orange-accent); border-radius: 3px; font-size: 12.5px; line-height: 1.45; }
+  .preco-tbl { width: 100%; min-width: 0 !important; table-layout: auto !important; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+  .preco-tbl td { padding: 6px 4px; border-bottom: 1px solid var(--beige-mid); }
+  .preco-tbl tr:last-child td { border-bottom: none; }
+  .preco-tbl td.n { text-align: right; font-family: var(--font-condensed); font-weight: 700; }
+  .preco-tbl tr.cur td { font-weight: 700; }
+  .am-icon.info { background: #dfe7f1; color: #23415f; }
+  /* menu "Mais ações" da Lista */
+  .dd { position: relative; }
+  .dd-menu { display: none; position: absolute; right: 0; top: calc(100% + 4px); z-index: 40; min-width: 290px; background: var(--white); border: 1.5px solid var(--charcoal); border-radius: 6px; box-shadow: 0 10px 28px rgba(0,0,0,0.18); padding: 6px; }
+  .dd.open .dd-menu { display: block; }
+  .dd-head { font-family: var(--font-condensed); font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mid-gray); padding: 9px 10px 4px 10px; }
+  .dd-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 8px 10px; font-family: var(--font-body); font-size: 13px; color: var(--charcoal); border-radius: 4px; cursor: pointer; }
+  .dd-item:hover { background: var(--beige-light); }
+  .dd-item small { display: block; font-size: 11px; color: var(--mid-gray); margin-top: 1px; }
+  .ov-grid > .card, .hoje > * { min-width: 0; }
+  .preco-tbl td { white-space: nowrap; } .preco-tbl td:first-child { white-space: normal; }
+  @media (max-width: 900px) { .hoje { grid-template-columns: 1fr; } .hoje-num { font-size: 64px; } }
+  @media (max-width: 720px) { .dd-menu { position: fixed; left: 14px; right: 14px; top: 120px; min-width: 0; } }
 
   /* ============ TIMELINE ============ */
   .tl-card { padding: 18px 22px 20px 22px !important; margin-bottom: 14px; }
@@ -1175,8 +1256,7 @@
     <div class="ab-right">
       <span class="ab-user" id="ab-user">—</span>
       <span class="live-meta" id="live-meta"><span class="live-dot"></span>sincronizado</span>
-      <button class="ab-refresh ab-anon" id="btn-anon" onclick="toggleAnonimizar()" title="Borratar nomes/emails/IBANs · útil para apresentações">🙈 Anonimizar</button>
-      <button class="ab-refresh" id="btn-refresh" onclick="refreshNow()" title="Atualizar agora">↻ Atualizar</button>
+      <button class="ab-refresh ab-refresh--icon" id="btn-refresh" onclick="refreshNow()" title="Atualizar agora (atualiza sozinho de 5 em 5 minutos)" aria-label="Atualizar agora">↻</button>
     </div>
   </div>
 </header>
@@ -1213,18 +1293,19 @@
       <button class="ed-pill" id="ed-pill-2027" onclick="setEdicao('2027')">2027</button>
       <button class="ed-pill" id="ed-pill-2026" onclick="setEdicao('2026')">2026<span class="ed-tag">arquivo</span></button>
     </div>
-    <div class="tab ed-27" data-panel="plano2027">Plano 2027</div>
     <div class="tab active" data-panel="overview">Visão geral</div>
     <div class="tab" data-panel="list">Lista <span class="tab-count warn" id="tc-list">0</span></div>
-    <div class="tab" data-panel="satisfacao">Satisfação</div>
-    <div class="nav-more ed-26">
-      <div class="tab nav-more-toggle" onclick="toggleMoreMenu()">⋯</div>
+    <div class="tab ed-27" data-panel="plano2027">Plano 2027</div>
+    <div class="nav-more">
+      <div class="tab nav-more-toggle" onclick="toggleMoreMenu()" title="Mais: o que se usa menos">Mais ▾</div>
       <div class="nav-more-menu" id="nav-more-menu">
-        <div class="more-item" data-panel="banco"        onclick="showTab('banco'); document.getElementById('nav-more-menu').classList.remove('open');">Banco <span class="tab-count" id="tc-banco">0</span></div>
-        <div class="more-item" data-panel="entregaveis"  onclick="showTab('entregaveis'); document.getElementById('nav-more-menu').classList.remove('open');">Entregáveis</div>
-        <div class="more-item" data-panel="financas"     onclick="showTab('financas'); document.getElementById('nav-more-menu').classList.remove('open');">Finanças</div>
+        <div class="more-item" data-panel="satisfacao"   onclick="showTab('satisfacao'); document.getElementById('nav-more-menu').classList.remove('open');">Satisfação</div>
+        <div class="more-item ed-26" data-panel="banco"        onclick="showTab('banco'); document.getElementById('nav-more-menu').classList.remove('open');">Banco <span class="tab-count" id="tc-banco">0</span></div>
+        <div class="more-item ed-26" data-panel="entregaveis"  onclick="showTab('entregaveis'); document.getElementById('nav-more-menu').classList.remove('open');">Entregáveis</div>
+        <div class="more-item ed-26" data-panel="financas"     onclick="showTab('financas'); document.getElementById('nav-more-menu').classList.remove('open');">Finanças</div>
         <div class="more-item" data-panel="historico"    onclick="showTab('historico'); document.getElementById('nav-more-menu').classList.remove('open');">Histórico</div>
         <div class="more-item" data-panel="eliminados"   onclick="showTab('eliminados'); document.getElementById('nav-more-menu').classList.remove('open');">Eliminados <span class="tab-count" id="tc-eliminados">0</span></div>
+        <div class="more-item" id="btn-anon" onclick="toggleAnonimizar(); document.getElementById('nav-more-menu').classList.remove('open');" title="Esconde nomes, emails e IBAN. Útil para mostrar o ecrã a outras pessoas.">🙈 Anonimizar</div>
       </div>
     </div>
     <div class="nav-banco" onclick="goBancoReal()" title="Saldo real da conta APDFE — clica para ver e editar">
@@ -1241,48 +1322,80 @@
     <!-- Alert strip continua disponível mas só renderizada se houver crítico crítico -->
     <div id="alert-strip-host"></div>
 
-    <!-- Linha 1: Timeline em toda a largura -->
-    <div class="card tl-card">
+    <!-- Linha 1: HOJE · inscritos vs meta + ritmo de inscrições -->
+    <div class="hoje">
+      <div class="hoje-main" id="hoje-main"></div>
+      <div class="card hoje-chart">
+        <div class="card-head">
+          <div class="card-title">Ritmo das inscrições</div>
+          <div class="card-meta" id="ritmo-meta">—</div>
+        </div>
+        <div class="ritmo-wrap" id="ritmo"></div>
+      </div>
+    </div>
+
+    <!-- Linha 2: Alertas do dia + Vagas + Pagamentos -->
+    <div class="ov-grid ov-grid--3">
+      <div class="card actions-mini" id="actions-mini-card">
+        <div class="card-head">
+          <div class="card-title">Alertas do dia</div>
+          <div class="card-meta" id="actions-mini-meta">—</div>
+        </div>
+        <div id="actions-mini-body"></div>
+      </div>
+
+      <div class="card weeks-card">
+        <div class="card-head">
+          <div class="card-title">Vagas por semana e escalão</div>
+          <div class="card-meta">60 vagas · cada</div>
+        </div>
+        <div class="weeks" id="weeks"></div>
+        <div class="esc-legend" id="esc-legend"></div>
+        <div class="weeks-foot" id="weeks-foot"></div>
+      </div>
+
+      <div class="card pag-card">
+        <div class="card-head">
+          <div class="card-title">Pagamentos</div>
+          <div class="card-meta" id="pag-donut-meta">—</div>
+        </div>
+        <div id="pag-body"></div>
+      </div>
+    </div>
+
+    <!-- Linha 3: Últimas inscrições + Pagamentos em falta + Preço em vigor -->
+    <div class="ov-grid ov-grid--3">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Últimas inscrições</div>
+          <div class="card-meta" id="ultimas-meta">—</div>
+        </div>
+        <div id="ultimas-body"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Pagamentos em falta</div>
+          <div class="card-meta" id="falta-meta">—</div>
+        </div>
+        <div id="falta-body"></div>
+      </div>
+      <div class="card ed-27">
+        <div class="card-head">
+          <div class="card-title">Preço em vigor</div>
+          <div class="card-meta" id="preco-meta">—</div>
+        </div>
+        <div id="preco-body"></div>
+      </div>
+    </div>
+
+    <!-- Linha 4: Timeline em toda a largura -->
+    <div class="card tl-card" style="margin-bottom:14px;">
       <div class="card-head">
         <div class="card-title">Linha do tempo · CFT <span class="ed-ano">2027</span></div>
         <div class="card-meta" id="tl-meta">—</div>
       </div>
       <div class="timeline" id="timeline"></div>
       <div class="tl-next" id="tl-next"></div>
-    </div>
-
-    <!-- Linha 2: Semanas + Donut + A tratar (3 cards iguais) -->
-    <div class="ov-grid ov-grid--3">
-      <div class="card weeks-card">
-        <div class="card-head">
-          <div class="card-title">Inscritos por semana</div>
-          <div class="card-meta">60 vagas · cada</div>
-        </div>
-        <div class="weeks" id="weeks"></div>
-        <div class="weeks-foot" id="weeks-foot"></div>
-      </div>
-
-      <div class="card donut-card">
-        <div class="card-head">
-          <div class="card-title">Estado dos pagamentos</div>
-          <div class="card-meta" id="pag-donut-meta">—</div>
-        </div>
-        <div class="donut-row">
-          <div class="donut-wrap">
-            <svg class="donut-svg" id="donut-svg" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg" aria-label="Estado dos pagamentos"></svg>
-            <div class="donut-center" id="donut-center"></div>
-          </div>
-          <div class="donut-legend" id="donut-legend"></div>
-        </div>
-      </div>
-
-      <div class="card actions-mini" id="actions-mini-card">
-        <div class="card-head">
-          <div class="card-title">A tratar</div>
-          <div class="card-meta" id="actions-mini-meta">—</div>
-        </div>
-        <div id="actions-mini-body"></div>
-      </div>
     </div>
 
     <!-- Linha 3: Clubes encurtado + logo CFT à direita -->
@@ -1324,15 +1437,23 @@
       <select id="filt-pag"><option value="">estado pagamento</option><option value="pago">pago</option><option value="parcial">parcial</option><option value="pendente">sem pagamento</option><option value="problema">valor problemático</option></select>
       <button class="quick-template" onclick="quickFilter('problema')">⚠ só problemáticos</button>
       <button class="quick-template" onclick="quickFilter('clear')">limpar</button>
-      <button class="quick-template" onclick="downloadNomesCsv()" title="Descarrega um CSV só com o nome de todos os atletas ativos (ordenados A→Z).">⬇ Nomes (CSV)</button>
 
       <div class="list-actionbar">
         <span class="sel-info" id="sel-info">0 selecionados</span>
         <button class="compose-btn" id="compose-btn" disabled onclick="openCompose()">Enviar email</button>
-        <button class="quick-template" id="promo-desconto-btn" onclick="promoverDescontoClube()" title="Envia rascunho branded a atletas internos cujo clube tem 1-7 atletas (potencial desconto se chegarem a 8). Pode incluir já-pagos.">📢 Promover desconto de clube</button>
-        <button class="quick-template" id="info-finais-btn" onclick="enviarInfoFinaisBulk()" title="Cria 1 único rascunho no Gmail com o email 'Informações finais' e todos os encarregados (atletas ativos com email) em BCC — mesma mensagem para todos, sem personalização.">✉ Informações finais · todos em BCC</button>
-        <button class="quick-template" id="agradecimento-btn" onclick="enviarAgradecimentoBulk()" title="Cria 1 único rascunho no Gmail 'Agradecimento + questionário de satisfação' com todos os encarregados (atletas ativos com email) em BCC. O link do questionário vai sem pré-preenchimento.">🙏 Agradecimento + questionário · todos em BCC</button>
-        <button class="quick-template" id="lembrete-questionario-btn" onclick="enviarLembreteQuestionarioBulk()" title="Cria 1 único rascunho no Gmail 'Lembrete questionário' em BCC, excluindo quem se identificou na resposta. Quem respondeu em anónimo volta a receber — o email pede desculpa e diz para não responder outra vez.">🔁 Lembrete questionário · quem não se identificou</button>
+        <div class="dd" id="dd-mais">
+          <button class="quick-template dd-toggle" onclick="toggleDd('dd-mais', event)" title="Emails para todos e outras ações que se usam poucas vezes">Mais ações ▾</button>
+          <div class="dd-menu">
+            <div class="dd-head">Email para todos (1 rascunho, todos em BCC)</div>
+            <button class="dd-item" id="info-finais-btn" onclick="closeDd(); enviarInfoFinaisBulk()">✉ Informações finais<small>2 semanas antes do campo</small></button>
+            <button class="dd-item" id="agradecimento-btn" onclick="closeDd(); enviarAgradecimentoBulk()">🙏 Agradecimento + questionário<small>depois do campo</small></button>
+            <button class="dd-item" id="lembrete-questionario-btn" onclick="closeDd(); enviarLembreteQuestionarioBulk()">🔁 Lembrete do questionário<small>só a quem não se identificou</small></button>
+            <div class="dd-head">Desconto de clube</div>
+            <button class="dd-item" id="promo-desconto-btn" onclick="closeDd(); promoverDescontoClube()">📢 Avisar clubes perto dos 8 inscritos<small id="promo-desconto-sub">aparece também nos alertas da Visão geral</small></button>
+            <div class="dd-head">Exportar</div>
+            <button class="dd-item" onclick="closeDd(); downloadNomesCsv()">⬇ Nomes dos atletas (CSV)</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2269,41 +2390,275 @@ function renderKPI(){
   `;
 }
 
-// ============ WEEKS ============
+// ============ WEEKS · vagas por semana, segmentadas por escalão etário ============
+// Escalão pela idade no ano do campo (2027: Sub-10 = 2017–2019, Sub-12 = 2015–16,
+// Sub-14 = 2013–14, Sub-16 = 2011–12). Uma só cor (verde), do claro ao escuro.
+const ESCALOES_IDADE = [
+  { key: 'sub10', label: 'Sub-10', color: '#b9d4b2' },
+  { key: 'sub12', label: 'Sub-12', color: '#7fae78' },
+  { key: 'sub14', label: 'Sub-14', color: '#4a8f3f' },
+  { key: 'sub16', label: 'Sub-16', color: '#1f4d2b' },
+  { key: 'nd',    label: 'Sem data', color: '#a89278' }
+];
+function anoNascimento(v){
+  if (!v) return null;
+  const m = String(v).match(/(19|20)\d{2}/);
+  if (m) return parseInt(m[0], 10);
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d.getFullYear();
+}
+function escalaoIdade(r){
+  const by = anoNascimento(r.data_nascimento);
+  if (!by) return 'nd';
+  const idade = parseInt(edAno(), 10) - by;
+  if (idade <= 10) return 'sub10';
+  if (idade <= 12) return 'sub12';
+  if (idade <= 14) return 'sub14';
+  return 'sub16';
+}
+function abrirSemanaNaLista(n){
+  showTab('list');
+  setTimeout(() => { quickFilter('clear'); const el = document.getElementById('filt-sem'); if (el) { el.value = String(n); renderTable(); } }, 50);
+}
+function abrirPagamentoNaLista(estado){
+  showTab('list');
+  setTimeout(() => { quickFilter('clear'); const el = document.getElementById('filt-pag'); if (el) { el.value = estado || ''; renderTable(); } }, 50);
+}
 function renderWeeks(){
   const weekCounts = {1:0, 2:0};
-  data.forEach(r => parseSems(r.semana).forEach(s => { if (weekCounts[s] !== undefined) weekCounts[s]++; }));
-  const wc = {1:'var(--green-dark)', 2:'var(--orange-accent)'};
+  const porEsc = {1:{}, 2:{}}, totEsc = {};
+  data.forEach(r => {
+    const e = escalaoIdade(r);
+    parseSems(r.semana).forEach(s => {
+      if (weekCounts[s] === undefined) return;
+      weekCounts[s]++;
+      porEsc[s][e] = (porEsc[s][e] || 0) + 1;
+      totEsc[e] = (totEsc[e] || 0) + 1;
+    });
+  });
   const dates = edAno() === '2026' ? {1:'12—18 jul', 2:'19—25 jul'} : {1:'11—17 jul', 2:'18—24 jul'};
   document.getElementById('weeks').innerHTML = [1,2].map(n => {
-    const pct = Math.round(weekCounts[n] / VAGAS_SEM * 100);
     const livres = VAGAS_SEM - weekCounts[n];
+    const segs = ESCALOES_IDADE.filter(e => porEsc[n][e.key]).map(e => {
+      const c = porEsc[n][e.key];
+      return `<div class="seg" style="width:${(c / VAGAS_SEM * 100).toFixed(2)}%; background:${e.color};" title="Semana ${n} · ${e.label}: ${c} atleta${c === 1 ? '' : 's'}"></div>`;
+    }).join('');
+    const estado = livres <= 0 ? 'cheia · lista de espera' : (livres + ' livre' + (livres === 1 ? '' : 's'));
     return `
-      <div class="week">
+      <div class="week" onclick="abrirSemanaNaLista(${n})" title="Ver a Semana ${n} na Lista">
         <div class="week-label">
           <div class="week-name">Semana ${n}</div>
           <div class="week-dates">${dates[n]}</div>
         </div>
-        <div class="week-bar"><div class="week-bar-fill ${pct < 12 ? 'thin' : ''}" style="width:${pct}%; background:${wc[n]};">
-          <span class="pct-label">${pct}%</span>
-        </div></div>
-        <div class="week-num">${weekCounts[n]}<span class="of"> /${VAGAS_SEM}</span><span class="free">${livres} livres</span></div>
+        <div class="week-bar week-bar--seg">${segs}</div>
+        <div class="week-num">${weekCounts[n]}<span class="of"> /${VAGAS_SEM}</span><span class="free">${estado}</span></div>
       </div>
     `;
   }).join('');
-  // Footer compacto: dias até cada semana + alerta se < 30
+  const leg = document.getElementById('esc-legend');
+  if (leg) leg.innerHTML = ESCALOES_IDADE.filter(e => totEsc[e.key]).map(e => `<span><i style="background:${e.color}"></i>${e.label}<b>${totEsc[e.key]}</b></span>`).join('');
   const foot = document.getElementById('weeks-foot');
   if (foot) {
     const dSem1 = daysUntil(CFT_START_DATE);
-    const dSem2 = daysUntil(CFT_WEEK2_DATE);
     const pieces = [];
-    if (dSem1 !== null) pieces.push(`Semana 1 em <b>${dSem1 < 0 ? 'já decorreu' : (dSem1 + ' dia' + (dSem1 === 1 ? '' : 's'))}</b>`);
-    if (dSem2 !== null) pieces.push(`Semana 2 em <b>${dSem2 < 0 ? 'já decorreu' : (dSem2 + ' dia' + (dSem2 === 1 ? '' : 's'))}</b>`);
-    const totalLivres = (60 - weekCounts[1]) + (60 - weekCounts[2]);
-    pieces.push(`Total livres: <b>${totalLivres}</b> de 120`);
+    if (dSem1 !== null) pieces.push(dSem1 < 0 ? 'O campo já começou' : `Faltam <b>${dSem1} dia${dSem1 === 1 ? '' : 's'}</b> para o campo`);
+    pieces.push(`Livres: <b>${Math.max(0, VAGAS_SEM - weekCounts[1]) + Math.max(0, VAGAS_SEM - weekCounts[2])}</b> de ${VAGAS_TOTAL}`);
     foot.innerHTML = pieces.map(p => `<span>${p}</span>`).join('');
   }
 }
+
+// ============ HOJE · inscritos vs meta ============
+// Meta = vagas totais (120), ou o valor de Config → meta_inscricoes se existir.
+function tsDate(r){
+  const raw = r._raw && r._raw.timestamp_inscricao;
+  const d = raw ? new Date(raw) : (r.ts ? new Date(r.ts) : null);
+  return d && !isNaN(d.getTime()) ? d : null;
+}
+function renderHoje(){
+  const host = document.getElementById('hoje-main');
+  if (!host) return;
+  const counts = (Api && Api._cache && Api._cache.counts) || {};
+  const inscricoes = counts.inscricoes || data.reduce((s, r) => s + parseSems(r.semana).length, 0);
+  const meta = Number(configBackend && configBackend.meta_inscricoes) || VAGAS_TOTAL;
+  const pct = meta > 0 ? Math.round(inscricoes / meta * 100) : 0;
+  const hoje0 = new Date(); hoje0.setHours(0, 0, 0, 0);
+  const nDesde = dias => data.filter(r => { const d = tsDate(r); return d && d >= new Date(hoje0.getTime() - dias * 86400000); }).length;
+  const novasHoje = nDesde(0), novas7 = nDesde(6);
+  host.innerHTML = `
+    <div>
+      <div class="hoje-over">Inscritos vs meta · CFT ${edAno()}</div>
+      <div class="hoje-num">${inscricoes}<span class="of">/ ${meta}</span></div>
+    </div>
+    <div>
+      <div class="hoje-bar" title="${pct}% da meta"><div style="width:${Math.min(100, pct)}%"></div></div>
+      <div class="hoje-sub" style="margin-top:8px;"><b>${pct}%</b> da meta · faltam <b>${Math.max(0, meta - inscricoes)}</b> · ${data.length} atleta${data.length === 1 ? '' : 's'}</div>
+    </div>
+    <div class="hoje-chips">
+      <div class="hoje-chip"><div class="l">Hoje</div><div class="v">+${novasHoje}</div></div>
+      <div class="hoje-chip"><div class="l">Últimos 7 dias</div><div class="v">+${novas7}</div></div>
+      <div class="hoje-chip"><div class="l">Dias até ao campo</div><div class="v">${(d => d === null ? '—' : (d < 0 ? '0' : d))(daysUntil(CFT_START_DATE))}</div></div>
+    </div>`;
+}
+
+// ============ RITMO · inscrições acumuladas por dia ============
+function renderRitmo(){
+  const host = document.getElementById('ritmo');
+  const meta = document.getElementById('ritmo-meta');
+  if (!host) return;
+  const dias = {};
+  data.forEach(r => { const d = tsDate(r); if (!d) return; const k = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); dias[k] = (dias[k] || 0) + parseSems(r.semana).length; });
+  const keys = Object.keys(dias).map(Number).sort((a, b) => a - b);
+  if (keys.length === 0) { host.innerHTML = '<div class="ritmo-empty">Ainda sem inscrições. O gráfico aparece com a primeira.</div>'; if (meta) meta.textContent = '—'; return; }
+  const hoje0 = new Date(); hoje0.setHours(0, 0, 0, 0);
+  const ini = keys[0], fim = Math.max(hoje0.getTime(), keys[keys.length - 1]);
+  const pts = []; let acc = 0;
+  for (let t = ini; t <= fim; t += 86400000) {
+    // tolera mudanças de hora: procura a chave do mesmo dia
+    const d = new Date(t + 43200000); const k = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    acc += dias[k] || 0; pts.push({ t: k, n: dias[k] || 0, acc });
+  }
+  const W = Math.max(280, Math.round(host.clientWidth || 640)), H = 190, L = 34, R = 46, T = 14, B = 24;
+  const maxY = Math.max(4, Math.ceil(acc * 1.15 / 4) * 4);
+  const x = i => L + (pts.length === 1 ? 0 : i / (pts.length - 1) * (W - L - R));
+  const y = v => T + (1 - v / maxY) * (H - T - B);
+  const line = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.acc).toFixed(1)).join(' ');
+  const area = line + ` L${x(pts.length - 1).toFixed(1)} ${y(0)} L${x(0).toFixed(1)} ${y(0)} Z`;
+  const grid = [0, maxY / 2, maxY].map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e5d9c4" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 3.5}" text-anchor="end" font-size="10" fill="#6b6b65" font-family="Barlow Condensed, sans-serif">${Math.round(v)}</text>`).join('');
+  const fd = t => _fmtDateShort(new Date(t));
+  const last = pts[pts.length - 1];
+  host.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Inscrições acumuladas por dia">
+      ${grid}
+      <path d="${area}" fill="#2d6b3c" opacity="0.10"/>
+      <path d="${line}" fill="none" stroke="#2d6b3c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      <line id="ritmo-cross" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#1c1c18" stroke-width="1" stroke-dasharray="3 3" visibility="hidden" vector-effect="non-scaling-stroke"/>
+      <circle id="ritmo-dot" r="4.5" cx="${x(pts.length - 1)}" cy="${y(last.acc)}" fill="#2d6b3c" stroke="#fff" stroke-width="2"/>
+      <text x="${L}" y="${H - 6}" font-size="10" fill="#6b6b65" font-family="Barlow Condensed, sans-serif">${fd(pts[0].t)}</text>
+      <text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10" fill="#6b6b65" font-family="Barlow Condensed, sans-serif">${fd(last.t)}</text>
+      <text x="${W - R + 8}" y="${y(last.acc) + 5}" font-size="15" fill="#1c1c18" font-family="Bebas Neue, sans-serif">${last.acc}</text>
+    </svg>
+    <div class="ritmo-tip" id="ritmo-tip"></div>`;
+  if (meta) meta.textContent = `inscrições acumuladas · ${pts.length} dia${pts.length === 1 ? '' : 's'}`;
+  const svg = host.querySelector('svg'), tip = host.querySelector('#ritmo-tip'), cross = host.querySelector('#ritmo-cross'), dot = host.querySelector('#ritmo-dot');
+  const move = ev => {
+    const rc = svg.getBoundingClientRect();
+    const px = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - rc.left) / rc.width * W;
+    const i = Math.max(0, Math.min(pts.length - 1, Math.round((px - L) / Math.max(1, W - L - R) * (pts.length - 1))));
+    const p = pts[i];
+    cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
+    dot.setAttribute('cx', x(i)); dot.setAttribute('cy', y(p.acc));
+    tip.style.display = 'block';
+    tip.style.left = (x(i) / W * rc.width) + 'px'; tip.style.top = (y(p.acc) / H * rc.height) + 'px';
+    tip.innerHTML = `<b>${fd(p.t)}</b> · ${p.acc} no total${p.n ? ' · +' + p.n + ' nesse dia' : ''}`;
+  };
+  const leave = () => { tip.style.display = 'none'; cross.setAttribute('visibility', 'hidden'); dot.setAttribute('cx', x(pts.length - 1)); dot.setAttribute('cy', y(last.acc)); };
+  svg.addEventListener('mousemove', move); svg.addEventListener('touchstart', move, { passive: true }); svg.addEventListener('touchmove', move, { passive: true });
+  svg.addEventListener('mouseleave', leave);
+}
+
+// ============ ÚLTIMAS INSCRIÇÕES ============
+function renderUltimas(){
+  const body = document.getElementById('ultimas-body'), meta = document.getElementById('ultimas-meta');
+  if (!body) return;
+  const rows = data.map(r => ({ r, d: tsDate(r) })).filter(o => o.d).sort((a, b) => b.d - a.d).slice(0, 6);
+  if (meta) meta.textContent = data.length + ' no total';
+  if (!rows.length) { body.innerHTML = '<div class="ov-empty">Ainda sem inscrições</div>'; return; }
+  body.innerHTML = rows.map(({ r, d }) => {
+    const st = paymentStatus(r).st;
+    const stTxt = { pago: 'pago', parcial: 'sinal pago', pendente: 'sem pagamento', problema: 'valor errado', devolver: 'a devolver' }[st] || st;
+    return `<div class="ov-row" onclick="abrirAtletaNaLista('${escAttr(r.id)}')" title="Abrir na Lista">
+      <div class="who"><b class="anon-nome">${escHtml(r.nome)}</b><span>${escHtml(r.clube || 'sem clube')} · ${semBadge(r.semana)}</span></div>
+      <div class="right"><b>${quandoCal(d)}</b>${stTxt}</div>
+    </div>`;
+  }).join('') + `<div class="ov-more" onclick="showTab('list'); setSortDesc('num');">Ver todas na Lista →</div>`;
+}
+function quandoCal(d){
+  const n = -daysUntil(d);
+  if (n <= 0) return 'hoje';
+  if (n === 1) return 'ontem';
+  if (n < 7) return 'há ' + n + ' dias';
+  return humanAgo(d);
+}
+function setSortDesc(field){ sortField = field; sortDir = 'desc'; renderTable(); }
+
+// ============ PAGAMENTOS EM FALTA ============
+// Só o que pede ação: sem qualquer pagamento ou valor errado. Quem pagou o sinal
+// está em dia até 21/6 e aparece só como resumo.
+function renderFalta(){
+  const body = document.getElementById('falta-body'), meta = document.getElementById('falta-meta');
+  if (!body) return;
+  const acao = [], sinal = [];
+  data.forEach(r => {
+    const ps = paymentStatus(r);
+    if (ps.st === 'pendente' || ps.st === 'problema') acao.push({ r, ps });
+    else if (ps.st === 'parcial') sinal.push({ r, ps });
+  });
+  acao.sort((a, b) => (a.ps.st === 'problema' ? 0 : 1) - (b.ps.st === 'problema' ? 0 : 1) || (tsDate(a.r) || 0) - (tsDate(b.r) || 0));
+  const somaSinal = sinal.reduce((s, o) => s + (Number(o.ps.falta) || 0), 0);
+  if (meta) meta.textContent = acao.length + ' a tratar';
+  const prazo = _fmtDateShort(CFT_DEADLINE_DEFAULT);
+  const notaSinal = sinal.length ? `<div class="ov-note"><b>${sinal.length}</b> com sinal pago: falta o resto (<b>${fmt(somaSinal)}</b>) até ${prazo}. Não é preciso fazer nada agora.</div>` : '';
+  if (!acao.length) { body.innerHTML = '<div class="actions-mini-clean">✓ ninguém sem pagamento</div>' + notaSinal; return; }
+  body.innerHTML = acao.slice(0, 5).map(({ r, ps }) => {
+    const d = tsDate(r);
+    return `<div class="ov-row" onclick="abrirAtletaNaLista('${escAttr(r.id)}')" title="Abrir na Lista">
+      <div class="who"><b class="anon-nome">${escHtml(r.nome)}</b><span>${ps.st === 'problema' ? 'valor errado · pagou ' + fmt(r.val_pago) : 'sem pagamento'}${d ? ' · inscrito ' + quandoCal(d) : ''}</span></div>
+      <div class="right"><b>${fmt(ps.falta)}</b>em falta</div>
+    </div>`;
+  }).join('') + (acao.length > 5 ? `<div class="ov-more" onclick="abrirPagamentoNaLista('pendente')">Ver os ${acao.length} na Lista →</div>` : '') + notaSinal;
+}
+
+// ============ PREÇO EM VIGOR (2027) ============
+// Preços oficiais 2027 (fechados a 20/11/2026). Fonte: PRECOS-OFICIAIS-2027.md.
+// Só para mostrar: o valor devido de cada atleta vem sempre do backend.
+const PRECOS_OFICIAIS_2027 = [
+  { ate: '2026-12-24', nome: 'Natal · até 24/12', preco: 350, desc: 315 },
+  { ate: '2027-03-31', nome: '25/12 a 31/3', preco: 375, desc: 335 },
+  { ate: null,         nome: 'Desde 1/4', preco: 395, desc: 355 }
+];
+function renderPreco(){
+  const body = document.getElementById('preco-body'), meta = document.getElementById('preco-meta');
+  if (!body) return;
+  const agora = new Date();
+  const idx = PRECOS_OFICIAIS_2027.findIndex(e => !e.ate || agora <= new Date(e.ate + 'T23:59:59'));
+  const cur = PRECOS_OFICIAIS_2027[idx];
+  const porEsc = PRECOS_OFICIAIS_2027.map(() => 0);
+  data.forEach(r => {
+    if (r.tipo === 'Externo') return;
+    const d = tsDate(r); if (!d) return;
+    const i = PRECOS_OFICIAIS_2027.findIndex(e => !e.ate || d <= new Date(e.ate + 'T23:59:59'));
+    porEsc[i] += parseSems(r.semana).length;
+  });
+  const dias = cur.ate ? daysUntil(new Date(cur.ate + 'T12:00:00')) : null;
+  const prox = PRECOS_OFICIAIS_2027[idx + 1];
+  if (meta) meta.textContent = 'por semana';
+  body.innerHTML = `
+    <div class="preco-now">
+      <div class="p">${cur.preco} €<small>sem desconto</small></div>
+      <div class="p" style="color:var(--green-dark);">${cur.desc} €<small>com desconto</small></div>
+    </div>
+    ${prox ? `<div class="preco-count">${dias === 0 ? '<b>Último dia</b>' : `Faltam <b>${dias} dia${dias === 1 ? '' : 's'}</b>`} para passar a <b>${prox.preco} €</b> (${prox.desc} € com desconto).</div>` : ''}
+    <table class="preco-tbl"><tbody>
+      ${PRECOS_OFICIAIS_2027.map((e, i) => `<tr class="${i === idx ? 'cur' : ''}"><td>${e.nome}</td><td class="n">${e.preco} € · ${e.desc} €</td><td class="n" title="Inscrições neste escalão de preço">${porEsc[i]} insc.</td></tr>`).join('')}
+      <tr><td>Externo</td><td class="n">290 €</td><td class="n">${data.filter(r => r.tipo === 'Externo').reduce((s, r) => s + parseSems(r.semana).length, 0)} insc.</td></tr>
+    </tbody></table>
+    <div class="ov-note" style="padding-left:0;">Sinal de 130 € por semana, resto até 21/6. Desconto: irmão, 2 semanas ou clube com 8+.</div>`;
+}
+
+// ============ MENU "Mais ações" (Lista) ============
+function toggleDd(id, ev){
+  if (ev) ev.stopPropagation();
+  const el = document.getElementById(id); if (!el) return;
+  const abrir = !el.classList.contains('open');
+  closeDd();
+  if (abrir) {
+    el.classList.add('open');
+    const sub = document.getElementById('promo-desconto-sub');
+    if (sub) { const n = elegiveisDescontoClube().length; sub.textContent = n ? n + ' atleta' + (n === 1 ? '' : 's') + ' em clubes ainda abaixo dos 8' : 'ninguém por avisar agora'; }
+  }
+}
+function closeDd(){ document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open')); }
+document.addEventListener('click', e => { if (!e.target.closest || !e.target.closest('.dd')) closeDd(); });
 
 // ============ FINANCEIRO (deprecated) ============
 // O card 'Estado financeiro' foi removido da Visão Geral em favor do donut
@@ -2388,49 +2743,36 @@ function renderClubesPorSemana(){
 }
 
 function renderEstadoDonut(){
-  const buckets = { pago: 0, parcial: 0, pendente: 0, problema: 0, devolver: 0 };
-  data.forEach(r => {
-    const st = paymentStatus(r).st;
-    if (buckets[st] !== undefined) buckets[st]++;
-    else buckets.pendente++;
-  });
-  const segs = [
-    { key: 'pago',     label: 'Pago',          color: '#3a8d5a', n: buckets.pago },
-    { key: 'parcial',  label: 'Parcial',       color: '#e09a3e', n: buckets.parcial },
-    { key: 'pendente', label: 'Sem pagamento', color: '#9e9e9e', n: buckets.pendente },
-    { key: 'problema', label: 'Valor errado',  color: '#c0392b', n: buckets.problema },
-    { key: 'devolver', label: 'A devolver',    color: '#ffc857', n: buckets.devolver }
-  ];
-  const total = segs.reduce((s, x) => s + x.n, 0);
-  const svg = document.getElementById('donut-svg');
-  const center = document.getElementById('donut-center');
-  const legend = document.getElementById('donut-legend');
+  const body = document.getElementById('pag-body');
   const meta = document.getElementById('pag-donut-meta');
-  if (!svg) return;
-  meta.textContent = total + ' inscriç' + (total === 1 ? 'ão' : 'ões');
-  // SVG: círculo com stroke-dasharray para fatias
-  const r = 15.91549430918954;  // raio que dá circumf=100
-  const cx = 21, cy = 21;
-  let offset = 25;  // offset inicial para começar do topo
-  const parts = [`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#eee" stroke-width="6"></circle>`];
-  if (total > 0) {
-    segs.forEach(s => {
-      if (s.n === 0) return;
-      const pct = (s.n / total) * 100;
-      parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="6" stroke-dasharray="${pct.toFixed(2)} ${(100 - pct).toFixed(2)}" stroke-dashoffset="${offset}" stroke-linecap="butt"><title>${s.label}: ${s.n} (${pct.toFixed(0)}%)</title></circle>`);
-      offset = (offset - pct + 100) % 100;
-    });
-  }
-  svg.innerHTML = parts.join('');
-  const pctPago = total > 0 ? Math.round((buckets.pago / total) * 100) : 0;
-  center.innerHTML = `<div class="big">${pctPago}<span style="font-size:14px;">%</span></div><div class="lbl">pagos</div>`;
-  legend.innerHTML = segs.filter(s => s.n > 0).map(s => `
-    <div class="donut-legend-row">
-      <span class="dot" style="background:${s.color}"></span>
-      <span class="lbl">${s.label}</span>
-      <span class="num">${s.n}</span>
-    </div>
-  `).join('');
+  if (!body) return;
+  const segs = [
+    { key: 'pago',     filtro: 'pago',     label: 'Pago',          color: '#2d6b3c', n: 0, eur: 0 },
+    { key: 'parcial',  filtro: 'parcial',  label: 'Sinal pago',    color: '#e0a04a', n: 0, eur: 0 },
+    { key: 'pendente', filtro: 'pendente', label: 'Sem pagamento', color: '#8f8f88', n: 0, eur: 0 },
+    { key: 'problema', filtro: 'problema', label: 'Valor errado',  color: '#c0392b', n: 0, eur: 0 },
+    { key: 'devolver', filtro: '',         label: 'A devolver',    color: '#5b7fa6', n: 0, eur: 0 }
+  ];
+  const by = {}; segs.forEach(x => by[x.key] = x);
+  let devido = 0, pago = 0;
+  data.forEach(r => {
+    const ps = paymentStatus(r);
+    const g = by[ps.st] || by.pendente;
+    g.n++;
+    g.eur += ps.st === 'pago' ? (Number(r.val_pago) || 0) : (ps.st === 'devolver' ? (Number(ps.sobra) || 0) : (Number(ps.falta) || 0));
+    devido += ps.total || 0; pago += Number(r.val_pago) || 0;
+  });
+  const total = segs.reduce((s, x) => s + x.n, 0);
+  if (meta) meta.textContent = total + ' inscrit' + (total === 1 ? 'o' : 'os');
+  if (!total) { body.innerHTML = '<div class="ov-empty">Ainda sem inscrições</div>'; return; }
+  const pct = devido > 0 ? Math.round(pago / devido * 100) : 0;
+  body.innerHTML = `
+    <div class="pag-big">${fmt(pago)}<small>recebido de ${fmt(devido)} · ${pct}%</small></div>
+    <div class="pag-stack">${segs.filter(x => x.n).map(x => `<div class="seg" style="flex:${x.n}; background:${x.color};" title="${x.label}: ${x.n} (${Math.round(x.n / total * 100)}%)" onclick="abrirPagamentoNaLista('${x.filtro}')"></div>`).join('')}</div>
+    ${segs.filter(x => x.n).map(x => `<div class="pag-row" onclick="abrirPagamentoNaLista('${x.filtro}')" title="Ver na Lista">
+      <span class="dot" style="background:${x.color}"></span><span class="lbl">${x.label}</span>
+      <span class="num">${x.n}</span><span class="eur">${x.key === 'pago' ? fmt(x.eur) : (x.key === 'devolver' ? fmt(x.eur) + ' a mais' : 'falta ' + fmt(x.eur))}</span>
+    </div>`).join('')}`;
 }
 
 // ============ ALERTS ============
@@ -4977,63 +5319,71 @@ function renderActionsMini(){
   const body = document.getElementById('actions-mini-body');
   const meta = document.getElementById('actions-mini-meta');
   if (!body) return;
-
-  const cc = clubeCounts();
   const rows = [];
+  const add = (cls, icon, html, cta) => rows.push(`<div class="actions-mini-row"><span class="am-icon ${cls}">${icon}</span><span class="am-text">${html}</span>${cta || ''}</div>`);
+  const pl = (n, s, p) => n === 1 ? s : p;
+  const ativos = data.filter(r => r.ativo);
 
-  // Linha 1: Promover desconto · clubes quase lá
-  let totalSemPromo = 0;
-  let primeiroClube = null;
-  Object.entries(cc).forEach(([clube, n]) => {
-    if (n < 6 || n >= 8) return;
-    const elegiveis = data.filter(r => r.clube === clube && r.tipo === 'Interno' && r.ativo &&
-      !((r.pricing && r.pricing.info) || {}).desc);
-    const semPromo = elegiveis.filter(r => !recentlySentKind(r.id, 'descontoClube', 30));
-    if (semPromo.length === 0) return;
-    totalSemPromo += semPromo.length;
-    if (!primeiroClube) primeiroClube = { clube, ids: semPromo.map(r => r.id), faltam: 8 - n };
+  // 1. Valor errado (pede contacto)
+  const errado = ativos.filter(r => paymentStatus(r).st === 'problema');
+  if (errado.length) add('warn', '!', `<b>${errado.length}</b> ${pl(errado.length, 'pagamento com valor errado', 'pagamentos com valor errado')}`,
+    `<button class="am-cta primary" onclick="abrirPagamentoNaLista('problema')">ver</button>`);
+
+  // 2. Sem pagamento há mais de 3 dias
+  const semPag = ativos.filter(r => paymentStatus(r).st === 'pendente' && (daysSince(tsDate(r)) || 0) > 3);
+  if (semPag.length) add('warn', '€', `<b>${semPag.length}</b> ${pl(semPag.length, 'inscrição', 'inscrições')} sem pagamento há mais de 3 dias`,
+    `<button class="am-cta" onclick="abrirPagamentoNaLista('pendente')">ver</button>`);
+
+  // 3. Possíveis duplicados
+  const dup = ativos.filter(r => r.duplicate_warning);
+  if (dup.length) add('warn', '⧉', `<b>${dup.length}</b> ${pl(dup.length, 'inscrição possivelmente repetida', 'inscrições possivelmente repetidas')}`,
+    `<button class="am-cta" onclick="showTab('list')">ver</button>`);
+
+  // 4. Semanas quase cheias ou cheias
+  [1, 2].forEach(n => {
+    const c = ativos.filter(r => parseSems(r.semana).includes(n)).length;
+    if (c >= VAGAS_SEM) add('warn', '■', `<b>Semana ${n} cheia</b> (${c}/${VAGAS_SEM}). Novas inscrições ficam em lista de espera.`, `<button class="am-cta" onclick="abrirSemanaNaLista(${n})">ver</button>`);
+    else if (c >= VAGAS_SEM - 10) add('', '▲', `<b>Semana ${n}</b> quase cheia: só ${VAGAS_SEM - c} ${pl(VAGAS_SEM - c, 'vaga', 'vagas')}`, `<button class="am-cta" onclick="abrirSemanaNaLista(${n})">ver</button>`);
   });
-  if (primeiroClube && totalSemPromo > 0) {
-    const ids = JSON.stringify(primeiroClube.ids);
-    rows.push(`<div class="actions-mini-row">
-      <span class="am-icon promo">⊕</span>
-      <span class="am-text">Promover desconto · <b>${escHtml(primeiroClube.clube)}</b> (falta${primeiroClube.faltam === 1 ? '' : 'm'} ${primeiroClube.faltam}) — ${primeiroClube.ids.length} sem promo enviada</span>
-      <button class="am-cta primary" onclick='enviarPromoClube(${ids})'>✉ enviar</button>
-    </div>`);
-  }
 
-  // Linha 2: Pagamento em falta · sem contacto há > 7 dias
-  const reenviar = data.filter(r => {
-    if (!r.ativo) return false;
-    const st = paymentStatus(r).st;
-    if (!['pendente','parcial','problema'].includes(st)) return false;
-    return !recentlySentKind(r.id, 'problema', 7);
+  // 5. Pagamentos por confirmar (valor escrito mas ainda não conferido)
+  const porConfirmar = ativos.filter(r => r.val_pago > 0 && !r.valor_confirmado);
+  if (porConfirmar.length) add('', '✓', `<b>${porConfirmar.length}</b> ${pl(porConfirmar.length, 'pagamento', 'pagamentos')} por confirmar`,
+    `<button class="am-cta" onclick="showTab('list'); setSortDesc('confirmado');">ver</button>`);
+
+  // 6. Desconto de clube: clubes a 1 ou 2 inscrições dos 8 (substitui o botão da Lista)
+  const ccInsc = (Api && Api._cache && Api._cache.clube_counts) || {};
+  Object.entries(ccInsc).filter(([, n]) => n >= 6 && n < 8).slice(0, 2).forEach(([clube, n]) => {
+    const eleg = ativos.filter(r => r.clube === clube && r.tipo === 'Interno' && !((r.pricing && r.pricing.info) || {}).desc);
+    const semPromo = eleg.filter(r => !recentlySentKind(r.id, 'descontoClube', 30));
+    const falta = 8 - n;
+    if (semPromo.length) add('promo', '⊕', `<b>${escHtml(clube)}</b> está a ${falta} ${pl(falta, 'inscrição', 'inscrições')} do desconto de clube`,
+      `<button class="am-cta primary" onclick='enviarPromoClube(${JSON.stringify(semPromo.map(r => r.id))})' title="Cria os rascunhos no Gmail; nada é enviado sem ser revisto">✉ avisar ${semPromo.length}</button>`);
+    else add('promo', '⊕', `<b>${escHtml(clube)}</b> está a ${falta} ${pl(falta, 'inscrição', 'inscrições')} do desconto de clube (famílias já avisadas)`);
   });
-  if (reenviar.length > 0) {
-    rows.push(`<div class="actions-mini-row">
-      <span class="am-icon warn">!</span>
-      <span class="am-text">Pagamento em falta · <b>${reenviar.length}</b> atleta${reenviar.length === 1 ? '' : 's'} sem contacto há &gt; 7 dias</span>
-      <button class="am-cta" onclick="showTab('list'); quickFilter('problema');">ver na lista</button>
-    </div>`);
+
+  // 7. Fim do escalão de preço a menos de 14 dias (só 2027)
+  if (edAno() === '2027') {
+    const agora = new Date();
+    const i = PRECOS_OFICIAIS_2027.findIndex(e => !e.ate || agora <= new Date(e.ate + 'T23:59:59'));
+    const cur = PRECOS_OFICIAIS_2027[i], prox = PRECOS_OFICIAIS_2027[i + 1];
+    if (cur && cur.ate && prox) {
+      const d = daysUntil(new Date(cur.ate + 'T12:00:00'));
+      if (d !== null && d >= 0 && d <= 14) add('info', '⏱', `${d === 0 ? '<b>Hoje</b> é o último dia' : `Faltam <b>${d} ${pl(d, 'dia', 'dias')}</b>`} a ${cur.preco} € (${cur.desc} € com desconto). Depois passa a ${prox.preco} €.`);
+    }
   }
 
-  // Linha 3: Pagamentos por confirmar (val_pago > 0 mas valor_confirmado=false)
-  const porConfirmar = data.filter(r => r.ativo && r.val_pago > 0 && !r.valor_confirmado);
-  if (porConfirmar.length > 0) {
-    rows.push(`<div class="actions-mini-row">
-      <span class="am-icon">⚠</span>
-      <span class="am-text"><b>${porConfirmar.length}</b> pagamento${porConfirmar.length === 1 ? '' : 's'} por confirmar manualmente</span>
-      <button class="am-cta" onclick="showTab('list');">ver na lista</button>
-    </div>`);
-  }
+  // 8. Sem IBAN para devoluções
+  const semIban = ativos.filter(r => r.iban === false);
+  if (semIban.length) add('', 'i', `<b>${semIban.length}</b> sem IBAN para devoluções`, `<button class="am-cta" onclick="showTab('list')">ver</button>`);
 
   if (rows.length === 0) {
-    body.innerHTML = '<div class="actions-mini-clean">✓ tudo limpo · hoje</div>';
-    if (meta) meta.textContent = '0 itens';
+    body.innerHTML = '<div class="actions-mini-clean">✓ nada para tratar hoje</div>';
+    if (meta) meta.textContent = '0 alertas';
     return;
   }
   body.innerHTML = rows.join('');
-  if (meta) meta.textContent = rows.length + ' ite' + (rows.length === 1 ? 'm' : 'ns');
+  if (meta) meta.textContent = rows.length + ' alerta' + (rows.length === 1 ? '' : 's');
 }
 
 // Bulk envio de avisoPrazo a quem tem pagamento por concluir e não recebeu
@@ -5587,8 +5937,13 @@ async function renderSatisfacao(force){
 
 function renderAll(){
   renderAppbar();
+  renderHoje();
+  renderRitmo();
   renderTimeline();
   renderActionsMini();
+  renderUltimas();
+  renderFalta();
+  renderPreco();
   renderWeeks();
   renderClubes();
   renderTrabalho();
@@ -5623,6 +5978,7 @@ function updateToolbarHeight(){
   if (h > 0) document.documentElement.style.setProperty('--toolbar-h', h + 'px');
 }
 window.addEventListener('resize', updateToolbarHeight);
+window.addEventListener('resize', () => { clearTimeout(window._ritmoT); window._ritmoT = setTimeout(() => { try { renderRitmo(); } catch (e) {} }, 200); });
 window.addEventListener('load', updateToolbarHeight);
 // ResizeObserver apanha mudanças de altura quando os filtros fazem wrap
 (function setupToolbarObserver(){
@@ -6297,8 +6653,8 @@ function setEdicao(ano){
   if (p26) p26.classList.toggle('active', ano === '2026');
   if (p27) p27.classList.toggle('active', ano === '2027');
   const be = document.getElementById('brand-edition');
-  if (be) be.textContent = ano === '2026' ? '4ª edição · 2026 · arquivo' : '5ª edição · 2027 · em preparação';
-  showTab(ano === '2026' ? 'overview' : 'plano2027');
+  if (be) be.textContent = ano === '2026' ? '4ª edição · 2026 · arquivo' : ('5ª edição · 2027 · ' + (new Date() >= new Date('2026-11-27T20:00:00') ? 'inscrições abertas' : 'abre a 27/11'));
+  showTab('overview');
 }
 function goBancoReal(){ setEdicao('2027'); }
 
