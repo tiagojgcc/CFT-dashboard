@@ -18,7 +18,8 @@
         throw new Error('CFT_CONFIG.API_URL não configurado');
       }
       if (!Auth.token) throw new Error('Não autenticado');
-      const body = Object.assign({ action, token: Auth.token }, params || {});
+      // Edição ativa (2026 = arquivo, lê a Sheet de 2026; 2027 = atual)
+      const body = Object.assign({ action, token: Auth.token, edicao: this.edicao() }, params || {});
       const resp = await fetch(window.CFT_CONFIG.API_URL, {
         method: 'POST',
         // text/plain evita CORS preflight no Apps Script
@@ -36,7 +37,14 @@
       return json.data;
     },
 
-    CACHE_KEY: 'cft_dashboard_cache_v1',
+    // Cache separada por edição, para o arquivo 2026 não se misturar com 2027.
+    get CACHE_KEY() { return 'cft_dashboard_cache_v2_' + this.edicao(); },
+
+    edicao() {
+      let ed = (document.body && document.body.dataset.edicao) || '';
+      if (!ed) { try { ed = localStorage.getItem('cft_edicao_v1') || ''; } catch (e) {} }
+      return ed === '2026' ? '2026' : '2027';
+    },
 
     async getAll() {
       const data = await this._call('getAll');
