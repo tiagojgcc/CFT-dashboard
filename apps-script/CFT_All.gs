@@ -1,7 +1,24 @@
 /**
+ * CFT Dashboard — BACKEND COMPLETO, FICHEIRO ÚNICO.
+ *
+ * Este é o único ficheiro a colar no Apps Script (projeto "CFT Dashboard",
+ * conta geral@camposft.com, ficheiro Código.gs). Os outros .gs desta pasta são
+ * cópias antigas por módulo e NÃO devem ser colados.
+ *
+ * Antes de publicar, correr:  node apps-script/testes/verificar.js
+ * Versão: CFT_BACKEND_VERSAO (ver abaixo).
+ */
+const CFT_BACKEND_VERSAO = '2026-11-22 abertura';
+
+/**
  * Router. Substituir SHEET_ID pela cópia de teste primeiro.
  */
-const SHEET_ID = '1LXOqqTt2Ct7xNtRvv_Nu38z5V3pza0NtacgxBM3_WSY';  // Sheet real ligado ao Forms (em geral@camposft.com)
+// CFT 2027: Sheet "CFT 2027 (Respostas)", ligado ao Form 2027.
+// O de 2026 era '1LXOqqTt2Ct7xNtRvv_Nu38z5V3pza0NtacgxBM3_WSY' (fica como arquivo).
+let SHEET_ID = '1abTVSDX0-4bBQezHltaVPECSYynQMRWgGi7ryTyqeeM';
+// Arquivo 2026: o Dashboard manda edicao=2026 e lê/escreve na Sheet de 2026.
+const SHEET_ID_2026 = '1LXOqqTt2Ct7xNtRvv_Nu38z5V3pza0NtacgxBM3_WSY';
+let EDICAO_ATIVA = '2027';
 
 function doGet(e)  { return handle_(e, 'GET'); }
 function doPost(e) { return handle_(e, 'POST'); }
@@ -19,8 +36,23 @@ function handle_(e, method) {
     if (action === 'survey_submit') {
       return json_({ ok: true, data: Satisfacao.submit(params) });
     }
+    // Endpoint público: inscrição feita no site (camposft.com/inscricao.html).
+    if (action === 'inscricao_submit') {
+      return json_({ ok: true, data: InscricaoSite.submit(params) });
+    }
+    if (action === 'clube_contagem') {
+      return json_({ ok: true, data: InscricaoSite.clubeContagem(params.clube) });
+    }
+    if (action === 'vagas') {
+      return json_({ ok: true, data: InscricaoSite.vagas() });
+    }
 
     const user = Auth.verify(params.token);
+    if (String(params.edicao || '') === '2026') {
+      SHEET_ID = SHEET_ID_2026;
+      EDICAO_ATIVA = '2026';
+      Config.invalidate();
+    }
 
     let result;
     switch (action) {
@@ -156,21 +188,146 @@ const Config = {
   invalidate() { this._cache = null; }
 };
 /**
- * Lógica de preços CFT 2027.
+ * Lógica de preços CFT 2027 (5ª edição).
  *
- * Externo: 275 € por semana, fixo.
- * Interno + inscrição até 31 mar:
- *    pronto: 330 (s/desc) | 295 (c/desc)
- *    prestações: 375 total (s/desc) | 330 total (c/desc) — 120 + (255 ou 210)
- * Interno + inscrição depois de 31 mar:
- *    pronto obrigatório: 375 (s/desc) | 330 (c/desc)
+ * O preço depende só da data de inscrição (não de como se paga). 3 escalões
+ * (proposta do Miguel, aceite pelo Tiago a 19/11/2026):
+ *   Interno, inscrição até 24 dez (campanha de Natal): 350 € / semana (315 € com desconto)
+ *   Interno, inscrição até 31 mar:   375 € / semana (335 € com desconto)
+ *   Interno, inscrição depois:       395 € / semana (355 € com desconto)
+ *   Desconto = 10%, arredondado a 5 € a favor da família (Tiago, 20/11/2026).
+ *   Externo:                         290 € / semana
+ * Pagamento: tudo de uma vez, OU sinal de 130 € por semana + resto até 21/6.
+ * O total é o mesmo nas duas formas. O sinal não é devolvido.
  *
- * Desconto se: irmao_desconto = TRUE  OU  nSem >= 2  OU  clube_inscricoes >= 8.
+ * Desconto (não acumula) se: irmao_desconto = TRUE  OU  nSem >= 2  OU  clube_inscricoes >= 8
+ * OU desconto_outro_motivo preenchido (exceção acordada Tiago+Miguel).
  *
  * Classificação a partir de valor_pago: o admin tipa o valor depois de ver o
- * comprovativo; o sistema classifica em pago / parcial_1 / parcial_2 / valor_errado.
+ * comprovativo; o sistema classifica em pago / parcial_1 (sinal) / parcial_2 / valor_errado.
  */
+const PRECOS_2027 = {
+  escaloes: [
+    { ate: '2026-12-24', preco: 350, desc: 315 },
+    { ate: '2027-03-31', preco: 375, desc: 335 },
+    { ate: null,         preco: 395, desc: 355 }
+  ],
+  externo: 290, sinal: 130
+};
+
 const Pricing = {
+  parseSems(s) {
+    if (s === null || s === undefined) return [];
+    // Inclui '.' para apanhar valores que o Sheets converteu para decimal em locale PT
+    // (ex: "1,2" gravado pelo Apps Script pode ser interpretado como o número 1.2)
+    // Edição 2026 só tem 2 semanas (3 foi cancelada) — n>=1 && n<=2.
+    return String(s).split(/[.,;+\s]+/)
+      .map(x => parseInt(x, 10))
+      .filter(n => !isNaN(n) && n >= 1 && n <= 2);
+  },
+
+  isExterno(opcao) {
+    return String(opcao || '').trim().toLowerCase() === 'externo';
+  },
+
+  hasDesconto(atleta, clubeCounts) {
+    if (atleta.irmao_desconto === true || atleta.irmao_desconto === 'TRUE') return true;
+    if (this.parseSems(atleta.semanas_atuais).length >= 2) return true;
+    if ((clubeCounts[atleta.clube] || 0) >= 8) return true;
+    if (atleta.desconto_outro_motivo && String(atleta.desconto_outro_motivo).trim()) return true;
+    return false;
+  },
+
+  // Devolve a razão textual do desconto (ou null se não há)
+  descontoMotivo(atleta, clubeCounts) {
+    if (atleta.irmao_desconto === true || atleta.irmao_desconto === 'TRUE') return 'irmão';
+    if ((clubeCounts[atleta.clube] || 0) >= 8) return '8 inscrições';
+    if (this.parseSems(atleta.semanas_atuais).length >= 2) return '≥2 semanas';
+    if (atleta.desconto_outro_motivo && String(atleta.desconto_outro_motivo).trim()) {
+      return String(atleta.desconto_outro_motivo).trim();
+    }
+    return null;
+  },
+
+  isBeforeCutoff(timestamp) {
+    const raw = Config.get('cutoff_desconto') || '2027-03-31';
+    let cutoff;
+    if (raw instanceof Date) {
+      cutoff = new Date(raw.getFullYear(), raw.getMonth(), raw.getDate(), 23, 59, 59);
+    } else {
+      cutoff = new Date(String(raw) + 'T23:59:59');
+    }
+    if (isNaN(cutoff.getTime())) cutoff = new Date('2027-03-31T23:59:59');
+    return new Date(timestamp) <= cutoff;
+  },
+
+  // Escalão de preço conforme a data de inscrição.
+  escalao(timestamp) {
+    const t = new Date(timestamp);
+    const valid = !isNaN(t.getTime());
+    return PRECOS_2027.escaloes.find(e => !e.ate || (valid && t <= new Date(e.ate + 'T23:59:59'))) ||
+      PRECOS_2027.escaloes[PRECOS_2027.escaloes.length - 1];
+  },
+
+  calc(atleta, clubeCounts) {
+    if (EDICAO_ATIVA === '2026') return Pricing2026.calc(atleta, clubeCounts);
+    const P = PRECOS_2027;
+    const nSem = this.parseSems(atleta.semanas_atuais).length;
+    if (nSem === 0) {
+      return { tipo: 'sem_semanas', desc: false, prontoTotal: 0, prestTotal: null, prest1: null, prest2: null, nSem: 0 };
+    }
+    const externo = this.isExterno(atleta.opcao_inscricao);
+    const desc = externo ? false : this.hasDesconto(atleta, clubeCounts);
+    const before = this.isBeforeCutoff(atleta.timestamp_inscricao);
+    const esc = this.escalao(atleta.timestamp_inscricao);
+    const porSemana = externo ? P.externo : (desc ? esc.desc : esc.preco);
+    const total = porSemana * nSem;
+    // Mesmo total com ou sem sinal: prestTotal = prontoTotal.
+    const prest1 = Math.min(P.sinal * nSem, total);
+    const prest2 = total - prest1;
+    return { tipo: externo ? 'externo' : 'interno', desc, before, escalao: esc, porSemana, prontoTotal: total, prestTotal: total, prest1, prest2, nSem };
+  },
+
+  classify(atleta, valorPago, clubeCounts) {
+    if (EDICAO_ATIVA === '2026') return Pricing2026.classify(atleta, valorPago, clubeCounts);
+    const p = this.calc(atleta, clubeCounts);
+    const v = Number(valorPago) || 0;
+    // Override manual do devido (admin pode forçar valor diferente para descontos especiais)
+    const overrideRaw = atleta.valor_devido_override;
+    const hasOverride = overrideRaw !== '' && overrideRaw !== null && overrideRaw !== undefined && !isNaN(Number(overrideRaw));
+    if (hasOverride) {
+      const devido = Number(overrideRaw);
+      let estado;
+      if (v === 0) estado = 'pendente';
+      else if (v === devido) estado = 'pago';
+      else if (v < devido) estado = 'parcial_1';
+      else estado = 'valor_errado';
+      return { estado, regime: 'manual', devido, falta: Math.max(0, devido - v), info: p, override: true };
+    }
+    if (p.tipo === 'sem_semanas') return { estado: 'sem_semanas', regime: null, devido: 0, falta: 0, info: p };
+    if (v === 0) return { estado: 'pendente', regime: null, devido: p.prontoTotal, falta: p.prontoTotal, info: p };
+    if (v === p.prontoTotal) return { estado: 'pago', regime: 'pronto', devido: p.prontoTotal, falta: 0, info: p };
+    if (v === p.prest1) return { estado: 'parcial_1', regime: 'prestacoes', devido: p.prestTotal, falta: p.prest2, info: p };
+    if (v === p.prest2) return { estado: 'parcial_2', regime: 'prestacoes', devido: p.prestTotal, falta: p.prest1, info: p };
+    // Sobrepagou → "a devolver"
+    if (v > p.prontoTotal) {
+      return { estado: 'a_devolver', regime: null, devido: p.prontoTotal, sobra: v - p.prontoTotal, falta: 0, info: p };
+    }
+    return { estado: 'valor_errado', regime: null, devido: p.prontoTotal, falta: p.prontoTotal - v, info: p };
+  }
+};
+/**
+ * Operações sobre a aba Atletas (escrita + leitura).
+ * Cada mutação:
+ *   1. valida (motivo obrigatório onde aplicável)
+ *   2. usa LockService para evitar race entre os 2 admins
+ *   3. atualiza ultima_alteracao_em / por
+ *   4. escreve evento em Historico
+ */
+
+// Mapeamento coluna (1-indexed) na aba Atletas — bate certo com Backfill.setupSheets
+// Preços da edição 2026 (arquivo). Usado quando o Dashboard pede edicao=2026.
+const Pricing2026 = {
   parseSems(s) {
     if (s === null || s === undefined) return [];
     // Inclui '.' para apanhar valores que o Sheets converteu para decimal em locale PT
@@ -272,16 +429,7 @@ const Pricing = {
     return { estado: 'valor_errado', regime: null, devido: p.prontoTotal, falta: p.prontoTotal - v, info: p };
   }
 };
-/**
- * Operações sobre a aba Atletas (escrita + leitura).
- * Cada mutação:
- *   1. valida (motivo obrigatório onde aplicável)
- *   2. usa LockService para evitar race entre os 2 admins
- *   3. atualiza ultima_alteracao_em / por
- *   4. escreve evento em Historico
- */
 
-// Mapeamento coluna (1-indexed) na aba Atletas — bate certo com Backfill.setupSheets
 const ATL_COLS = {
   id_inscricao: 1, timestamp_inscricao: 2, atleta: 3, data_nascimento: 4,
   clube: 5, encarregado: 6, email: 7, telefone: 8,
@@ -1585,18 +1733,23 @@ const Triggers = {
 
 // Top-level (Apps Script triggers exigem função global, não método)
 function onFormSubmitTrigger_(e) {
+  processFormRow_(e.range.getRow());
+}
+
+// Processa uma linha de "Respostas do Formulário 1" (Form ou site): cria o id,
+// replica para Atletas, numera e lê o comprovativo. Devolve o id_inscricao.
+function processFormRow_(row) {
   const ss = SpreadsheetApp.openById(SHEET_ID);
   const formSheet = ss.getSheetByName('Respostas do Formulário 1');
   if (!formSheet) {
     Logger.log('Aba "Respostas do Formulário 1" não encontrada — trigger abortado.');
-    return;
+    return null;
   }
-  const row = e.range.getRow();
   const idCol = Backfill._idCol(formSheet);
   const migradoCol = Backfill._migradoCol(formSheet);
   if (idCol === -1 || migradoCol === -1) {
     Logger.log('Trigger abortado: colunas id_inscricao/migrado_em em falta');
-    return;
+    return null;
   }
   let id = formSheet.getRange(row, idCol).getValue();
   // Defensivo: se a cell contém Date ou algo não-UUID, gera novo UUID e sobrescreve.
@@ -1607,12 +1760,20 @@ function onFormSubmitTrigger_(e) {
     formSheet.getRange(row, idCol).setValue(id);
   }
   formSheet.getRange(row, migradoCol).setValue(new Date());
-  Backfill.migrateRow_(row, formSheet, ss.getSheetByName('Atletas'));
-  // Atribuir número de inscrição + renomear ficheiro no Drive
+  // O número de inscrição é dado dentro do mesmo bloqueio que o site usa,
+  // para duas inscrições ao mesmo tempo nunca ficarem com o mesmo número.
+  const lock = LockService.getScriptLock();
+  const temLock = lock.tryLock(30000);
   try {
-    Backfill.assignNumeroAndRename_(id);
-  } catch (e) {
-    Logger.log('Numeração/rename falhou para ' + id + ': ' + e.message);
+    Backfill.migrateRow_(row, formSheet, ss.getSheetByName('Atletas'));
+    // Atribuir número de inscrição + renomear ficheiro no Drive
+    try {
+      Backfill.assignNumeroAndRename_(id);
+    } catch (e) {
+      Logger.log('Numeração/rename falhou para ' + id + ': ' + e.message);
+    }
+  } finally {
+    if (temLock) lock.releaseLock();
   }
   // Ler comprovativo automaticamente
   try {
@@ -1620,6 +1781,7 @@ function onFormSubmitTrigger_(e) {
   } catch (e) {
     Logger.log('OCR auto falhou para ' + id + ': ' + e.message);
   }
+  return id;
 }
 /**
  * Tarefas manuais — criadas pelo admin no dashboard, visíveis na tab Trabalho.
@@ -1866,11 +2028,11 @@ const Backfill = {
       sh.appendRow(['key','value','notas']);
       sh.appendRow(['whitelist_emails','geral@camposft.com','separar por vírgula']);
       sh.appendRow(['client_id','','OAuth client ID do frontend (preencher após criar)']);
-      sh.appendRow(['vagas_total','180','60 × 3 semanas']);
+      sh.appendRow(['vagas_total','120','60 × 2 semanas']);
       sh.appendRow(['vagas_por_semana','60','']);
-      sh.appendRow(['cutoff_desconto','2026-03-31','até esta data: pronto pagamento mais barato']);
-      sh.appendRow(['prazo_pagamento','2026-06-21','liquidação 2ª prestação']);
-      sh.appendRow(['edicao','4','4ª edição']);
+      sh.appendRow(['cutoff_desconto','2027-03-31','inscrição até esta data: preço mais baixo']);
+      sh.appendRow(['prazo_pagamento','2027-06-21','prazo para pagar o resto (depois do sinal)']);
+      sh.appendRow(['edicao','5','5ª edição']);
       sh.getRange(1, 1, 1, 3).setFontWeight('bold').setBackground('#1a1a1a').setFontColor('#fff');
       sh.setFrozenRows(1);
     }
@@ -2476,18 +2638,22 @@ const Backfill = {
     const nome = sh.getRange(sheetRow, ATL_COLS.atleta).getValue();
     const ts = sh.getRange(sheetRow, ATL_COLS.timestamp_inscricao).getValue();
     const url = sh.getRange(sheetRow, ATL_COLS.comprovativo_url).getValue();
+    this.renameComprovativo_(nextNum, nome, ts, url);
+  },
+
+  // Dá ao comprovativo no Drive o nome com o número de inscrição.
+  renameComprovativo_(num, nome, ts, url) {
     const fileId = Comprovativo.extractFileId(url);
-    if (fileId) {
-      try {
-        const file = DriveApp.getFileById(fileId);
-        const oldName = file.getName();
-        const extMatch = oldName.match(/\.([a-zA-Z0-9]{2,5})$/);
-        const ext = extMatch ? extMatch[1].toLowerCase() : 'bin';
-        const newName = this.buildFilename_(nextNum, nome, ts, ext);
-        if (oldName !== newName) file.setName(newName);
-      } catch (e) {
-        Logger.log('Rename trigger falhou: ' + e.message);
-      }
+    if (!fileId) return;
+    try {
+      const file = DriveApp.getFileById(fileId);
+      const oldName = file.getName();
+      const extMatch = oldName.match(/\.([a-zA-Z0-9]{2,5})$/);
+      const ext = extMatch ? extMatch[1].toLowerCase() : 'bin';
+      const newName = this.buildFilename_(num, nome, ts, ext);
+      if (oldName !== newName) file.setName(newName);
+    } catch (e) {
+      Logger.log('Rename trigger falhou: ' + e.message);
     }
   }
 };
@@ -2770,8 +2936,8 @@ const EmailTemplates = {
     // mostrada à direita — usado pelo agradecimento pós-edição.
     const C = this.C;
     return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.nearBlack}" style="background-color:${C.nearBlack};border-collapse:collapse;width:100%;"><tr>
-      <td bgcolor="${C.nearBlack}" width="50%" align="left" style="background-color:${C.nearBlack};padding:26px 40px;"><img src="${this.LOGO_DARK_URL}" alt="CFT" width="150" height="55" style="display:block;width:150px;height:55px;" /></td>
-      <td bgcolor="${C.nearBlack}" width="50%" align="right" style="background-color:${C.nearBlack};padding:26px 40px;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;color:${C.sand};text-transform:uppercase;">${edition || this.EDITION}</td>
+      <td bgcolor="${C.nearBlack}" align="left" style="background-color:${C.nearBlack};padding:22px 0 22px 6%;"><img src="${this.LOGO_DARK_URL}" alt="CFT" width="120" height="44" style="display:block;width:120px;height:44px;" /></td>
+      <td bgcolor="${C.nearBlack}" align="right" style="background-color:${C.nearBlack};padding:22px 6% 22px 12px;white-space:nowrap;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;color:${C.sand};text-transform:uppercase;">${edition || this.EDITION}</td>
     </tr></table>`;
   },
 
@@ -2791,7 +2957,7 @@ const EmailTemplates = {
             <div style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:12px;color:${C.charcoal};line-height:1.8;">
               <span style="margin-right:24px;"><b style="color:${C.greenDark};">e</b>&nbsp;geral@camposft.com</span>
               <span style="margin-right:24px;"><b style="color:${C.greenDark};">w</b>&nbsp;camposft.com</span>
-              <span><b style="color:${C.greenDark};">ig</b>&nbsp;@camposft</span>
+              <span><b style="color:${C.greenDark};">ig</b>&nbsp;@campoft</span>
             </div>
           </td>
         </tr></table>
@@ -2802,27 +2968,35 @@ const EmailTemplates = {
   _footer() {
     const C = this.C;
     return `<div style="background:${C.charcoal};color:${C.beige};padding:24px 40px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:11px;line-height:1.6;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;">
+      <div>
         <div>
           <div style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:${C.greenBright};margin-bottom:6px;">Campo de Formação Técnica</div>
-          <div style="color:${C.sand};">APDFE · Associação Promoção e Desporto em Ferias Escolares</div>
+          <div style="color:${C.sand};">APDFE · Associação de Promoção do Desporto em Férias Escolares</div>
         </div>
-        <div style="color:${C.sand};font-size:10px;">Recebeu este email porque inscreveu o seu educando no CFT.</div>
+        <div style="color:${C.sand};font-size:10px;margin-top:10px;">Recebeu este email porque inscreveu o seu educando no CFT.</div>
       </div>
     </div>`;
   },
 
   _wrap(content, edition) {
     const C = this.C;
-    return `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">${this._googleFontsLink()}<style>body{margin:0;padding:0;}</style></head>
+    return `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">${this._googleFontsLink()}<meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0;padding:0;}
+@media (min-width:620px){.cft-h1{font-size:64px!important}.cft-ph{font-size:54px!important}.cft-l{display:inline-block!important;width:150px!important;vertical-align:top!important;padding-top:3px!important}.cft-v{display:inline-block!important;width:60%!important;vertical-align:top!important;margin-top:0!important}}
+</style></head>
 <body style="margin:0;padding:0;background:#f0eee9;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;color:${C.charcoal};">
-  <div style="max-width:680px;margin:0 auto;background:${C.beige};border:1px solid ${C.beigeMid};">
-    ${this._header(edition)}
-    ${content}
-    ${this._signature()}
-    ${this._footer()}
+  <div style="max-width:680px;margin:0 auto;background:${C.beige};">
+    ${this._fluido(this._header(edition) + content + this._signature() + this._footer())}
   </div>
 </body></html>`;
+  },
+
+  // Margens laterais fixas de 40px passam a 6% (22px no telemóvel, 40px no computador),
+  // para o email caber num ecrã de 375px sem cortar nem desalinhar.
+  _fluido(html) {
+    return html
+      .replace(/padding:(\d+(?:px)?) 40px (\d+(?:px)?) 40px/g, 'padding:$1 6% $2 6%')
+      .replace(/padding:(\d+(?:px)?) 40px;/g, 'padding:$1 6%;')
+      .replace(/margin:0 40px;/g, 'margin:0 6%;');
   },
 
   _over(text, color) {
@@ -2832,7 +3006,7 @@ const EmailTemplates = {
 
   _display(text, sub) {
     const C = this.C;
-    return `<h1 style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:72px;line-height:0.92;color:${C.nearBlack};margin:0;text-transform:uppercase;letter-spacing:-0.005em;">${this._esc(text)}</h1>${sub ? `<div style="margin-top:16px;font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:18px;color:${C.charcoal};">${this._esc(sub)}</div>` : ''}`;
+    return `<h1 class="cft-h1" style="font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:38px;line-height:1;color:${C.nearBlack};margin:0;text-transform:uppercase;letter-spacing:-0.005em;">${this._esc(text)}</h1>${sub ? `<div style="margin-top:16px;font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:18px;color:${C.charcoal};">${this._esc(sub)}</div>` : ''}`;
   },
 
   _para(text) {
@@ -2842,12 +3016,12 @@ const EmailTemplates = {
   _infoBox(rows, title) {
     const C = this.C;
     const rowsHtml = rows.map(([label, value, italic]) =>
-      `<div style="display:flex;align-items:baseline;padding:14px 0;border-bottom:1px solid ${C.beigeMid};gap:24px;">
-        <div style="width:130px;flex-shrink:0;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:${C.midGray};">${this._esc(label)}</div>
-        <div style="flex:1;font-family:${italic ? "'Playfair Display',Georgia,serif" : "'DM Sans','Helvetica Neue',Arial,sans-serif"};font-style:${italic ? 'italic' : 'normal'};font-size:${italic ? '19px' : '15px'};font-weight:${italic ? 400 : 500};color:${C.charcoal};">${value}</div>
+      `<div style="padding:12px 0;border-bottom:1px solid ${C.beigeMid};">
+        <div class="cft-l" style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:${C.midGray};">${this._esc(label)}</div>
+        <div class="cft-v" style="margin-top:3px;font-family:${italic ? "'Playfair Display',Georgia,serif" : "'DM Sans','Helvetica Neue',Arial,sans-serif"};font-style:${italic ? 'italic' : 'normal'};font-size:${italic ? '19px' : '15px'};font-weight:${italic ? 400 : 500};color:${C.charcoal};">${value}</div>
       </div>`
     ).join('');
-    return `<div style="margin:0 40px;background:${C.offWhite};padding:8px 28px 20px 28px;border:1px solid ${C.beigeMid};">
+    return `<div style="margin:0 40px;background:${C.offWhite};padding:8px 5% 16px 5%;border:1px solid ${C.beigeMid};">
       ${title ? `<div style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:${C.greenDark};padding:18px 0 4px 0;">${this._esc(title)}</div>` : ''}
       ${rowsHtml}
     </div>`;
@@ -3400,6 +3574,123 @@ const EmailTemplates = {
     return { subject, html: this._wrap(body, headerEd) };
   },
 
+  // Postal de Natal personalizado com o nome do atleta. Entra no email
+  // "Inscrição feita" de quem se inscreve até 24/12/2026 (ver InscricaoSite).
+  // O nome é texto do próprio email (não é imagem gerada), por isso não falha
+  // nem atrasa o envio. O botão abre camposft.com/postal.html, onde a família
+  // pode guardar o postal como imagem ou imprimir.
+  POSTAL_IMG_URL: 'https://camposft.com/assets/postal-natal-topo.jpg',
+  POSTAL_PAGE_URL: 'https://camposft.com/postal.html',
+  _postalNatal(data) {
+    const C = this.C;
+    const gold = '#e8b84a';
+    const nome = this.firstName(data.atleta);
+    const sems = String(data.semanas || '').split(/[.,;+\s]+/).map(x => parseInt(x, 10)).filter(n => n === 1 || n === 2);
+    const datas = { 1: '11 a 17 de julho', 2: '18 a 24 de julho' };
+    const quando = sems.length ? sems.map(n => datas[n]).join(' e ') + ' de 2027' : 'julho de 2027';
+    const url = this.POSTAL_PAGE_URL + '?n=' + encodeURIComponent(nome) + '&s=' + encodeURIComponent(sems.join(','));
+    return `
+      <div style="padding:28px 40px 0 40px;">
+        ${this._over('Um presente para pôr debaixo da árvore', C.greenDark)}
+        ${this._para(`Se quiser fazer surpresa no Natal, este postal já tem o nome ${data.gen_atleta === 'f' ? 'da' : 'do'} ${this._esc(nome)}. Pode imprimir ou enviar por WhatsApp.`)}
+      </div>
+      <div style="padding:8px 40px 0 40px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.nearBlack};border-radius:10px;overflow:hidden;">
+          <tr><td style="padding:0;line-height:0;font-size:0;">
+            <a href="${url}" style="text-decoration:none;"><img src="${this.POSTAL_IMG_URL}" width="520" alt="Bola de basquetebol com um laço, ao lado de uma árvore de Natal" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:10px 10px 0 0;"></a>
+          </td></tr>
+          <tr><td style="padding:22px 20px 24px 20px;background:${C.nearBlack};">
+            <div style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${gold};">${this._esc(nome)}, tens um presente à tua espera em julho</div>
+            <div class="cft-ph" style="font-family:'Bebas Neue','Arial Narrow',Impact,sans-serif;font-size:36px;line-height:1;letter-spacing:0.01em;color:${C.offWhite};text-transform:uppercase;margin:12px 0 14px 0;">Este verão<br>vais ao <span style="color:${gold};">CFT!</span></div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:${C.offWhite};">Uma semana de basquetebol e amigos para a vida.</div>
+            <div style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:${C.sand};margin-top:16px;">${this._esc(quando)} · Ponte da Barca · 5ª edição</div>
+          </td></tr>
+        </table>
+      </div>
+      <div style="padding:16px 40px 0 40px;">
+        <a href="${url}" style="display:inline-block;background:${C.charcoal};color:${C.offWhite};font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;text-decoration:none;padding:13px 22px;border-radius:4px;">Abrir o postal para imprimir ou enviar</a>
+      </div>`;
+  },
+
+  // 11. Inscrição recebida pelo site — enviado automaticamente logo após a
+  //     inscrição (InscricaoSite). Resumo com o valor, o sinal e o prazo.
+  inscricaoRecebida(data) {
+    const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
+    const sinal = data.pagamento === 'sinal';
+    const subject = `CFT 2027 · Inscrição feita · ${data.atleta || ''}`.trim();
+    const mono = (s) => `<span style="font-family:ui-monospace,Menlo,monospace;">${s}</span>`;
+    const cinza = (s) => ` <span style="color:${C.midGray};">${s}</span>`;
+    const rows = [
+      ['Atleta', this._esc(data.atleta)],
+      ['Semanas', this._esc(data.semanas)],
+      ['Opção', this._esc(data.opcao)],
+      ['Valor total', `<b>${this._esc(data.total)}</b>${data.desconto ? cinza('(com desconto)') : ''}`],
+      data.comprovativo === false ? ['Pagamento', 'Falta o comprovativo'] : ['Pago agora', sinal ? `${this._esc(data.sinal)}${cinza('(sinal)')}` : `${this._esc(data.total)}${cinza('(totalidade)')}`]
+    ];
+    if (sinal) rows.push(['Falta pagar', `<b>${this._esc(data.resto)}</b>${cinza('até 21 de junho de 2027')}`]);
+    rows.push(['IBAN', mono(this.IBAN_CFT)]);
+    const body = `
+      <div style="padding:48px 40px 24px 40px;">
+        ${this._over('Inscrição feita', C.greenDark)}
+        ${this._display(a.benvindo === 'bem-vinda' ? 'Bem-vinda\nao CFT 2027.' : 'Bem-vindo\nao CFT 2027.')}
+      </div>
+      <div style="padding:0 40px 24px 40px;">
+        ${this._greeting(ee, data)}
+        ${this._para(`A inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no <b>CFT 2027 · 5ª edição</b>, em Ponte da Barca, está feita. Obrigado pela confiança!`)}
+        ${this._para(data.comprovativo === false ? `<b>Ainda não temos o comprovativo da transferência.</b> Por favor responda a este email com o comprovativo em anexo.` : `Recebemos o comprovativo da transferência. Só voltamos a contactar se houver algum problema com o pagamento.`)}
+      </div>
+      ${this._infoBox(rows, 'Resumo da inscrição')}
+      ${data.postal_natal ? this._postalNatal(data) : ''}
+      <div style="padding:24px 40px 8px 40px;">
+        ${sinal ? this._para(`O resto (<b>${this._esc(data.resto)}</b>) é pago até <b>21 de junho de 2027</b>, por transferência para o mesmo IBAN, com o nome ${a.doA} atleta na descrição. Perto da data enviamos um lembrete.`) : ''}
+        ${this._para(`Se o clube ${a.doA} atleta chegar a 8 inscritos, o desconto de clube é descontado no valor que falta pagar ou devolvido para o IBAN indicado na inscrição.`)}
+        ${this._para(`O sinal não é devolvido em caso de desistência. O resto é devolvido a quem desistir até 21 de junho; depois dessa data, só com atestado médico. As restantes regras estão no <a href="https://camposft.com/regulamento.html" style="color:${C.greenDark};">regulamento</a>.`)}
+        ${this._para(`Mais perto do campo enviamos as informações práticas. Qualquer dúvida, basta responder a este email.`)}
+      </div>
+      <div style="padding:8px 40px 16px 40px;">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Até breve,</div>
+      </div>`;
+    return { subject, html: this._wrap(body) };
+  },
+
+  // Semana cheia à data da inscrição: fica em lista de espera (enviado pelo site).
+  listaEspera(data) {
+    const C = this.C;
+    const a = this.G_atl(data);
+    const ee = this.G_ee(data);
+    const subject = `CFT 2027 · Lista de espera · ${data.atleta || ''}`.trim();
+    const cheias = String(data.semanas_cheias || 'A semana escolhida');
+    const plural = cheias.indexOf(' e ') >= 0;
+    const rows = [
+      ['Atleta', this._esc(data.atleta)],
+      ['Semanas', this._esc(data.semanas)],
+      ['Opção', this._esc(data.opcao)],
+      ['Estado', '<b>Lista de espera</b>']
+    ];
+    const body = `
+      <div style="padding:48px 40px 24px 40px;">
+        ${this._over('Lista de espera', C.greenDark)}
+        ${this._display('Semana\ncheia.')}
+      </div>
+      <div style="padding:0 40px 24px 40px;">
+        ${this._greeting(ee, data)}
+        ${this._para(`Recebemos a inscrição ${a.doA} <b>${this._esc(data.atleta)}</b> no <b>CFT 2027</b>, mas as vagas da <b>${this._esc(cheias)}</b> já estavam todas ocupadas. A inscrição fica em <b>lista de espera</b>, por ordem de chegada.`)}
+        ${this._para(`Se abrir uma vaga, avisamos por email.`)}
+        ${this._para(data.comprovativo ? `Como já tinha feito a transferência, o valor é devolvido para o IBAN indicado na inscrição se não abrir vaga.` : `Não é preciso pagar nada agora.`)}
+        ${data.semana_livre ? this._para(`A outra semana que escolheu ainda tem vagas. Para garantir já esse lugar, faça uma nova inscrição só para essa semana em <a href="https://camposft.com/inscricao.html" style="color:${C.greenDark};">camposft.com</a>.`) : ''}
+      </div>
+      ${this._infoBox(rows, 'Resumo')}
+      <div style="padding:24px 40px 8px 40px;">
+        ${this._para(`Qualquer dúvida, basta responder a este email.`)}
+      </div>
+      <div style="padding:8px 40px 16px 40px;">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:22px;color:${C.charcoal};">Até breve,</div>
+      </div>`;
+    return { subject, html: this._wrap(body) };
+  },
+
   // ============ Entry point: render template by name ============
   render(templateName, data) {
     const fn = this[templateName];
@@ -3454,11 +3745,10 @@ const EmailDraft = {
     if (info.tipo !== 'interno' || info.desc) return null;
     const nSem = info.nSem || 0;
     if (nSem === 0) return null;
-    // Preço pronto com desconto: before cutoff = 295/sem · after = 330/sem
-    const prontoComDescTotal = (info.before ? 295 : 330) * nSem;
-    // Preço prestações com desconto: before = 330/sem · after = n/a (depois cutoff só pronto)
-    const prestComDescTotal = info.before ? (330 * nSem) : null;
-    return { pronto: prontoComDescTotal, prest: prestComDescTotal };
+    // 2027: o preço com desconto depende só da data de inscrição (mesmo total com ou sem sinal).
+    const esc = info.escalao || PRECOS_2027.escaloes[PRECOS_2027.escaloes.length - 1];
+    const total = esc.desc * nSem;
+    return { pronto: total, prest: total };
   },
 
   /** Constrói o objeto de dados (placeholders) a partir do atleta + contexto. */
@@ -3955,3 +4245,412 @@ const Satisfacao = {
     return { recebido: true };
   }
 };
+
+/**
+ * Inscrição pública a partir do site (camposft.com/inscricao.html).
+ *
+ * O Google Form tem reCAPTCHA, por isso o site não consegue submeter
+ * diretamente para o formResponse. Em vez disso, o site faz POST para este
+ * endpoint (action pública 'inscricao_submit', sem token), que:
+ *   1. guarda o comprovativo na pasta do Drive (se vier ficheiro);
+ *   2. escreve uma linha em "Respostas do Formulário 1" com o MESMO formato
+ *      que o Form escreve (colunas encontradas pelo título);
+ *   3. corre o mesmo processamento do trigger onFormSubmit (id, Atletas,
+ *      número de inscrição, leitura do comprovativo).
+ *
+ * Pasta dos comprovativos: Propriedade do script COMPROVATIVOS_FOLDER_ID.
+ * Se não existir, cria a pasta "CFT 2027 - Comprovativos (site)" e guarda o id.
+ */
+const InscricaoSite = {
+  MAX_FILE_BYTES: 10 * 1024 * 1024,
+  MIME_OK: /^(application\/pdf|image\/(jpeg|png|gif|webp|heic|heif))$/i,
+  // Quando o telemóvel não diz o tipo do ficheiro, decide-se pela extensão.
+  MIME_POR_EXT: { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif' },
+  // Código único de cada inscrição, criado no site. Fica como id_inscricao.
+  CHAVE_OK: /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i,
+  VAGAS_PADRAO: 60,
+  ESPERA_MOTIVO: 'Lista de espera',
+
+  // chave do site -> como encontrar a coluna no Sheet (exato ou "contém")
+  COLS: [
+    ['email_resp',        { exact: 'Endereço de e-mail' }],
+    ['semanas',           { exact: 'Semana de inscrição' }],
+    ['como_conheceu',     { contains: 'como tomou conhecimento' }],
+    ['treinador_indicou', { contains: 'caso tenha respondido treinador' }],
+    ['opcao',             { exact: 'Opção de inscrição' }],
+    ['atleta',            { exact: 'Nome completo do atleta' }],
+    ['cc',                { exact: 'Nº Cartão de Cidadão' }],
+    ['dataNasc',          { exact: 'Data de nascimento', type: 'date' }],
+    ['nif',               { exact: 'NIF' }],
+    ['tshirt',            { exact: 'Tamanho equipamento' }],
+    ['tshirt_num',        { exact: 'Número colocar equipamento' }],
+    ['tshirt_nome',       { exact: 'Nome colocar equipamento' }],
+    ['clube',             { exact: 'Clube onde joga' }],
+    ['posicao',           { exact: 'Posição onde joga' }],
+    ['melhorar',          { exact: 'O que pretende melhorar com o campo?' }],
+    ['alergia_alim',      { exact: 'Tem alguma alergia alimentar?', qual: 'alergia_alim_qual' }],
+    ['medicacao',         { exact: 'Faz alguma medicação regularmente?', qual: 'medicacao_qual' }],
+    ['doenca',            { exact: 'Tem alguma doença?', qual: 'doenca_qual' }],
+    ['alergia_med',       { exact: 'Tem alguma alergia medicamentosa?', qual: 'alergia_med_qual' }],
+    ['encarregado',       { exact: 'Nome encarregado de educação' }],
+    ['email_ee',          { exact: 'Email' }],
+    ['telefone',          { exact: 'Telemóvel' }],
+    ['contacto_emerg',    { exact: 'Contacto de emergência' }],
+    ['decl_resp',         { contains: 'declaro, como encarregado' }],
+    ['decl_imagem',       { contains: 'captação e divulgação' }],
+    ['decl_saida',        { contains: 'saída do seu educando' }],
+    ['iban',              { exact: 'Iban para devolução de dinheiro' }],
+    ['iban_pag',          { exact: 'IBAN pagamento' }],
+    ['irmao',             { contains: 'irmão inscrito' }]
+  ],
+  OBRIGATORIOS: ['semanas', 'opcao', 'atleta', 'dataNasc', 'encarregado', 'email_ee', 'telefone', 'decl_resp'],
+
+  submit(params) {
+    // Honeypot: bots preenchem o campo escondido. Finge sucesso e descarta.
+    if (String(params.website || '').trim() !== '') return { recebido: true };
+
+    const r = params.respostas || {};
+    if (!r.email_resp) r.email_resp = r.email_ee;
+    const falta = this.OBRIGATORIOS.filter(k => String(r[k] || '').trim() === '');
+    if (falta.length) throw new Error('Faltam campos obrigatórios: ' + falta.join(', '));
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(r.email_ee).trim())) throw new Error('Email inválido');
+    if (!Pricing.parseSems(r.semanas).length) throw new Error('Semana de inscrição inválida');
+
+    // 0. Reenvio da mesma inscrição (rede lenta, botão carregado duas vezes, página
+    //    recarregada): responde o mesmo que da primeira vez e não cria nada.
+    const chave = this.CHAVE_OK.test(String(params.chave || '')) ? String(params.chave).toLowerCase() : '';
+    if (chave) {
+      const antes = this.jaRecebida_(chave);
+      if (antes) return antes;
+    }
+    const vagas = this.vagasPorSemana_();
+
+    // 1. Comprovativo. Um ficheiro que não se consegue guardar NÃO impede a
+    //    inscrição: fica registada sem comprovativo e a família é avisada.
+    let comprovativoUrl = '', comprovativoErro = '';
+    if (params.ficheiro && params.ficheiro.base64) {
+      try { comprovativoUrl = this.saveFile_(params.ficheiro, r.atleta); }
+      catch (e) { comprovativoErro = String(e && e.message || e); Logger.log('Comprovativo não guardado: ' + comprovativoErro); }
+    }
+
+    // 2. Tudo o que decide a ordem de chegada corre dentro do mesmo bloqueio:
+    //    reenvio, vagas, linha no Sheet, Atletas e número de inscrição.
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(45000)) throw new Error('OCUPADO');
+    let reg;
+    try {
+      reg = this.registar_(r, chave, comprovativoUrl, vagas);
+    } finally {
+      lock.releaseLock();
+    }
+    if (reg.repetido) {
+      // Dois pedidos iguais ao mesmo tempo: o ficheiro deste é uma cópia a mais.
+      this.descartarFicheiro_(comprovativoUrl);
+      return this.jaRecebida_(chave) || { recebido: true, repetido: true, id: chave };
+    }
+    try { CacheService.getScriptCache().remove('insc_contagens'); } catch (e) {}
+
+    // 3. Fora do bloqueio: o que pode demorar e não mexe na ordem.
+    if (reg.id && reg.espera) {
+      const quais = reg.cheias.map(s => 'Semana ' + s).join(' e ');
+      try { Historico.append({ utilizador: 'site', id_atleta: reg.id, atleta: r.atleta, tipo: 'soft_delete', antes: 'ativo', depois: 'inativo', motivo: this.ESPERA_MOTIVO + ' (' + quais + ' cheia à data da inscrição)' }); } catch (e) { Logger.log('Histórico falhou: ' + e.message); }
+      try { Tarefas.create({ titulo: 'Lista de espera: ' + String(r.atleta).slice(0, 80), descricao: quais + ' cheia quando se inscreveu (n.º ' + reg.numero + '). ' + (comprovativoUrl ? 'ATENÇÃO: já enviou comprovativo de pagamento. ' : 'Não pagou. ') + 'Quando houver vaga, reativar a inscrição na Lista.', id_atleta: reg.id, atleta_nome: r.atleta }, 'site'); } catch (e) { Logger.log('Tarefa falhou: ' + e.message); }
+    }
+    let leitura = 'sem_comprovativo';
+    if (reg.id && comprovativoUrl) {
+      try { Backfill.renameComprovativo_(reg.numero, r.atleta, new Date(), comprovativoUrl); } catch (e) { Logger.log('Rename falhou: ' + e.message); }
+      if (!reg.espera) leitura = this.agendarLeitura_(reg.id);
+    }
+    // Email automático de confirmação (não bloqueia a inscrição se falhar)
+    let email = 'nao_enviado';
+    try { email = this.enviarConfirmacao_(r, reg.id, !!comprovativoUrl, reg); } catch (e) { Logger.log('Email confirmação falhou: ' + e.message); }
+
+    const out = {
+      recebido: true, id: reg.id || null, numero: reg.numero || null,
+      comprovativo: !!comprovativoUrl, comprovativo_erro: !!comprovativoErro,
+      lista_espera: !!reg.espera, semanas_cheias: reg.cheias || [],
+      email: email, leitura: leitura
+    };
+    if (chave) { try { CacheService.getScriptCache().put('insc_' + chave, JSON.stringify(out), 21600); } catch (e) {} }
+    return out;
+  },
+
+  // Corre SEMPRE dentro do bloqueio do script. Poucas chamadas ao Sheet, para o
+  // bloqueio ficar preso o menos tempo possível.
+  registar_(r, chave, comprovativoUrl, vagas) {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sh = ss.getSheetByName('Respostas do Formulário 1');
+    if (!sh) throw new Error('Aba "Respostas do Formulário 1" não encontrada');
+    const atl = ss.getSheetByName('Atletas');
+    if (!atl) throw new Error('Aba "Atletas" não encontrada');
+
+    // Estado atual (uma só leitura): reenvios, vagas ocupadas e último número.
+    const last = atl.getLastRow();
+    const vals = last >= 2 ? atl.getRange(2, 1, last - 1, ATL_NCOLS).getValues() : [];
+    if (chave && vals.some(v => String(v[ATL_COLS.id_inscricao - 1]).toLowerCase() === chave)) return { repetido: true };
+    const ocup = { 1: 0, 2: 0 };
+    let maxNum = 0;
+    vals.forEach(v => {
+      const a = Inscricoes._rowToObj(v);
+      maxNum = Math.max(maxNum, Number(a.num_inscricao) || 0);
+      if (a.ativo) Pricing.parseSems(a.semanas_atuais).forEach(s => { ocup[s]++; });
+    });
+    const cheias = Pricing.parseSems(r.semanas).filter(s => ocup[s] >= vagas);
+    const espera = cheias.length > 0;
+
+    // Linha no formato do Form, já com id e data de migração.
+    const lastCol = sh.getLastColumn();
+    const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0]
+      .map(h => String(h).trim().replace(/\s+/g, ' '));
+    const lower = headers.map(h => h.toLowerCase());
+    const idIdx = headers.indexOf('id_inscricao'), migIdx = headers.indexOf('migrado_em');
+    if (idIdx < 0 || migIdx < 0) throw new Error('Colunas id_inscricao/migrado_em em falta na aba de respostas');
+    const id = chave || Utilities.getUuid();
+    const linha = new Array(lastCol).fill('');
+    const put = (idx, val) => { if (idx >= 0 && idx < lastCol) linha[idx] = val; };
+    put(headers.indexOf('Carimbo de data/hora'), new Date());
+    this.COLS.forEach(([key, spec]) => {
+      const idx = spec.exact ? headers.indexOf(spec.exact)
+        : lower.findIndex(h => h.indexOf(spec.contains) >= 0);
+      if (idx < 0) return;
+      put(idx, this.clean_(r[key], spec.type));
+      // "Qual?" fica sempre na coluna a seguir à pergunta-mãe (igual ao Backfill)
+      if (spec.qual) put(idx + 1, this.clean_(r[spec.qual]));
+    });
+    put(lower.findIndex(h => h.indexOf('comprovativo pagamento inscrição') >= 0), comprovativoUrl);
+    put(idIdx, id);
+    put(migIdx, new Date());
+    sh.appendRow(linha);
+    const row = sh.getLastRow();
+
+    // Atletas + número de inscrição + o que o site já sabe (irmão, pagamento, espera).
+    Backfill.migrateRow_(row, sh, atl);
+    let arow = atl.getLastRow();
+    if (String(atl.getRange(arow, ATL_COLS.id_inscricao).getValue()) !== id) arow = Inscricoes._findRow(id);
+    const numero = maxNum + 1;
+    const stamp = Utilities.formatDate(new Date(), 'Europe/Lisbon', 'yyyy-MM-dd HH:mm');
+    const notas = [];
+    if (espera) notas.push('[' + stamp + ' site] ' + this.ESPERA_MOTIVO + ': ' + cheias.map(s => 'Semana ' + s).join(' e ') + ' cheia à data da inscrição' + (comprovativoUrl ? ' (já enviou comprovativo)' : ' (não pagou)'));
+    else if (r.pagamento) notas.push('[' + stamp + ' site] Site: pagou ' + (String(r.pagamento) === 'sinal' ? 'o sinal' : 'a totalidade') + ' na inscrição');
+    // Colunas 34 a 39 seguidas: irmao_desconto, ativo, motivo_eliminacao, eliminado_em, eliminado_por, notas_internas
+    atl.getRange(arow, ATL_COLS.irmao_desconto, 1, 6).setValues([[
+      String(r.irmao) === 'Sim', !espera,
+      espera ? this.ESPERA_MOTIVO + ' · ' + cheias.map(s => 'Semana ' + s).join(' e ') + ' cheia' : '',
+      espera ? new Date() : '', espera ? 'site' : '', notas.join('\n')
+    ]]);
+    atl.getRange(arow, ATL_COLS.num_inscricao).setValue(numero);
+    return { id: id, numero: numero, espera: espera, cheias: cheias };
+  },
+
+  // Já existe uma inscrição com este código? Devolve a resposta dada da primeira vez.
+  jaRecebida_(chave) {
+    try {
+      const c = CacheService.getScriptCache().get('insc_' + chave);
+      if (c) { const o = JSON.parse(c); o.repetido = true; return o; }
+    } catch (e) {}
+    const atl = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Atletas');
+    const last = atl ? atl.getLastRow() : 0;
+    if (last < 2) return null;
+    const ids = atl.getRange(2, ATL_COLS.id_inscricao, last - 1, 1).getValues();
+    const idx = ids.findIndex(v => String(v[0]).toLowerCase() === chave);
+    if (idx < 0) return null;
+    const a = Inscricoes._rowToObj(atl.getRange(idx + 2, 1, 1, ATL_NCOLS).getValues()[0]);
+    const espera = !a.ativo && String(a.motivo_eliminacao || '').indexOf(this.ESPERA_MOTIVO) === 0;
+    return { recebido: true, repetido: true, id: chave, numero: Number(a.num_inscricao) || null, comprovativo: !!a.comprovativo_url, comprovativo_erro: false, lista_espera: espera, semanas_cheias: [], email: 'ja_enviado' };
+  },
+
+  vagasPorSemana_() {
+    const n = Number(Config.get('vagas_por_semana'));
+    return n > 0 ? n : this.VAGAS_PADRAO;
+  },
+
+  // Contagens leves (só a aba Atletas), com cache de 1 minuto. Servem o contador
+  // de clube e a consulta de vagas do site sem carregar o Dashboard inteiro.
+  contagens_() {
+    const cache = CacheService.getScriptCache();
+    try { const c = JSON.parse(cache.get('insc_contagens') || 'null'); if (c) return c; } catch (e) {}
+    const atl = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Atletas');
+    const last = atl ? atl.getLastRow() : 0;
+    const vals = last >= 2 ? atl.getRange(2, 1, last - 1, ATL_NCOLS).getValues() : [];
+    const out = { clubes: {}, semanas: { 1: 0, 2: 0 } };
+    vals.forEach(v => {
+      const a = Inscricoes._rowToObj(v);
+      if (!a.ativo) return;
+      const sems = Pricing.parseSems(a.semanas_atuais);
+      sems.forEach(s => { out.semanas[s]++; });
+      const k = String(a.clube || '').trim().toLowerCase();
+      if (k) out.clubes[k] = (out.clubes[k] || 0) + sems.length;
+    });
+    try { cache.put('insc_contagens', JSON.stringify(out), 60); } catch (e) {}
+    return out;
+  },
+
+  // Público: que semanas estão cheias (o site pergunta antes de mostrar o IBAN).
+  // Não revela quantos inscritos há, só se está cheia e se restam poucas vagas.
+  vagas() {
+    const cap = this.vagasPorSemana_();
+    const c = this.contagens_().semanas;
+    const sem = (n) => { const livres = cap - (Number(c[n]) || 0); return { cheia: livres <= 0, ultimas: livres > 0 && livres <= 5 ? livres : null }; };
+    return { semanas: { 1: sem(1), 2: sem(2) } };
+  },
+
+  // Leitura automática do comprovativo fora do pedido da família: agenda uma
+  // execução para daqui a 1 minuto (uma só de cada vez). Se não der para
+  // agendar, lê na hora como antes.
+  agendarLeitura_(id) {
+    try {
+      const props = PropertiesService.getScriptProperties();
+      const agora = Date.now();
+      const ult = Number(props.getProperty('OCR_AGENDADO_EM')) || 0;
+      if (agora - ult < 10 * 60 * 1000) return 'agendada';
+      ScriptApp.newTrigger('lerComprovativosPendentes_').timeBased().after(60 * 1000).create();
+      props.setProperty('OCR_AGENDADO_EM', String(agora));
+      return 'agendada';
+    } catch (e) {
+      Logger.log('Não deu para agendar a leitura (' + e.message + '); leio agora.');
+      try { Comprovativo.readAndSave(id, 'auto-trigger'); return 'direta'; }
+      catch (e2) { Logger.log('OCR auto falhou para ' + id + ': ' + e2.message); return 'falhou'; }
+    }
+  },
+
+  // Email automático. Desliga-se pondo email_auto_inscricao = nao no Config.
+  // Inscrição normal: "Inscrição feita". Semana cheia: "Lista de espera".
+  enviarConfirmacao_(r, id, temComprovativo, reg) {
+    const flag = String(Config.get('email_auto_inscricao') || 'sim').trim().toLowerCase();
+    if (flag === 'nao' || flag === 'não' || flag === 'false') return 'desligado';
+    const to = String(r.email_ee || '').trim();
+    if (!to) return 'sem email';
+    const espera = !!(reg && reg.espera);
+    const atleta = {
+      timestamp_inscricao: new Date(), opcao_inscricao: r.opcao, semanas_atuais: r.semanas,
+      irmao_desconto: String(r.irmao) === 'Sim', clube: r.clube
+    };
+    const p = Pricing.calc(atleta, {});
+    const eur = (n) => (Number(n) || 0) + ' €';
+    const data = {
+      atleta: String(r.atleta || ''), ee_nome: EmailTemplates.shortName(r.encarregado || ''),
+      gen_atleta: EmailTemplates.guessGender(r.atleta || ''), gen_ee: EmailTemplates.guessGender(r.encarregado || ''),
+      semanas: String(r.semanas || ''), opcao: String(r.opcao || ''),
+      total: eur(p.prontoTotal), sinal: eur(p.prest1), resto: eur(p.prest2), desconto: !!p.desc,
+      comprovativo: !!temComprovativo,
+      pagamento: String(r.pagamento) === 'sinal' ? 'sinal' : 'total',
+      postal_natal: !espera && this.postalNatalAtivo_(),
+      semanas_cheias: espera ? reg.cheias.map(s => 'Semana ' + s).join(' e ') : '',
+      semana_livre: espera && Pricing.parseSems(r.semanas).length > reg.cheias.length,
+      numero: reg && reg.numero ? reg.numero : ''
+    };
+    const modelo = espera ? 'listaEspera' : 'inscricaoRecebida';
+    const { subject, html } = EmailTemplates.render(modelo, data);
+    const plain = EmailDraft._plainFallback(html);
+    const nl = '\r\n', wrap = (b64) => b64.replace(/(.{76})/g, '$1\r\n');
+    const boundary = 'cft_' + Utilities.getUuid().replace(/-/g, '');
+    const mime =
+      'From: =?UTF-8?B?' + Utilities.base64Encode('CFT · Campo de Formação Técnica', Utilities.Charset.UTF_8) + '?= <geral@camposft.com>' + nl +
+      'To: ' + to.replace(/[\r\n,;<>]/g, '') + nl +
+      'Subject: =?UTF-8?B?' + Utilities.base64Encode(subject, Utilities.Charset.UTF_8) + '?=' + nl +
+      'MIME-Version: 1.0' + nl +
+      'Content-Type: multipart/alternative; boundary="' + boundary + '"' + nl + nl +
+      '--' + boundary + nl + 'Content-Type: text/plain; charset=UTF-8' + nl + 'Content-Transfer-Encoding: base64' + nl + nl +
+      wrap(Utilities.base64Encode(plain, Utilities.Charset.UTF_8)) + nl +
+      '--' + boundary + nl + 'Content-Type: text/html; charset=UTF-8' + nl + 'Content-Transfer-Encoding: base64' + nl + nl +
+      wrap(Utilities.base64Encode(html, Utilities.Charset.UTF_8)) + nl +
+      '--' + boundary + '--';
+    Gmail.Users.Messages.send({ raw: Utilities.base64EncodeWebSafe(mime) }, 'me');
+    try {
+      Emails.log({ template: modelo, assunto: subject, corpo: '', destinatarios: [to], ids_atletas: id ? [id] : [] }, 'site');
+    } catch (e) { Logger.log('Emails.log falhou: ' + e.message); }
+    return 'enviado';
+  },
+
+  // Postal de Natal no email de confirmação: só até 24/12/2026 (hora de Lisboa).
+  // Desliga-se pondo postal_natal = nao no Config.
+  postalNatalAtivo_() {
+    const flag = String(Config.get('postal_natal') || 'sim').trim().toLowerCase();
+    if (flag === 'nao' || flag === 'não' || flag === 'false') return false;
+    const hoje = Utilities.formatDate(new Date(), 'Europe/Lisbon', 'yyyy-MM-dd');
+    return hoje <= '2026-12-24';
+  },
+
+  // Público: quantas inscrições tem um clube (para o contador do desconto de clube no site).
+  // Conta inscrições (1 atleta em 2 semanas = 2), como no desconto.
+  clubeContagem(clube) {
+    const nome = String(clube || '').trim();
+    if (!nome) return { clube: '', inscritos: 0, minimo: 8 };
+    const counts = this.contagens_().clubes || {};
+    return { clube: nome, inscritos: Number(counts[nome.toLowerCase()]) || 0, minimo: 8 };
+  },
+
+  clean_(v, type) {
+    if (v === undefined || v === null) return '';
+    if (Array.isArray(v)) v = v.join(', ');
+    let s = String(v).trim().slice(0, 1000);
+    // Evita que texto comece por = + - @ e seja lido como fórmula
+    // e que telefones como +351... virem números
+    if (/^[=+\-@]/.test(s)) s = "'" + s;
+    if (type === 'date') {
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    }
+    return s;
+  },
+
+  folder_() {
+    const props = PropertiesService.getScriptProperties();
+    const id = props.getProperty('COMPROVATIVOS_FOLDER_ID');
+    if (id) {
+      try { return DriveApp.getFolderById(id); } catch (e) { /* recria */ }
+    }
+    const f = DriveApp.createFolder('CFT 2027 - Comprovativos (site)');
+    props.setProperty('COMPROVATIVOS_FOLDER_ID', f.getId());
+    return f;
+  },
+
+  saveFile_(fic, atleta) {
+    const extNome = (String(fic.nome || '').match(/\.([a-zA-Z0-9]{2,5})$/) || [])[1];
+    let mime = String(fic.mime || '').toLowerCase();
+    if (!this.MIME_OK.test(mime) && extNome && this.MIME_POR_EXT[extNome.toLowerCase()]) mime = this.MIME_POR_EXT[extNome.toLowerCase()];
+    if (!this.MIME_OK.test(mime)) throw new Error('O comprovativo tem de ser PDF ou imagem');
+    const bytes = Utilities.base64Decode(String(fic.base64));
+    if (bytes.length > this.MAX_FILE_BYTES) throw new Error('Comprovativo grande demais (máx. 10 MB)');
+    const ext = extNome || mime.split('/')[1];
+    const base = String(atleta || 'atleta').replace(/[^\p{L}\p{N} _-]/gu, '').trim().slice(0, 60) || 'atleta';
+    const nome = 'site_' + Utilities.formatDate(new Date(), 'Europe/Lisbon', 'yyyyMMdd-HHmmss') + '_' + base + '.' + ext.toLowerCase();
+    const file = this.folder_().createFile(Utilities.newBlob(bytes, mime, nome));
+    return file.getUrl();
+  },
+
+  // Manda para o lixo do Drive (recuperável 30 dias) a cópia repetida de um comprovativo.
+  descartarFicheiro_(url) {
+    try {
+      const fileId = url ? Comprovativo.extractFileId(url) : null;
+      if (fileId) DriveApp.getFileById(fileId).setTrashed(true);
+    } catch (e) { Logger.log('Não deu para descartar a cópia: ' + e.message); }
+  }
+};
+
+// Lê os comprovativos que ainda não têm valor (agendada por InscricaoSite.agendarLeitura_).
+// Cada comprovativo é tentado uma vez por cada 6 horas, para um ficheiro ilegível
+// não gastar leituras sempre que entra uma inscrição nova.
+function lerComprovativosPendentes_() {
+  try {
+    ScriptApp.getProjectTriggers().forEach(t => {
+      if (t.getHandlerFunction() === 'lerComprovativosPendentes_') ScriptApp.deleteTrigger(t);
+    });
+  } catch (e) { Logger.log('Limpeza de triggers falhou: ' + e.message); }
+  PropertiesService.getScriptProperties().deleteProperty('OCR_AGENDADO_EM');
+  const cache = CacheService.getScriptCache();
+  const inicio = Date.now();
+  const pend = Inscricoes.getAll().atletas.filter(a => a.ativo && a.comprovativo_url && !(Number(a.valor_pago) > 0));
+  let lidos = 0, tentados = 0;
+  for (let i = 0; i < pend.length; i++) {
+    if (Date.now() - inicio > 4.5 * 60 * 1000) break;
+    const id = pend[i].id_inscricao;
+    if (cache.get('ocr_try_' + id)) continue;
+    cache.put('ocr_try_' + id, '1', 21600);
+    if (tentados > 0) Utilities.sleep(4500);  // o leitor aguenta cerca de 15 por minuto
+    tentados++;
+    try { Comprovativo.readAndSave(id, 'auto-trigger'); lidos++; }
+    catch (e) { Logger.log('OCR auto falhou para ' + id + ': ' + e.message); }
+  }
+  Logger.log('lerComprovativosPendentes_: ' + lidos + ' lidos em ' + tentados + ' tentados (' + pend.length + ' pendentes).');
+}
