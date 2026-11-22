@@ -11,7 +11,8 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #111110; color: #faf7f2; font-family: 'DM Sans', Helvetica, Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px 40px; }
   h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: #e8b84a; font-weight: 700; margin-bottom: 14px; }
-  canvas { width: 100%; max-width: 460px; height: auto; border-radius: 10px; box-shadow: 0 16px 50px rgba(0,0,0,.6); background: #1c1c18; }
+  canvas { display: none; }
+  #img { display: block; width: 100%; max-width: 460px; height: auto; aspect-ratio: 4 / 5; border-radius: 10px; box-shadow: 0 16px 50px rgba(0,0,0,.6); background: #1c1c18; -webkit-touch-callout: default; }
   .acoes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
   button { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 13px 20px; border-radius: 4px; border: 1.5px solid #faf7f2; background: #faf7f2; color: #111110; cursor: pointer; }
   button.sec { background: transparent; color: #faf7f2; }
@@ -21,19 +22,21 @@
   @media print {
     body { background: #fff; padding: 0; }
     h1, .acoes, p, label { display: none; }
-    canvas { max-width: 150mm; box-shadow: none; border-radius: 0; margin: 12mm auto; }
+    #img { max-width: 150mm; box-shadow: none; border-radius: 0; margin: 12mm auto; }
   }
 </style>
 </head>
 <body>
 <h1>Postal de Natal · CFT 2027</h1>
-<canvas id="postal" width="1080" height="1350" role="img" aria-label="Postal de Natal do CFT 2027"></canvas>
+<canvas id="postal" width="1080" height="1350" aria-hidden="true"></canvas>
+<img id="img" alt="Postal de Natal do CFT 2027" width="1080" height="1350">
 <div class="acoes">
+  <button id="enviar" hidden>Enviar</button>
   <button id="guardar">Guardar imagem</button>
-  <button class="sec" onclick="window.print()">Imprimir</button>
+  <button class="sec" id="imprimir">Imprimir</button>
 </div>
 <label>Nome no postal<br><input id="nome" maxlength="24" autocomplete="off"></label>
-<p>Guarde a imagem para enviar por WhatsApp, ou imprima e ponha debaixo da árvore. O nome fica só neste ecrã: não é guardado em lado nenhum.</p>
+<p id="ajuda">Envie por WhatsApp, guarde a imagem ou imprima e ponha debaixo da árvore. Se os botões não funcionarem no seu telemóvel, carregue no postal durante dois segundos e escolha «Guardar imagem» ou «Partilhar». O nome fica só neste ecrã: não é guardado em lado nenhum.</p>
 <script>
 (function () {
   var q = new URLSearchParams(location.search);
@@ -80,6 +83,7 @@
     c.font = "600 25px 'Barlow Condensed', Arial Narrow, sans-serif"; c.fillStyle = '#c9b99a';
     var rod = quando + ' · PONTE DA BARCA · 5ª EDIÇÃO';
     espacado(rod, (1080 - largura(rod, 3)) / 2, 1285, 3);
+    try { document.getElementById('img').src = cv.toDataURL('image/jpeg', 0.9); } catch (e) {}
   }
   function pronto() { if (++prontos >= 2) desenha(); }
   bg.onload = pronto; bg.onerror = pronto; logo.onload = pronto; logo.onerror = pronto;
@@ -88,13 +92,25 @@
     Promise.all([document.fonts.load("176px 'Bebas Neue'"), document.fonts.load("700 30px 'Barlow Condensed'"), document.fonts.load("600 25px 'Barlow Condensed'"), document.fonts.load("37px 'DM Sans'")]).then(desenha, desenha);
   }
   inp.addEventListener('input', desenha);
+  function nomeFicheiro() { var n = limpa(inp.value); return 'postal-cft-2027' + (n ? '-' + n.toLowerCase().replace(/\s+/g, '-') : '') + '.jpg'; }
+  function comFicheiro(fn) { cv.toBlob(function (b) { fn(new File([b], nomeFicheiro(), { type: 'image/jpeg' }), b); }, 'image/jpeg', 0.9); }
+  // Enviar: abre a folha de partilha do telemóvel (WhatsApp, etc.). Só aparece onde funciona.
+  var podePartilhar = false;
+  try { podePartilhar = !!(navigator.canShare && navigator.canShare({ files: [new File([''], 'x.jpg', { type: 'image/jpeg' })] })); } catch (e) {}
+  var bEnviar = document.getElementById('enviar');
+  if (podePartilhar) {
+    bEnviar.hidden = false; document.getElementById('guardar').className = 'sec';
+    bEnviar.addEventListener('click', function () {
+      comFicheiro(function (f) { navigator.share({ files: [f], title: 'Postal de Natal · CFT 2027' }).catch(function () {}); });
+    });
+  }
   document.getElementById('guardar').addEventListener('click', function () {
-    cv.toBlob(function (b) {
-      var a = document.createElement('a'); a.href = URL.createObjectURL(b);
-      a.download = 'postal-cft-2027' + (limpa(inp.value) ? '-' + limpa(inp.value).toLowerCase().replace(/\s+/g, '-') : '') + '.png';
+    comFicheiro(function (f, b) {
+      var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = nomeFicheiro();
       document.body.appendChild(a); a.click(); a.remove();
-    }, 'image/png');
+    });
   });
+  document.getElementById('imprimir').addEventListener('click', function () { window.print(); });
 })();
 </script>
 </body>
