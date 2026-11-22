@@ -1144,7 +1144,7 @@
   };
 </script>
 <script src="assets/auth.js"></script>
-<script src="assets/api.js?v=20261121"></script>
+<script src="assets/api.js?v=20261122"></script>
 </head>
 <body>
 
@@ -4680,7 +4680,8 @@ async function refreshNow(){
     finState = financasBackend;
     renderAll();
   } catch (e) {
-    toast('Erro a atualizar: ' + e.message, true);
+    // Resposta de outra edição (trocou-se de 2026/2027 a meio): ignora, já vem outra a caminho.
+    if (!e.stale) toast('Erro a atualizar: ' + e.message, true);
   } finally {
     if (btn) btn.classList.remove('spinning');
   }

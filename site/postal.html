@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Postal de Natal · CFT 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111110; color: #faf7f2; font-family: 'DM Sans', Helvetica, Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px 40px; }
+  h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: #e8b84a; font-weight: 700; margin-bottom: 14px; }
+  canvas { display: none; }
+  #img { display: block; width: 100%; max-width: 460px; height: auto; aspect-ratio: 4 / 5; border-radius: 10px; box-shadow: 0 16px 50px rgba(0,0,0,.6); background: #1c1c18; -webkit-touch-callout: default; }
+  .acoes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
+  button { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 13px 20px; border-radius: 4px; border: 1.5px solid #faf7f2; background: #faf7f2; color: #111110; cursor: pointer; }
+  button.sec { background: transparent; color: #faf7f2; }
+  p { font-size: 13.5px; line-height: 1.6; color: #c9b99a; max-width: 460px; text-align: center; margin-top: 16px; }
+  label { display: block; font-size: 12px; color: #c9b99a; margin-top: 18px; text-align: center; }
+  input { margin-top: 6px; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 4px; border: 1px solid #6b6b65; background: #1c1c18; color: #faf7f2; width: 240px; text-align: center; }
+  @media print {
+    html, body { height: auto !important; min-height: 0 !important; overflow: hidden; }
+    body { background: #fff; padding: 10mm; display: block; }
+    canvas, input, button { display: none !important; }
+    h1, .acoes, p, label { display: none; }
+    #img { width: 100%; max-width: none; height: auto; max-height: 255mm; page-break-after: avoid; break-after: avoid; page-break-inside: avoid; object-fit: contain; box-shadow: none; border-radius: 0; margin: 0 auto; display: block; }
+  }
+  @page { size: A4 portrait; margin: 0; }
+</style>
+</head>
+<body>
+<h1>Postal de Natal · CFT 2027</h1>
+<canvas id="postal" width="1080" height="1350" aria-hidden="true"></canvas>
+<img id="img" alt="Postal de Natal do CFT 2027" width="1080" height="1350">
+<div class="acoes">
+  <button id="enviar" hidden>Enviar</button>
+  <button id="guardar">Guardar imagem</button>
+  <button class="sec" id="imprimir">Imprimir</button>
+</div>
+<label>Nome no postal<br><input id="nome" maxlength="24" autocomplete="off"></label>
+<p id="ajuda">Envie por WhatsApp, guarde a imagem ou imprima e ponha debaixo da árvore. Se os botões não funcionarem no seu telemóvel, carregue no postal durante dois segundos e escolha «Guardar imagem» ou «Partilhar». O nome fica só neste ecrã: não é guardado em lado nenhum.</p>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var limpa = function (s) { return String(s || '').replace(/[^\p{L}\p{N} .'-]/gu, '').trim().slice(0, 24); };
+  var nome = limpa(q.get('n'));
+  var sems = String(q.get('s') || '').split(',').map(Number).filter(function (n) { return n === 1 || n === 2; });
+  var datas = { 1: '11 A 17 DE JULHO', 2: '18 A 24 DE JULHO' };
+  var quando = sems.length ? sems.map(function (n) { return datas[n]; }).join(' E ') + ' DE 2027' : 'JULHO DE 2027';
+  var cv = document.getElementById('postal'), c = cv.getContext('2d');
+  var inp = document.getElementById('nome'); inp.value = nome;
+  var bg = new Image(), logo = new Image(), prontos = 0;
+  var gold = '#e8b84a', off = '#faf7f2';
+  function espacado(txt, x, y, esp) { // texto com letter-spacing
+    for (var i = 0; i < txt.length; i++) { c.fillText(txt[i], x, y); x += c.measureText(txt[i]).width + esp; }
+  }
+  function largura(txt, esp) { var w = 0; for (var i = 0; i < txt.length; i++) w += c.measureText(txt[i]).width + esp; return w; }
+  function desenha() {
+    c.fillStyle = '#111110'; c.fillRect(0, 0, 1080, 1350);
+    if (bg.complete && bg.naturalWidth) c.drawImage(bg, 0, 0, 1080, 1350);
+    var g = c.createLinearGradient(0, 560, 0, 900); g.addColorStop(0, 'rgba(17,17,16,0)'); g.addColorStop(1, 'rgba(17,17,16,0.96)');
+    c.fillStyle = g; c.fillRect(0, 560, 1080, 340); c.fillStyle = 'rgba(17,17,16,0.96)'; c.fillRect(0, 900, 1080, 450);
+    // logo
+    c.fillStyle = '#fff'; c.beginPath(); c.roundRect(60, 60, 146, 108, 18); c.fill();
+    if (logo.complete && logo.naturalWidth) { var lw = 96, lh = lw * logo.naturalHeight / logo.naturalWidth; c.drawImage(logo, 60 + (146 - lw) / 2, 60 + (108 - lh) / 2, lw, lh); }
+    // etiqueta
+    c.font = "700 27px 'Barlow Condensed', Arial Narrow, sans-serif"; c.textBaseline = 'middle';
+    var et = 'PRESENTE DE NATAL', ew = largura(et, 3.5) + 40;
+    c.fillStyle = gold; c.beginPath(); c.roundRect(1080 - 60 - ew, 74, ew, 58, 6); c.fill();
+    c.fillStyle = '#111110'; espacado(et, 1080 - 60 - ew + 22, 104, 3.5);
+    c.textBaseline = 'alphabetic';
+    // sobretítulo com o nome
+    var n = limpa(inp.value).toUpperCase();
+    var over = (n ? n + ', ' : '') + 'TENS UM PRESENTE À TUA ESPERA EM JULHO';
+    var fs = 30; c.font = "700 " + fs + "px 'Barlow Condensed', Arial Narrow, sans-serif";
+    while (largura(over, 4) > 960 && fs > 18) { fs--; c.font = "700 " + fs + "px 'Barlow Condensed', Arial Narrow, sans-serif"; }
+    c.fillStyle = gold; espacado(over, 60, 778, 4);
+    // título
+    c.font = "400 176px 'Bebas Neue', Impact, sans-serif"; c.fillStyle = off;
+    c.fillText('ESTE VERÃO', 56, 935);
+    c.fillText('VAIS AO ', 56, 1080);
+    var w = c.measureText('VAIS AO ').width; c.fillStyle = gold; c.fillText('CFT!', 56 + w, 1080);
+    c.font = "400 37px 'DM Sans', Helvetica, Arial, sans-serif"; c.fillStyle = off;
+    c.fillText('Uma semana de basquetebol e amigos para a vida.', 60, 1160);
+    c.font = "600 25px 'Barlow Condensed', Arial Narrow, sans-serif"; c.fillStyle = '#c9b99a';
+    var rod = quando + ' · PONTE DA BARCA · 5ª EDIÇÃO';
+    espacado(rod, (1080 - largura(rod, 3)) / 2, 1285, 3);
+    try { document.getElementById('img').src = cv.toDataURL('image/jpeg', 0.9); } catch (e) {}
+  }
+  function pronto() { if (++prontos >= 2) desenha(); }
+  bg.onload = pronto; bg.onerror = pronto; logo.onload = pronto; logo.onerror = pronto;
+  bg.src = 'assets/postal-natal-fundo.jpg'; logo.src = 'assets/logo_CFT.png';
+  if (document.fonts && document.fonts.load) {
+    Promise.all([document.fonts.load("176px 'Bebas Neue'"), document.fonts.load("700 30px 'Barlow Condensed'"), document.fonts.load("600 25px 'Barlow Condensed'"), document.fonts.load("37px 'DM Sans'")]).then(desenha, desenha);
+  }
+  inp.addEventListener('input', desenha);
+  function nomeFicheiro() { var n = limpa(inp.value); return 'postal-cft-2027' + (n ? '-' + n.toLowerCase().replace(/\s+/g, '-') : '') + '.jpg'; }
+  function comFicheiro(fn) { cv.toBlob(function (b) { fn(new File([b], nomeFicheiro(), { type: 'image/jpeg' }), b); }, 'image/jpeg', 0.9); }
+  // Enviar: abre a folha de partilha do telemóvel (WhatsApp, etc.). Só aparece onde funciona.
+  var podePartilhar = false;
+  try { podePartilhar = !!(navigator.canShare && navigator.canShare({ files: [new File([''], 'x.jpg', { type: 'image/jpeg' })] })); } catch (e) {}
+  var bEnviar = document.getElementById('enviar');
+  if (podePartilhar) {
+    bEnviar.hidden = false; document.getElementById('guardar').className = 'sec';
+    bEnviar.addEventListener('click', function () {
+      comFicheiro(function (f) { navigator.share({ files: [f], title: 'Postal de Natal · CFT 2027' }).catch(function () {}); });
+    });
+  }
+  document.getElementById('guardar').addEventListener('click', function () {
+    comFicheiro(function (f, b) {
+      var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = nomeFicheiro();
+      document.body.appendChild(a); a.click(); a.remove();
+    });
+  });
+  document.getElementById('imprimir').addEventListener('click', function () { window.print(); });
+})();
+</script>
+</body>
+</html>
