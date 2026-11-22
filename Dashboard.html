@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CFT 2026 — Dashboard</title>
+<title>CFT — Dashboard</title>
 <link rel="icon" type="image/png" href="assets/logo_CFT.png">
 <link rel="apple-touch-icon" href="assets/logo_CFT.png">
 <link rel="stylesheet" href="assets/cft-tokens.css">
@@ -1144,7 +1144,7 @@
   };
 </script>
 <script src="assets/auth.js"></script>
-<script src="assets/api.js"></script>
+<script src="assets/api.js?v=20261122"></script>
 </head>
 <body>
 
@@ -1214,8 +1214,8 @@
       <button class="ed-pill" id="ed-pill-2026" onclick="setEdicao('2026')">2026<span class="ed-tag">arquivo</span></button>
     </div>
     <div class="tab ed-27" data-panel="plano2027">Plano 2027</div>
-    <div class="tab ed-26 active" data-panel="overview">Visão geral</div>
-    <div class="tab ed-26" data-panel="list">Lista <span class="tab-count warn" id="tc-list">0</span></div>
+    <div class="tab active" data-panel="overview">Visão geral</div>
+    <div class="tab" data-panel="list">Lista <span class="tab-count warn" id="tc-list">0</span></div>
     <div class="tab" data-panel="satisfacao">Satisfação</div>
     <div class="nav-more ed-26">
       <div class="tab nav-more-toggle" onclick="toggleMoreMenu()">⋯</div>
@@ -1244,7 +1244,7 @@
     <!-- Linha 1: Timeline em toda a largura -->
     <div class="card tl-card">
       <div class="card-head">
-        <div class="card-title">Linha do tempo · CFT 2026</div>
+        <div class="card-title">Linha do tempo · CFT <span class="ed-ano">2027</span></div>
         <div class="card-meta" id="tl-meta">—</div>
       </div>
       <div class="timeline" id="timeline"></div>
@@ -1711,7 +1711,7 @@
           <input type="text" id="p27-new-label" placeholder="Nova deadline (ex: Encomendar equipamentos)">
           <button class="p27-add-btn" onclick="p27Add()">Adicionar</button>
         </div>
-        <div class="p27-note">Datas pré-preenchidas com base no calendário de 2026 — ajusta à vontade. Guardado neste browser (localStorage).</div>
+        <div class="p27-note">Datas oficiais de 2027 — ajusta à vontade. Guardado neste browser.</div>
       </div>
 
       <div>
@@ -1724,11 +1724,11 @@
         </div>
         <div class="card" style="margin-top:14px;">
           <div class="card-head">
-            <div class="card-title">Preços 2027 · a decidir</div>
-            <div class="card-meta">referência: tabela 2026</div>
+            <div class="card-title">Preços 2027 · oficiais</div>
+            <div class="card-meta">fechados a 20/11/2026</div>
           </div>
           <div id="p27-precos"></div>
-          <div class="p27-note">Preenche a coluna 2027 quando fecharem os preços com base na margem alvo. Em 2026 a margem ficou apertada — considerar subida ligeira ou corte de custos (equipamentos/refeições).</div>
+          <div class="p27-note">Desconto (irmão, 2 semanas ou clube com 8+) = 10%, arredondado a 5 € a favor da família. Não acumulam. Sinal de 130 € por semana + resto até 21/6, ou tudo de uma vez: o total é o mesmo. O sinal não é devolvido.</div>
         </div>
       </div>
     </div>
@@ -1876,7 +1876,16 @@
 <script>
 const VAGAS_TOTAL = 120;          // 60 × 2 semanas
 const VAGAS_SEM = 60;
-const CUTOFF = new Date('2026-03-31');
+// Datas de cada edição (o botão 2026/2027 escolhe qual usar).
+const EDICOES = {
+  '2026': { ano: '2026', inicio: '2026-07-12', sem2: '2026-07-19', prazo: '2026-06-21', cutoff: '2026-03-31', abertura: '2025-11-01', pagar: '2026-07-25', agradec: '2026-07-26',
+            semanas: { 1: 'Domingo 12 a sábado 18 de julho de 2026', 2: 'Domingo 19 a sábado 25 de julho de 2026' } },
+  '2027': { ano: '2027', inicio: '2027-07-11', sem2: '2027-07-18', prazo: '2027-06-21', cutoff: '2027-03-31', abertura: '2026-11-27', pagar: '2027-07-31', agradec: '2027-08-01',
+            semanas: { 1: 'Domingo 11 a sábado 17 de julho de 2027', 2: 'Domingo 18 a sábado 24 de julho de 2027' } }
+};
+function edCfg(){ return EDICOES[(document.body && document.body.dataset.edicao) === '2026' ? '2026' : '2027']; }
+function edAno(){ return edCfg().ano; }
+
 const SENDER = 'geral@camposft.com';
 
 let resolucoes = {};
@@ -1917,8 +1926,13 @@ function valorErradoTooltip(r){
   const v = Number(r.val_pago) || 0;
   const nSem = info.nSem || 0;
   const opcoes = [];
-  if (info.tipo === 'externo') {
-    opcoes.push(`pronto externo: ${275*nSem}€ (275×${nSem} sem)`);
+  if (info.escalao) {
+    // 2027: o preço depende só da data de inscrição; com sinal o total é o mesmo.
+    opcoes.push(`total: ${info.prontoTotal}€ (${info.porSemana}€ × ${nSem} sem)`);
+    if (info.prest1 && info.prest2) opcoes.push(`ou sinal ${info.prest1}€ + resto ${info.prest2}€`);
+    if (info.desc) opcoes.push('(com desconto)');
+  } else if (info.tipo === 'externo') {
+    opcoes.push(`pronto externo: ${info.prontoTotal}€`);
   } else if (info.tipo === 'interno') {
     opcoes.push(`pronto: ${info.prontoTotal}€`);
     if (info.prestTotal !== null) {
@@ -2260,7 +2274,7 @@ function renderWeeks(){
   const weekCounts = {1:0, 2:0};
   data.forEach(r => parseSems(r.semana).forEach(s => { if (weekCounts[s] !== undefined) weekCounts[s]++; }));
   const wc = {1:'var(--green-dark)', 2:'var(--orange-accent)'};
-  const dates = {1:'12—18 jul', 2:'19—25 jul'};
+  const dates = edAno() === '2026' ? {1:'12—18 jul', 2:'19—25 jul'} : {1:'11—17 jul', 2:'18—24 jul'};
   document.getElementById('weeks').innerHTML = [1,2].map(n => {
     const pct = Math.round(weekCounts[n] / VAGAS_SEM * 100);
     const livres = VAGAS_SEM - weekCounts[n];
@@ -2882,7 +2896,7 @@ function defaultMessage(r, channel){
   const opener = channel === 'wa' ? 'Olá!' : 'Boa tarde,';
   const sig = '\n\nObrigado,\nEquipa CFT';
   if (status === 'pendente' || (r.val_pago == null || r.val_pago === 0)) {
-    return `${opener} Daqui CFT — ainda não recebemos o pagamento da inscrição do(a) ${nome} no Campo de Formação Técnica 2026. Pode confirmar quando foi efetuado e enviar comprovativo? IBAN: PT50 0007 0000 0065 0137 6512 3${sig}`;
+    return `${opener} Daqui CFT — ainda não recebemos o pagamento da inscrição do(a) ${nome} no Campo de Formação Técnica ${edAno()}. Pode confirmar quando foi efetuado e enviar comprovativo? IBAN: PT50 0007 0000 0065 0137 6512 3${sig}`;
   }
   if (status === 'parcial_1' || status === 'parcial_2') {
     return `${opener} Daqui CFT — está em falta a 2ª prestação da inscrição do(a) ${nome}. Lembramos que o prazo final é 21 de junho. IBAN: PT50 0007 0000 0065 0137 6512 3${sig}`;
@@ -2890,7 +2904,7 @@ function defaultMessage(r, channel){
   if (status === 'valor_errado') {
     return `${opener} Daqui CFT — o valor recebido para a inscrição do(a) ${nome} não corresponde ao esperado. Pode confirmar o pagamento e enviar comprovativo?${sig}`;
   }
-  return `${opener} Daqui CFT — sobre a inscrição do(a) ${nome} no Campo de Formação Técnica 2026.${sig}`;
+  return `${opener} Daqui CFT — sobre a inscrição do(a) ${nome} no Campo de Formação Técnica ${edAno()}.${sig}`;
 }
 
 function waLinkFor(r){
@@ -2911,7 +2925,7 @@ function gmailComposeUrl(to, subject, body, bcc){
 }
 function mailLinkFor(r){
   if (!r.email_enc) return null;
-  const subject = `[CFT 2026] Inscrição de ${r.nome || ''}`;
+  const subject = `[CFT ${edAno()}] Inscrição de ${r.nome || ''}`;
   const body = defaultMessage(r, 'em');
   return gmailComposeUrl(r.email_enc, subject, body, null);
 }
@@ -2964,27 +2978,27 @@ function quickFilter(kind){
 const TEMPLATES = {
   problema: {
     label: 'Pagamento problemático',
-    subject: '[CFT 2026] Questão urgente com o seu pagamento',
-    body: `Boa tarde,\n\nAo analisarmos o pagamento da inscrição do seu educando para o Campo de Formação Técnica 2026, verificámos que o valor recebido não corresponde ao esperado. Pedimos que confirme o pagamento e nos envie comprovativo o mais rapidamente possível.\n\nIBAN: PT50 0007 0000 0065 0137 6512 3 (APDFE)\n\nQualquer dúvida, contacte-nos por este email.\n\nObrigado,\nEquipa CFT`,
+    subject: '[CFT {ANO}] Questão urgente com o seu pagamento',
+    body: `Boa tarde,\n\nAo analisarmos o pagamento da inscrição do seu educando para o Campo de Formação Técnica {ANO}, verificámos que o valor recebido não corresponde ao esperado. Pedimos que confirme o pagamento e nos envie comprovativo o mais rapidamente possível.\n\nIBAN: PT50 0007 0000 0065 0137 6512 3 (APDFE)\n\nQualquer dúvida, contacte-nos por este email.\n\nObrigado,\nEquipa CFT`,
   },
   resto: {
     label: 'Aviso prazo · 21 jun',
-    subject: '[CFT 2026] Prazo final do pagamento — 21 de junho',
-    body: `Boa tarde,\n\nLembramos que o prazo final para concluir o pagamento da inscrição do seu educando para o Campo de Formação Técnica 2026 é dia 21 de junho.\n\nIBAN: PT50 0007 0000 0065 0137 6512 3 (APDFE)\n\nApós a transferência, envie comprovativo para este email.\n\nObrigado,\nEquipa CFT`,
+    subject: '[CFT {ANO}] Prazo final do pagamento — 21 de junho',
+    body: `Boa tarde,\n\nLembramos que o prazo final para concluir o pagamento da inscrição do seu educando para o Campo de Formação Técnica {ANO} é dia 21 de junho.\n\nIBAN: PT50 0007 0000 0065 0137 6512 3 (APDFE)\n\nApós a transferência, envie comprovativo para este email.\n\nObrigado,\nEquipa CFT`,
   },
   praticas: {
     label: 'Informações práticas',
-    subject: '[CFT 2026] Informações práticas do campo',
-    body: `Boa tarde,\n\nFaltam poucas semanas para o início do Campo de Formação Técnica 2026. Seguem as informações práticas:\n\n• Local: Pavilhão Municipal de Ponte da Barca\n• Horário: 9h00 — 17h30\n• Material: ténis de basquete, garrafa de água, calções e t-shirt\n• Almoço: incluído\n\nQualquer dúvida, estamos disponíveis.\n\nAté breve,\nEquipa CFT`,
+    subject: '[CFT {ANO}] Informações práticas do campo',
+    body: `Boa tarde,\n\nFaltam poucas semanas para o início do Campo de Formação Técnica {ANO}. Seguem as informações práticas:\n\n• Local: Pavilhão Municipal de Ponte da Barca\n• Horário: 9h00 — 17h30\n• Material: ténis de basquete, garrafa de água, calções e t-shirt\n• Almoço: incluído\n\nQualquer dúvida, estamos disponíveis.\n\nAté breve,\nEquipa CFT`,
   },
   iban: {
     label: 'Pedir IBAN',
-    subject: '[CFT 2026] IBAN para reembolso',
+    subject: '[CFT {ANO}] IBAN para reembolso',
     body: `Boa tarde,\n\nPara concluir o registo da inscrição do seu educando, pedimos que nos envie o IBAN da conta bancária por este email. Este IBAN é necessário em caso de eventual reembolso.\n\nObrigado,\nEquipa CFT`,
   },
   generico: {
     label: 'Mensagem em branco',
-    subject: '[CFT 2026] ',
+    subject: '[CFT {ANO}] ',
     body: `Boa tarde,\n\n[escreva aqui]\n\nObrigado,\nEquipa CFT`,
   },
 };
@@ -3054,8 +3068,8 @@ function renderTemplatePills(){
 }
 function applyTemplate(k){
   activeTemplate = k;
-  document.getElementById('email-subject').value = TEMPLATES[k].subject;
-  document.getElementById('email-body').value = TEMPLATES[k].body;
+  document.getElementById('email-subject').value = TEMPLATES[k].subject.replace(/\{ANO\}/g, edAno());
+  document.getElementById('email-body').value = TEMPLATES[k].body.replace(/\{ANO\}/g, edAno());
   renderTemplatePills();
 }
 
@@ -3158,40 +3172,6 @@ async function promoverDescontoClube(){
   } else {
     toast('Falha ao criar rascunhos: ' + errors.slice(0,3).join(' | '), true);
   }
-}
-
-// ============ TASKS ============
-function renderTasks(){
-  const tasks = [
-    {group:'Urgente · hoje', color:'var(--orange-accent)', items:[
-      {title:'Contactar Martim Barbosa — pagou só 50€', meta:'jmgsb1@gmail.com', date:'Hoje', dateClass:'urgent'},
-      {title:'Contactar Afonso Estrócio — pagou só 50€', meta:'lady.j.estrocio@gmail.com', date:'Hoje', dateClass:'urgent'},
-      {title:'Verificar Francisco Abelheira', meta:'Pedir novo comprovativo (scan ilegível)', date:'Hoje', dateClass:'urgent'},
-      {title:'Verificar Rita Costa', meta:'Pedir novo comprovativo (imagem ilegível)', date:'Hoje', dateClass:'urgent'},
-      {title:'Resolver Leonor Moreira', meta:'Ficheiro vazio · sem pagamento', date:'Hoje', dateClass:'urgent'},
-      {title:'Recolher IBAN de 3 atletas', meta:'Gustavo Carvalho · Tiago Gomes · Vasco Rodrigues', date:'Urgente', dateClass:'urgent'},
-    ]},
-    {group:'Em breve · maio', color:'var(--sand-dark)', items:[
-      {title:'Email a todos os encarregados — aviso prazo', meta:'Aproximação do término do prazo (21 jun)', date:'1 jun', dateClass:'soon'},
-    ]},
-    {group:'Pré-campo · julho', color:'var(--green-dark)', items:[
-      {title:'Enviar email com informações práticas', meta:'Local, horários, material a trazer', date:'1 jul', dateClass:'ok'},
-      {title:'Lembrete "falta 1 semana"', meta:'Confirmar todos os pagamentos', date:'5 jul', dateClass:'ok'},
-    ]},
-  ];
-  document.getElementById('task-sections').innerHTML = tasks.map(g => `
-    <div class="task-group">
-      <div class="task-group-title"><span class="dot" style="background:${g.color}"></span>${g.group}<span class="rule"></span></div>
-      ${g.items.map(t => `<div class="task-item${g.color === 'var(--orange-accent)' ? ' urgent' : ''}">
-        <div class="task-check" onclick="this.closest('.task-item').classList.toggle('done');this.classList.toggle('checked');this.textContent=this.classList.contains('checked')?'✓':'';"></div>
-        <div>
-          <div class="task-title">${t.title}</div>
-          <div class="task-meta">${t.meta}</div>
-        </div>
-        <div class="task-date ${t.dateClass}">${t.date}</div>
-      </div>`).join('')}
-    </div>
-  `).join('');
 }
 
 // ============ HISTÓRICO (backend) ============
@@ -3618,7 +3598,7 @@ function calcIdade(dataNasc){
   if (!dataNasc) return '—';
   const d = new Date(dataNasc);
   if (isNaN(d.getTime())) return '—';
-  const ref = new Date('2026-07-12');  // data de início do campo
+  const ref = new Date(edCfg().inicio);  // data de início do campo
   let idade = ref.getFullYear() - d.getFullYear();
   const m = ref.getMonth() - d.getMonth();
   if (m < 0 || (m === 0 && ref.getDate() < d.getDate())) idade--;
@@ -3669,7 +3649,7 @@ function renderEntregaveis(){
 }
 
 function openEntregavel(semana){
-  const SEMANAS_DATAS = { 1:'12—18 julho', 2:'19—25 julho', 3:'26 julho—1 agosto' };
+  const SEMANAS_DATAS = edAno() === '2026' ? { 1:'12—18 julho', 2:'19—25 julho', 3:'26 julho—1 agosto' } : { 1:'11—17 julho', 2:'18—24 julho' };
   const atletas = (data || []).filter(r => parseSems(r.semana).includes(semana));
   atletas.sort((a, b) => (a.num || 9999) - (b.num || 9999));
   const rows = atletas.map((r, i) => {
@@ -3713,7 +3693,7 @@ function openEntregavel(semana){
 <header>
   <div class="left">
     <h1>CFT — Semana ${semana}</h1>
-    <div class="sub">${SEMANAS_DATAS[semana]} · 4ª edição · 2026</div>
+    <div class="sub">${SEMANAS_DATAS[semana]} · ${edAno() === '2026' ? '4ª edição · 2026' : '5ª edição · 2027'}</div>
   </div>
   <div class="right">
     <div><b>${atletas.length}</b> atletas</div>
@@ -4157,7 +4137,7 @@ let trabMessages = {}; // id → texto editado
 let trabView = 'active'; // 'active' | 'resolved'
 
 function trabSubject(item){
-  return `[CFT 2026] ${item.subjectShort} — ${item.atleta.nome}`;
+  return `[CFT ${edAno()}] ${item.subjectShort} — ${item.atleta.nome}`;
 }
 
 // Constrói mapa { itemId → timestamp da última resolução } a partir do Histórico do backend
@@ -4198,7 +4178,7 @@ function buildTrabalhoItems(){
         tipoClass: 'problema',
         subjectShort: 'Pagamento da inscrição',
         detail: `Pagou ${r.val_pago}€ · Esperado ${p.devido}€ · Falta ${p.falta}€`,
-        body: `Boa tarde,\n\nAo verificarmos o pagamento da inscrição de ${r.nome} no Campo de Formação Técnica 2026, detetámos que o valor recebido (${r.val_pago}€) não corresponde ao esperado (${p.devido}€). Falta ${p.falta}€.\n\nPode confirmar e regularizar?\n\nIBAN: PT50 0007 0000 0065 0137 6512 3\n\nObrigado,\nEquipa CFT`
+        body: `Boa tarde,\n\nAo verificarmos o pagamento da inscrição de ${r.nome} no Campo de Formação Técnica ${edAno()}, detetámos que o valor recebido (${r.val_pago}€) não corresponde ao esperado (${p.devido}€). Falta ${p.falta}€.\n\nPode confirmar e regularizar?\n\nIBAN: PT50 0007 0000 0065 0137 6512 3\n\nObrigado,\nEquipa CFT`
       });
     } else if (st === 'pendente' && (r.val_pago == null || r.val_pago === 0)) {
       items.push({
@@ -4208,7 +4188,7 @@ function buildTrabalhoItems(){
         tipoClass: 'sempag',
         subjectShort: 'Pagamento da inscrição',
         detail: `Sem pagamento confirmado · ${(p.devido || 0)}€`,
-        body: `Boa tarde,\n\nAinda não recebemos o pagamento da inscrição de ${r.nome} no Campo de Formação Técnica 2026. Valor: ${p.devido || 0}€.\n\nIBAN: PT50 0007 0000 0065 0137 6512 3\n\nApós a transferência, envie comprovativo para este email.\n\nObrigado,\nEquipa CFT`
+        body: `Boa tarde,\n\nAinda não recebemos o pagamento da inscrição de ${r.nome} no Campo de Formação Técnica ${edAno()}. Valor: ${p.devido || 0}€.\n\nIBAN: PT50 0007 0000 0065 0137 6512 3\n\nApós a transferência, envie comprovativo para este email.\n\nObrigado,\nEquipa CFT`
       });
     } else if (st === 'parcial') {
       items.push({
@@ -4700,7 +4680,8 @@ async function refreshNow(){
     finState = financasBackend;
     renderAll();
   } catch (e) {
-    toast('Erro a atualizar: ' + e.message, true);
+    // Resposta de outra edição (trocou-se de 2026/2027 a meio): ignora, já vem outra a caminho.
+    if (!e.stale) toast('Erro a atualizar: ' + e.message, true);
   } finally {
     if (btn) btn.classList.remove('spinning');
   }
@@ -4708,9 +4689,10 @@ async function refreshNow(){
 
 // ============ HERO / DATAS-CHAVE · Visão geral ============
 // Datas-chave da edição (com fallback a config se vier do backend).
-const CFT_START_DATE = new Date('2026-07-12');   // semana 1
-const CFT_WEEK2_DATE = new Date('2026-07-19');   // semana 2
-const CFT_DEADLINE_DEFAULT = new Date('2026-06-21');
+// Atualizadas por setEdicao() conforme a edição escolhida.
+let CFT_START_DATE = new Date('2027-07-11');   // semana 1
+let CFT_WEEK2_DATE = new Date('2027-07-18');   // semana 2
+let CFT_DEADLINE_DEFAULT = new Date('2027-06-21');
 
 function daysUntil(date){
   if (!date) return null;
@@ -4737,13 +4719,14 @@ function _fmtDateShort(d){
 function _cftMarcos(){
   const cfgPrazo = (configBackend && configBackend.prazo_pagamento) ? new Date(configBackend.prazo_pagamento) : CFT_DEADLINE_DEFAULT;
   const cfgStart = (configBackend && configBackend.data_inicio) ? new Date(configBackend.data_inicio) : CFT_START_DATE;
-  const cfgCutoff = (configBackend && configBackend.cutoff_desconto) ? new Date(configBackend.cutoff_desconto) : new Date('2026-03-31');
+  const cfgCutoff = (configBackend && configBackend.cutoff_desconto) ? new Date(configBackend.cutoff_desconto) : new Date(edCfg().cutoff);
   const avisoPrazo = new Date(cfgPrazo.getTime() - 14 * 86400000);  // 2 semanas antes do prazo
   const infoGeral = new Date(cfgStart.getTime() - 14 * 86400000);   // 2 semanas antes do início
   const cfgWeek2 = new Date(cfgStart.getTime() + 7 * 86400000);
   return [
-    { key: 'abertura', label: 'Abertura das inscrições',  date: new Date('2025-11-01') },
-    { key: 'cutoff',   label: 'Fim do desconto',          date: cfgCutoff },
+    { key: 'abertura', label: 'Abertura das inscrições',  date: new Date(edCfg().abertura) },
+    ...(edAno() === '2027' ? [{ key: 'natal', label: 'Fim do preço de Natal', date: new Date('2026-12-24') }] : []),
+    { key: 'cutoff',   label: edAno() === '2027' ? 'Fim do 2º escalão de preço' : 'Fim do desconto', date: cfgCutoff },
     { key: 'aviso',    label: 'Enviar aviso',             sub: '2 semanas para o final do prazo de pagamento',
       date: avisoPrazo,
       cta: { text: '✉ enviar aviso prazo', fn: 'enviarAvisoPrazoBulk' } },
@@ -4752,8 +4735,8 @@ function _cftMarcos(){
       cta: { text: '✉ enviar informações finais',  fn: 'enviarInfoFinaisBulk' } },
     { key: 'sem1',     label: 'Início CFT · semana 1',    date: cfgStart },
     { key: 'sem2',     label: 'Início CFT · semana 2',    date: cfgWeek2 },
-    { key: 'pagar',    label: 'Realizar pagamentos',      date: new Date('2026-07-25') },
-    { key: 'agradec',  label: 'Email agradecimento aos pais', date: new Date('2026-07-26') }
+    { key: 'pagar',    label: 'Realizar pagamentos',      date: new Date(edCfg().pagar) },
+    { key: 'agradec',  label: 'Email agradecimento aos pais', date: new Date(edCfg().agradec) }
   ].sort((a, b) => a.date - b.date);
 }
 
@@ -5073,8 +5056,8 @@ async function enviarAgradecimentoBulk(){
 }
 
 // ---- Quem se identificou no questionário --------------------------------
-// A identificação no questionário é opcional e escrita à mão ("Rita Costa"
-// para "Rita Oliveira Costa"), por isso o cruzamento é por tokens: o nome
+// A identificação no questionário é opcional e escrita à mão ("Ana Silva"
+// para "Ana Maria Silva"), por isso o cruzamento é por tokens: o nome
 // dado tem de estar todo contido no nome inscrito. Falha para o lado seguro —
 // um nome ambíguo ou inexistente não exclui ninguém, porque mandar o lembrete
 // a quem já respondeu custa um pedido de desculpa (que o email já traz) e não
@@ -5166,10 +5149,7 @@ function fmtDataNasc(v){
   return s;
 }
 function openSeguro(semana){
-  const COBERTURA = {
-    1: 'Domingo 12 a sábado 18 de julho de 2026',
-    2: 'Domingo 19 a sábado 25 de julho de 2026'
-  };
+  const COBERTURA = edCfg().semanas;
   const seen = new Set(); const out = []; let semDados = 0;
   (data || [])
     .filter(r => r.ativo && parseSems(r.semana).includes(semana))
@@ -6265,8 +6245,20 @@ function renderFinancas(){
 const EDICAO_KEY = 'cft_edicao_v1';
 function setEdicao(ano){
   ano = ano === '2026' ? '2026' : '2027';
+  const mudou = document.body.dataset.edicao && document.body.dataset.edicao !== ano;
   try { localStorage.setItem(EDICAO_KEY, ano); } catch (e) {}
   document.body.dataset.edicao = ano;
+  const cfg = EDICOES[ano];
+  CFT_START_DATE = new Date(cfg.inicio); CFT_WEEK2_DATE = new Date(cfg.sem2); CFT_DEADLINE_DEFAULT = new Date(cfg.prazo);
+  document.querySelectorAll('.ed-ano').forEach(el => { el.textContent = ano; });
+  // Cada edição lê a sua Sheet: ao trocar, volta a carregar os dados dessa edição.
+  if (mudou && typeof Auth !== 'undefined' && Auth.token) {
+    const cached = Api.getCachedSync();
+    dataAll = cached ? cached.atletas : []; data = dataAll.filter(a => a.ativo);
+    if (cached) { historicoBackend = cached.historico; emailsBackend = cached.emails; configBackend = cached.config; }
+    try { renderAll(); } catch (e) {}
+    refreshNow();
+  }
   const p26 = document.getElementById('ed-pill-2026');
   const p27 = document.getElementById('ed-pill-2027');
   if (p26) p26.classList.toggle('active', ano === '2026');
@@ -6301,23 +6293,31 @@ function updateNavBanco(){
 }
 
 // ============ PLANO 2027 · deadlines + banco + preços ============
-const P27_DL_KEY = 'cft_plano2027_dl_v1';
+const P27_DL_KEY = 'cft_plano2027_dl_v2';
+const P27_DL_KEY_V1 = 'cft_plano2027_dl_v1';
+// Datas reais de 2027 (atualizadas a 21/11/2026: datas e preços já fechados com o Miguel).
 const P27_DL_DEFAULT = [
-  { d: '2026-09-15', l: 'Balanço 2026 + definir preços 2027 (com o Miguel)' },
-  { d: '2026-10-01', l: 'Reservar pavilhão e fechar datas oficiais' },
-  { d: '2026-10-15', l: 'Nova cara CFT 2027 — design, site, templates de email' },
-  { d: '2026-11-02', l: 'Abrir inscrições + anúncio (Instagram, clubes, treinadores)' },
-  { d: '2027-03-31', l: 'Fim do desconto de pronto pagamento' },
+  { d: '2026-09-15', l: 'Balanço 2026 + definir preços 2027 (com o Miguel)', done: true },
+  { d: '2026-11-21', l: 'Pavilhão e datas confirmados (Miguel)', done: true },
+  { d: '2026-11-27', l: 'Abrir inscrições (email às famílias; divulgação pública no dia 28)' },
+  { d: '2026-12-24', l: 'Fim do preço de Natal (350 € / 315 € com desconto)' },
+  { d: '2027-03-31', l: 'Fim do 2º escalão (375 € / 335 € com desconto)' },
   { d: '2027-06-07', l: 'Enviar aviso de prazo de pagamento' },
-  { d: '2027-06-21', l: 'Prazo final de pagamento' },
-  { d: '2027-06-28', l: 'Enviar informações finais aos pais' },
+  { d: '2027-06-21', l: 'Prazo final de pagamento do resto' },
+  { d: '2027-06-27', l: 'Enviar informações finais aos pais' },
   { d: '2027-07-01', l: 'Seguro, staff e equipamentos fechados' },
-  { d: '2027-07-12', l: 'Semana 1 · CFT 2027 (data a confirmar)' },
-  { d: '2027-07-19', l: 'Semana 2 · CFT 2027 (data a confirmar)' }
+  { d: '2027-07-11', l: 'Semana 1 · CFT 2027 (11 a 17 de julho)' },
+  { d: '2027-07-18', l: 'Semana 2 · CFT 2027 (18 a 24 de julho)' }
 ];
 function p27Load(){
   try { const s = JSON.parse(localStorage.getItem(P27_DL_KEY)); if (Array.isArray(s) && s.length) return s; } catch (e) {}
-  return P27_DL_DEFAULT.map((x, i) => ({ id: 'd' + i, data: x.d, label: x.l, done: false }));
+  const base = P27_DL_DEFAULT.map((x, i) => ({ id: 'd' + i, data: x.d, label: x.l, done: !!x.done }));
+  // Mantém as deadlines que foram acrescentadas à mão na versão anterior
+  try {
+    const v1 = JSON.parse(localStorage.getItem(P27_DL_KEY_V1));
+    if (Array.isArray(v1)) v1.filter(x => x && !/^d\d+$/.test(String(x.id))).forEach(x => base.push(x));
+  } catch (e) {}
+  return base;
 }
 function p27Save(list){ try { localStorage.setItem(P27_DL_KEY, JSON.stringify(list)); } catch (e) {} }
 function p27Add(){
@@ -6388,7 +6388,7 @@ function renderPlano2027(){
     <div class="p27-kpi">
       <div class="p27-kpi-label">Semana 1 · 2027</div>
       <div class="p27-kpi-num">${sem1 ? daysUntil(new Date(sem1.data)) + 'd' : '—'}</div>
-      <div class="p27-kpi-sub">${sem1 ? _fmtDateShort(new Date(sem1.data)) + ' · a confirmar' : 'adiciona a deadline da semana 1'}</div>
+      <div class="p27-kpi-sub">${sem1 ? _fmtDateShort(new Date(sem1.data)) + ' · confirmada' : 'adiciona a deadline da semana 1'}</div>
     </div>`;
 
   // Banco card
@@ -6428,19 +6428,16 @@ function renderPlano2027(){
     </div>`;
   }).join('');
 
-  // Preços — referência 2026 vs decisão 2027
-  const p = p27PrecosLoad();
-  const inp = k => `<input type="number" class="p27-preco-input" value="${p[k] !== undefined && p[k] !== '' ? p[k] : ''}" placeholder="?" min="0" step="5" onchange="p27PrecoSet('${k}', this.value)">`;
+  // Preços oficiais 2027 (fonte: plano-2027/PRECOS-OFICIAIS-2027.md). Iguais aos do Apps Script.
   const precosHost = document.getElementById('p27-precos');
   if (precosHost) precosHost.innerHTML = `
     <table class="p27-tbl">
-      <thead><tr><th>Modalidade (por semana)</th><th style="text-align:right">2026</th><th style="text-align:right">2027</th></tr></thead>
+      <thead><tr><th>Inscrição (por semana)</th><th style="text-align:right">Sem desconto</th><th style="text-align:right">Com desconto</th></tr></thead>
       <tbody>
-        <tr><td>Interno · pronto pagamento (até 31/03)</td><td class="num">330 €</td><td class="num">${inp('int_pronto')}</td></tr>
-        <tr><td>Interno · pronto c/ desconto</td><td class="num">295 €</td><td class="num">${inp('int_pronto_desc')}</td></tr>
-        <tr><td>Interno · prestações (120 € + resto)</td><td class="num">375 €</td><td class="num">${inp('int_prest')}</td></tr>
-        <tr><td>Interno · depois de 31/03 (só pronto)</td><td class="num">375 €</td><td class="num">${inp('int_tarde')}</td></tr>
-        <tr><td>Externo</td><td class="num">275 €</td><td class="num">${inp('externo')}</td></tr>
+        <tr><td>Até 24/12/2026 (Natal)</td><td class="num">350 €</td><td class="num">315 €</td></tr>
+        <tr><td>25/12/2026 a 31/3/2027</td><td class="num">375 €</td><td class="num">335 €</td></tr>
+        <tr><td>A partir de 1/4/2027</td><td class="num">395 €</td><td class="num">355 €</td></tr>
+        <tr><td>Externo</td><td class="num">290 €</td><td class="num">—</td></tr>
       </tbody>
     </table>`;
 }

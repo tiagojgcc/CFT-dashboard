@@ -12,8 +12,10 @@
 // ABERTO: enquanto for false, mostra a mensagem de que as inscrições ainda não abriram.
 window.CFT_INSC = {
   API_URL: 'https://script.google.com/macros/s/AKfycbx3yw0iNCS-oUt5HM0hSg5zw_nEBYz787Uz49YyfiWBgfI801KGXTFCKz8i12-EqPu40w/exec',
-  // Abre sozinho a 27/11/2026 às 00:00 (hora de Lisboa). Para testar antes: ?teste=1
-  ABERTO: Date.now() >= Date.parse('2026-11-27T00:00:00Z') || /[?&]teste=1/.test(location.search),
+  // Abre sozinho a 27/11/2026 às 20:00 (hora de Lisboa; anúncio às 21:00). Para testar antes: ?teste=1
+  // Famílias de 2026: entram antes pela ligação privada do email de 25/11 (?convite=cft26).
+  ABRE: Date.parse('2026-11-27T20:00:00Z'),
+  ABERTO: Date.now() >= Date.parse('2026-11-27T20:00:00Z') || /[?&](teste=1|convite=cft26)(&|$)/.test(location.search),
   CLUBES: ['Académico Futebol Clube', 'Barca Basket Clube', 'Basket Club Limiense', 'Basket Clube de Valença', 'Club 5 Basket', 'Clube Basquete Viana', 'Futebol Clube Porto', 'GDB Leça', 'Guifões Sport Clube', 'Juvemaia', 'Maia Basket Clube', 'Powertogether', 'SC Braga'],
   IBAN: 'PT50 0007 0000 0065 0137 6512 3',
   TITULAR: 'APDFE',
@@ -61,6 +63,13 @@ window.CFT_INSC = {
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green-dark); box-shadow: 0 0 0 3px var(--green-pale); }
   .bad { border-color: #b23a2a !important; }
   .err { color: #b23a2a; font-size: 13px; }
+  .ferr { color: #b23a2a; font-size: 13px; font-weight: 400; }
+  .aviso { background: var(--off-white); border-left: 4px solid var(--orange-accent); padding: 12px 14px; font-size: 14px; border-radius: 0 6px 6px 0; }
+  .aviso button { background: none; border: 0; padding: 0; margin-left: 6px; color: inherit; text-decoration: underline; font: inherit; cursor: pointer; }
+  .choice small.vg { color: #b23a2a; font-weight: 600; }
+  .espera-box { background: var(--charcoal); color: var(--off-white); border-radius: 10px; padding: 20px; display: grid; gap: 10px; }
+  .espera-box .big { font-family: var(--font-display); font-size: 44px; line-height: 1; }
+  #enviando { font-size: 14px; color: var(--mid-gray); }
   .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
   .choice { position: relative; }
   .choice input { position: absolute; opacity: 0; inset: 0; }
@@ -117,7 +126,14 @@ window.CFT_INSC = {
 </div></section>
 
 <main class="main">
+  <div id="fechado" hidden style="text-align:center;padding:48px 8px 64px">
+    <div class="eyebrow" style="color:var(--green-dark)">Ainda não abriram</div>
+    <h2 style="font-family:var(--font-display);font-size:44px;line-height:1;margin:12px 0 16px">As inscrições abrem a 27 de novembro</h2>
+    <p style="max-width:520px;margin:0 auto 28px">Sexta-feira, 27 de novembro de 2026. Volta aqui nesse dia para inscrever o teu atleta.</p>
+    <a href="/" class="next" style="display:inline-block;padding:14px 28px;border-radius:8px;text-decoration:none;font-family:var(--font-condensed);font-weight:700;letter-spacing:.08em;text-transform:uppercase">Ver o site</a>
+  </div>
   <div class="steps" id="steps"></div>
+  <div class="aviso" id="recuperado" hidden>Recuperámos o que já tinhas preenchido neste dispositivo.<button type="button" id="recomecar">Começar de novo</button></div>
   <form id="f" novalidate>
     <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
 
@@ -126,6 +142,7 @@ window.CFT_INSC = {
       <div class="q"><span class="lbl">Em que semana(s) queres participar?</span>
         <div class="choices" id="semanas"></div>
         <span class="err" data-err="semanas" hidden>Escolhe pelo menos uma semana.</span>
+        <div class="aviso" id="vagas-aviso" hidden></div>
       </div>
       <div class="q"><span class="lbl">Opção de inscrição</span>
         <div class="choices">
@@ -194,7 +211,7 @@ window.CFT_INSC = {
     <fieldset data-step="Pagamento" hidden>
       <legend>Pagamento</legend>
       <div class="pay" id="pay"></div>
-      <div class="q"><span class="lbl">Comprovativo da transferência</span>
+      <div class="q" id="comp-q"><span class="lbl">Comprovativo da transferência</span>
         <div class="drop"><input type="file" name="comprovativo" id="comprovativo" accept="image/*,application/pdf" required></div>
         <span class="hint" style="margin:0">Pode ser uma fotografia ou o PDF do banco.</span>
       </div>
@@ -203,6 +220,13 @@ window.CFT_INSC = {
     <div id="ok" class="done-box" hidden>
       <div class="big">Inscrição enviada</div>
       <p>Obrigado! Vais receber já um email com o resumo da inscrição e o IBAN.</p>
+      <p id="ok-comp" hidden><b>Não conseguimos guardar o comprovativo.</b> A inscrição ficou feita: envia o comprovativo para <a href="mailto:geral@camposft.com">geral@camposft.com</a>, com o nome do atleta.</p>
+      <p><a href="/">Voltar ao site</a></p>
+    </div>
+    <div id="ok-espera" class="done-box" hidden>
+      <div class="big">Estás na lista de espera</div>
+      <p id="ok-espera-txt"></p>
+      <p>Vais receber um email com este resumo. Se abrir uma vaga, avisamos por email, por ordem de chegada.</p>
       <p><a href="/">Voltar ao site</a></p>
     </div>
 
@@ -210,9 +234,20 @@ window.CFT_INSC = {
       <button type="button" class="back" id="back" hidden>Voltar</button>
       <button type="button" class="next" id="next">Continuar</button>
     </div>
+    <p id="enviando" role="status" hidden></p>
     <p class="err" id="submit-err" role="alert" hidden></p>
   </form>
 </main>
+<script>
+if (!window.CFT_INSC.ABERTO) {
+  document.getElementById('fechado').hidden = false;
+  document.getElementById('steps').style.display = 'none';
+  document.getElementById('f').style.display = 'none';
+  // Quem já tem a página aberta antes da hora: abre sozinha, sem recarregar à mão.
+  var falta = window.CFT_INSC.ABRE - Date.now();
+  if (falta > 0 && falta < 12 * 3600 * 1000) setTimeout(function(){ location.reload(); }, falta + 1500);
+}
+</script>
 
 
 <script>
@@ -248,7 +283,8 @@ window.CFT_INSC = {
     const fs = sets[i]; let ok = true;
     fs.querySelectorAll('.err').forEach(e => e.hidden = true);
     fs.querySelectorAll('.bad').forEach(e => e.classList.remove('bad'));
-    if (fs.dataset.step === 'Pagamento' && !pag) { ok = false; fs.querySelector('[data-err=pagamento]').hidden = false; }
+    fs.querySelectorAll('.ferr').forEach(e => e.remove());
+    if (fs.dataset.step === 'Pagamento' && !emEspera() && !pag) { ok = false; fs.querySelector('[data-err=pagamento]').hidden = false; }
     if (i === 0) {
       if (!val('semanas').length) { ok = false; fs.querySelector('[data-err=semanas]').hidden = false; }
       if (!val('opcao')) { ok = false; fs.querySelector('[data-err=opcao]').hidden = false; }
@@ -259,10 +295,56 @@ window.CFT_INSC = {
       if (el.type === 'radio') { if (seen.has(el.name)) return; seen.add(el.name); if (!val(el.name)) { ok = false; el.closest('.q').querySelectorAll('.choice span').forEach(s => s.classList.add('bad')); } return; }
       if (el.type === 'checkbox') { if (!el.checked) { ok = false; el.classList.add('bad'); } return; }
       if (el.type === 'file') { if (!el.files.length) { ok = false; el.closest('.drop').classList.add('bad'); } return; }
-      if (!el.checkValidity() || !el.value.trim()) { ok = false; el.classList.add('bad'); }
+      if (el.name === 'nif' || el.name === 'cc') el.value = el.value.replace(/\s+/g, '');
+      const m = porque(el);
+      if (m) { ok = false; el.classList.add('bad'); el.insertAdjacentHTML('afterend', `<span class="ferr">${m}</span>`); }
     });
     if (!ok) { const b = fs.querySelector('.bad, .err:not([hidden])'); b && b.scrollIntoView({behavior:'smooth', block:'center'}); }
     return ok;
+  }
+
+  // Explica em português porque é que um campo não está certo ('' = está certo).
+  function porque(el){
+    const v = el.value.trim();
+    if (!v) return 'Falta preencher.';
+    if (el.name === 'nascimento' && (v < el.min || v > el.max)) return 'O CFT 2027 é para atletas nascidos entre 2011 e 2019.';
+    if (el.name === 'nif' && !/^\d{9}$/.test(v)) return 'O NIF tem 9 algarismos.';
+    if (el.name === 'ee_email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) return 'Confirma o email. Exemplo: nome@email.pt';
+    if (el.name === 'telemovel' && v.replace(/\D/g, '').length < 9) return 'Confirma o número de telemóvel.';
+    if (el.name === 'iban_devolucao' && !el.checkValidity()) return 'Confirma o IBAN. Começa por 2 letras, por exemplo PT50.';
+    if (el.name === 'numero' && !el.checkValidity()) return 'Escolhe um número entre 0 e 99.';
+    return el.checkValidity() ? '' : 'Confirma este campo.';
+  }
+
+  // ---------- Vagas e lista de espera ----------
+  // O site pergunta ao servidor que semanas estão cheias. Sem resposta, segue como
+  // inscrição normal: quem decide no fim é sempre o servidor.
+  let vagas = null;
+  const numSemana = v => (String(v).match(/Semana (\d)/) || [])[1];
+  const cheias = () => vagas ? val('semanas').map(numSemana).filter(n => vagas[n] && vagas[n].cheia) : [];
+  const emEspera = () => cheias().length > 0;
+  function drawVagas(){
+    if (!vagas) return;
+    f.querySelectorAll('input[name=semanas]').forEach(i => {
+      const n = numSemana(i.value), v = vagas[n], sp = i.parentNode.querySelector('span');
+      let t = sp.querySelector('.vg'); if (t) t.remove();
+      if (!v) return;
+      const txt = v.cheia ? 'Cheia · lista de espera' : (v.ultimas ? (v.ultimas === 1 ? 'Última vaga' : `Últimas ${v.ultimas} vagas`) : '');
+      if (txt) sp.insertAdjacentHTML('beforeend', `<small class="vg">${txt}</small>`);
+    });
+    const box = document.getElementById('vagas-aviso'), ch = cheias();
+    box.hidden = !ch.length;
+    if (!ch.length) return;
+    const livres = val('semanas').map(numSemana).filter(n => !ch.includes(n));
+    box.innerHTML = `<b>${ch.length > 1 ? 'As semanas ' + ch.join(' e ') + ' estão cheias' : 'A Semana ' + ch[0] + ' está cheia'}.</b> Podes continuar e ficar em <b>lista de espera</b>: não pagas nada agora e avisamos por email se abrir vaga.`
+      + (livres.length ? ` A Semana ${livres[0]} ainda tem vagas: para garantir já esse lugar, escolhe só essa semana.` : '');
+  }
+  async function lerVagas(){
+    if (!C.API_URL) return;
+    try {
+      const j = await (await fetch(C.API_URL + '?action=vagas')).json();
+      if (j.ok && j.data && j.data.semanas) { vagas = j.data.semanas; drawVagas(); if (sets[step] && sets[step].dataset.step === 'Pagamento') show(step); }
+    } catch (e) { /* sem informação de vagas: segue normal */ }
   }
 
   function preco(){
@@ -287,12 +369,26 @@ window.CFT_INSC = {
       }
       const ja = clubeCache[clube], comEsta = ja + p.n, falta = Math.max(0, 8 - comEsta);
       const nome = clube.replace(/[<>&]/g, '');
+      if (!box) return;
       box.innerHTML = falta > 0
-        ? `<b>${nome}</b>: com esta inscrição ${comEsta === 1 ? 'fica <b>1</b> inscrição' : `ficam <b>${comEsta}</b> inscrições`}. Faltam <b>${falta}</b> para o desconto de clube (8). Se chegarem lá, o desconto é descontado no resto a pagar ou devolvido. Fala com os colegas de equipa!`
+        ? `<b>${nome}</b>: com esta inscrição ${comEsta === 1 ? 'fica <b>1</b> inscrição' : `ficam <b>${comEsta}</b> inscrições`}. ${falta === 1 ? 'Falta <b>1</b>' : `Faltam <b>${falta}</b>`} para o desconto de clube (8). Se chegarem lá, o desconto é descontado no resto a pagar ou devolvido. Fala com os colegas de equipa!`
         : `<b>${nome}</b> já chega às 8 inscrições: tens direito ao desconto de clube. É descontado no resto a pagar, ou devolvido se pagares tudo.`;
     } catch (e) { /* sem contador: fica a frase geral */ }
   }
   function drawPay(){
+    const compQ = document.getElementById('comp-q'), compI = document.getElementById('comprovativo');
+    if (emEspera()) {
+      const ch = cheias();
+      compQ.hidden = true; compI.required = false;
+      document.getElementById('pay').className = 'espera-box';
+      document.getElementById('pay').innerHTML = `
+        <div class="eyebrow">Lista de espera</div>
+        <div class="big">${ch.length > 1 ? 'Semanas cheias' : 'Semana ' + ch[0] + ' cheia'}</div>
+        <div><b>Não pagues nada agora.</b> Ao enviar, o atleta fica em lista de espera, por ordem de chegada. Se abrir uma vaga, avisamos por email.</div>`;
+      return;
+    }
+    compQ.hidden = false; compI.required = true;
+    document.getElementById('pay').className = 'pay';
     const p = preco();
     document.getElementById('pay').innerHTML = `
       <div class="eyebrow">Valor da inscrição</div>
@@ -319,8 +415,9 @@ window.CFT_INSC = {
   function show(i){
     step = i; sets.forEach((s,k) => s.hidden = k !== i);
     document.getElementById('back').hidden = i === 0;
-    document.getElementById('next').textContent = i === sets.length - 1 ? 'Enviar inscrição' : 'Continuar';
     if (sets[i].dataset.step === 'Pagamento') drawPay();
+    document.getElementById('next').textContent = i === sets.length - 1 ? textoEnviar() : 'Continuar';
+    guardar();
     drawSteps(); window.scrollTo({top: 0, behavior: 'smooth'});
   }
 
@@ -331,21 +428,87 @@ window.CFT_INSC = {
     await submit();
   };
 
+  const textoEnviar = () => emEspera() ? 'Entrar na lista de espera' : 'Enviar inscrição';
+
+  // ---------- Guardar as respostas neste dispositivo ----------
+  // No telemóvel é preciso sair para a app do banco para pagar. Se o browser
+  // recarregar a página ao voltar, as respostas voltam a aparecer. Ficam só
+  // neste dispositivo, apagam-se quando a inscrição é enviada ou ao fim de 7 dias.
+  const LS = 'cft_insc_2027_v1';
+  const novaChave = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+  let chave = novaChave(), pronto = false, tGuardar = 0;
+  function guardar(){
+    if (!pronto) return;
+    try {
+      const campos = {};
+      [...f.elements].forEach(el => {
+        if (!el.name || el.type === 'file' || el.name === 'website' || el.name === 'pagamento') return;
+        if (el.type === 'checkbox' || el.type === 'radio') { if (el.checked) (campos[el.name] = campos[el.name] || []).push(el.value); }
+        else if (el.value) campos[el.name] = el.value;
+      });
+      localStorage.setItem(LS, JSON.stringify({ t: Date.now(), chave, step, pag, campos }));
+    } catch (e) { /* sem armazenamento (modo privado): continua sem guardar */ }
+  }
+  function repor(){
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) {}
+    if (!d || !d.campos || Date.now() - d.t > 7 * 24 * 3600 * 1000) { limpar(); return 0; }
+    if (!Object.keys(d.campos).length) return 0;
+    [...f.elements].forEach(el => {
+      const v = d.campos[el.name];
+      if (v === undefined || el.type === 'file') return;
+      if (el.type === 'checkbox' || el.type === 'radio') el.checked = Array.isArray(v) && v.includes(el.value);
+      else el.value = v;
+    });
+    // volta a mostrar os campos que dependem de outras respostas ("Qual?", outro clube, treinador)
+    [...f.elements].forEach(el => { if (el.name && (el.tagName === 'SELECT' || el.checked)) el.dispatchEvent(new Event('change', { bubbles: true })); });
+    [...f.elements].forEach(el => { const v = d.campos[el.name]; if (typeof v === 'string' && el.type !== 'file' && !el.value) el.value = v; });
+    if (d.chave) chave = d.chave;
+    pag = d.pag || '';
+    document.getElementById('recuperado').hidden = false;
+    return Math.min(Math.max(0, d.step | 0), sets.length - 1);
+  }
+  function limpar(){ try { localStorage.removeItem(LS); } catch (e) {} }
+  f.addEventListener('input', () => { clearTimeout(tGuardar); tGuardar = setTimeout(guardar, 400); });
+  f.addEventListener('change', e => { guardar(); if (e.target.name === 'semanas') drawVagas(); });
+  window.addEventListener('pagehide', guardar);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) guardar(); });
+  document.getElementById('recomecar').onclick = () => { limpar(); location.reload(); };
+
+  // Fotografias grandes são reduzidas antes de enviar (envio mais rápido em dados móveis).
+  // Se o browser não conseguir ler a imagem (por exemplo HEIC), segue o ficheiro original.
+  async function prepararFicheiro(file){
+    const ext = (file.name.match(/\.([a-z0-9]{2,5})$/i) || [])[1] || '';
+    const porExt = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif' };
+    const mime = file.type || porExt[ext.toLowerCase()] || 'application/octet-stream';
+    if (/^image\/(jpeg|png|webp)$/.test(mime) && file.size > 900 * 1024 && window.createImageBitmap) {
+      try {
+        const bmp = await createImageBitmap(file), k = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+        const cv = document.createElement('canvas'); cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+        cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+        const b64 = cv.toDataURL('image/jpeg', 0.82).split(',')[1];
+        if (b64 && b64.length * 0.75 < file.size) return { nome: file.name.replace(/\.[a-z0-9]+$/i, '') + '.jpg', mime: 'image/jpeg', base64: b64 };
+      } catch (e) { /* segue o original */ }
+    }
+    if (file.size > 8 * 1024 * 1024) throw new Error('O comprovativo tem mais de 8 MB. Envia uma fotografia mais pequena ou o PDF.');
+    return { nome: file.name, mime, base64: await toB64(file) };
+  }
+  const espera_ms = ms => new Promise(r => setTimeout(r, ms));
+
   function toB64(file){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(file); }); }
 
   function semanaForm(){ const v = val('semanas'); return v.length >= 2 ? 'Semana 1 e semana 2' : (v[0] || ''); }
 
   async function submit(){
-    const btn = document.getElementById('next'), er = document.getElementById('submit-err');
+    const btn = document.getElementById('next'), er = document.getElementById('submit-err'), st = document.getElementById('enviando');
     er.hidden = true; btn.disabled = true; btn.textContent = 'A enviar…';
+    st.textContent = 'A enviar. Pode demorar até um minuto. Não feches esta página.'; st.hidden = false;
     try {
-      if (!C.ABERTO || !C.API_URL) throw new Error('As inscrições abrem a 27 de novembro. Esta página ainda está em teste.');
-      const file = document.getElementById('comprovativo').files[0];
-      let ficheiro = null;
-      if (file) {
-        if (file.size > 8 * 1024 * 1024) throw new Error('O comprovativo tem mais de 8 MB. Envia uma fotografia mais pequena ou o PDF.');
-        ficheiro = { nome: file.name, mime: file.type || 'application/octet-stream', base64: await toB64(file) };
-      }
+      if (!C.ABERTO || !C.API_URL) throw new Error('As inscrições abrem a 27 de novembro.');
+      const esperaAgora = emEspera();
+      const file = esperaAgora ? null : document.getElementById('comprovativo').files[0];
+      const ficheiro = file ? await prepararFicheiro(file) : null;
       const respostas = {
         semanas: semanaForm(), opcao: val('opcao'), irmao: val('irmao') || 'Não',
         atleta: val('nome'), dataNasc: val('nascimento'), cc: val('cc'), nif: val('nif'),
@@ -355,25 +518,56 @@ window.CFT_INSC = {
         doenca: val('doenca'), doenca_qual: val('doenca_qual'), alergia_med: val('alergia_med'), alergia_med_qual: val('alergia_med_qual'),
         encarregado: val('ee_nome'), email_ee: val('ee_email'), telefone: val('telemovel'), contacto_emerg: val('emergencia') || val('telemovel'),
         como_conheceu: val('conhecimento'), treinador_indicou: val('treinador_nome'),
-        decl_resp: val('decl_responsabilidade') ? 'Sim (regulamento v1 de 20/11/2026)' : '', decl_imagem: 'Sim (regulamento)', decl_saida: val('decl_saida'), pagamento: pag,
+        decl_resp: val('decl_responsabilidade') ? 'Sim (regulamento v1 de 20/11/2026)' : '', decl_imagem: 'Sim (regulamento)', decl_saida: val('decl_saida'), pagamento: esperaAgora ? '' : pag,
         iban: val('iban_devolucao')
       };
-      const r = await fetch(C.API_URL, {
-        method: 'POST', redirect: 'follow',
-        // text/plain evita o pedido CORS prévio no Apps Script
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'inscricao_submit', website: val('website'), respostas, ficheiro })
-      });
-      const j = await r.json();
+      // A mesma chave em todas as tentativas: o servidor nunca cria duas inscrições.
+      const body = JSON.stringify({ action: 'inscricao_submit', website: val('website'), chave, respostas, ficheiro });
+      const pausas = [3000, 6000, 10000];
+      let j = null;
+      for (let t = 0; ; t++) {
+        let falhou = '';
+        try {
+          const r = await fetch(C.API_URL, {
+            method: 'POST', redirect: 'follow',
+            // text/plain evita o pedido CORS prévio no Apps Script
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body
+          });
+          j = await r.json();
+          if (!j.ok && j.error === 'OCUPADO') falhou = 'ocupado';
+        } catch (e) { j = null; falhou = 'rede'; }
+        if (!falhou) break;
+        if (t >= pausas.length) throw new Error(falhou === 'ocupado' ? 'MUITA_GENTE' : 'SEM_LIGACAO');
+        st.textContent = falhou === 'ocupado' ? 'Há muita gente a inscrever-se neste momento. A tentar de novo…' : 'A ligação falhou. A tentar de novo…';
+        await espera_ms(pausas[t]);
+      }
       if (!j.ok) throw new Error(j.error || 'erro desconhecido');
-      sets.forEach(s => s.hidden = true); document.getElementById('navbtns').hidden = true; steps.hidden = true;
-      document.getElementById('ok').hidden = false; window.scrollTo({top: 0});
+      const d = j.data || {};
+      limpar(); pronto = false;
+      sets.forEach(s => s.hidden = true); document.getElementById('navbtns').hidden = true; steps.hidden = true; st.hidden = true;
+      document.getElementById('recuperado').hidden = true;
+      if (d.lista_espera) {
+        const quais = (d.semanas_cheias || []).length ? (d.semanas_cheias.length > 1 ? 'As semanas ' + d.semanas_cheias.join(' e ') + ' estão cheias' : 'A Semana ' + d.semanas_cheias[0] + ' está cheia') : 'A semana escolhida está cheia';
+        document.getElementById('ok-espera-txt').textContent = quais + '. O atleta ficou em lista de espera.' + (d.comprovativo ? ' Como já fizeste a transferência, o valor é devolvido para o IBAN que indicaste se não abrir vaga.' : ' Não é preciso pagar nada agora.');
+        document.getElementById('ok-espera').hidden = false;
+      } else {
+        document.getElementById('ok-comp').hidden = d.comprovativo !== false || !ficheiro;
+        document.getElementById('ok').hidden = false;
+      }
+      window.scrollTo({top: 0});
     } catch (e) {
-      er.textContent = 'Não conseguimos enviar a inscrição (' + e.message + '). Tenta de novo dentro de momentos, ou escreve para geral@camposft.com.';
-      er.hidden = false; btn.disabled = false; btn.textContent = 'Enviar inscrição';
+      const m = e.message === 'MUITA_GENTE' ? 'Há muita gente a inscrever-se neste momento e não conseguimos guardar a inscrição.'
+        : e.message === 'SEM_LIGACAO' ? 'Não conseguimos ligar ao servidor. Confirma a ligação à internet.'
+        : 'Não conseguimos enviar a inscrição (' + e.message + ').';
+      er.textContent = m + ' As tuas respostas ficaram guardadas: carrega outra vez em «' + textoEnviar() + '» daqui a um minuto. Se continuar, escreve para geral@camposft.com.';
+      er.hidden = false; st.hidden = true; btn.disabled = false; btn.textContent = textoEnviar();
     }
   }
-  show(0);
+  const inicio = repor();
+  pronto = true;
+  show(inicio);
+  lerVagas();
 })();
 </script>
 </body>

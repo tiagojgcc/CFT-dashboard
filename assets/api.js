@@ -18,7 +18,8 @@
         throw new Error('CFT_CONFIG.API_URL não configurado');
       }
       if (!Auth.token) throw new Error('Não autenticado');
-      const body = Object.assign({ action, token: Auth.token }, params || {});
+      // Edição ativa (2026 = arquivo, lê a Sheet de 2026; 2027 = atual)
+      const body = Object.assign({ action, token: Auth.token, edicao: this.edicao() }, params || {});
       const resp = await fetch(window.CFT_CONFIG.API_URL, {
         method: 'POST',
         // text/plain evita CORS preflight no Apps Script
@@ -36,20 +37,38 @@
       return json.data;
     },
 
-    CACHE_KEY: 'cft_dashboard_cache_v1',
+    // Cache separada por edição, para o arquivo 2026 não se misturar com 2027.
+    get CACHE_KEY() { return 'cft_dashboard_cache_v3_' + this.edicao(); },
+
+    edicao() {
+      let ed = (document.body && document.body.dataset.edicao) || '';
+      if (!ed) { try { ed = localStorage.getItem('cft_edicao_v1') || ''; } catch (e) {} }
+      return ed === '2026' ? '2026' : '2027';
+    },
 
     async getAll() {
+      // A edição e a chave da cache ficam fixadas ANTES do pedido. Se o utilizador
+      // trocar de edição enquanto a resposta vem a caminho, esta resposta é da
+      // edição antiga: guarda-se na cache dela e não se mostra (senão o arquivo
+      // 2026 aparecia com os números de 2027, e vice-versa).
+      const ed = this.edicao();
+      const key = this.CACHE_KEY;
       const data = await this._call('getAll');
-      this.lastUpdate = new Date(data.lastUpdate);
-      this._cache = data;
       // Persistir snapshot para load instantâneo na próxima visita
       try {
         const payload = JSON.stringify({ ts: Date.now(), data });
         // localStorage tem limite ~5MB; corta historico/emails se preciso
         if (payload.length < 4_000_000) {
-          localStorage.setItem(this.CACHE_KEY, payload);
+          localStorage.setItem(key, payload);
         }
       } catch (e) { /* quota cheia ou desativado — ignora */ }
+      if (this.edicao() !== ed) {
+        const err = new Error('Edição mudou durante o pedido');
+        err.stale = true;
+        throw err;
+      }
+      this.lastUpdate = new Date(data.lastUpdate);
+      this._cache = data;
       return this._unpack(data);
     },
 
@@ -70,16 +89,23 @@
 
     // Devolve snapshot persistido (ou null). Nunca lança.
     getCachedSync() {
+      const data = this._lerCache();
+      // Sem cópia desta edição: não deixar ficar em memória os números da outra.
+      this._cache = data;
+      this.lastUpdate = data && data.lastUpdate ? new Date(data.lastUpdate) : null;
+      return data ? this._unpack(data) : null;
+    },
+
+    _lerCache() {
       try {
         const raw = localStorage.getItem(this.CACHE_KEY);
         if (!raw) return null;
         const obj = JSON.parse(raw);
         if (!obj || !obj.data) return null;
-        // Ignora cache > 24h
-        if (Date.now() - (obj.ts || 0) > 24 * 3600 * 1000) return null;
-        this._cache = obj.data;
-        this.lastUpdate = obj.data.lastUpdate ? new Date(obj.data.lastUpdate) : null;
-        return this._unpack(obj.data);
+        // Ignora cache > 24h. O arquivo 2026 já não muda: a cópia serve sempre
+        // (é confirmada com a Sheet de 2026 logo a seguir).
+        if (this.edicao() !== '2026' && Date.now() - (obj.ts || 0) > 24 * 3600 * 1000) return null;
+        return obj.data;
       } catch (e) { return null; }
     },
 
