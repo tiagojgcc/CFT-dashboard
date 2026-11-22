@@ -8,7 +8,7 @@
  * Antes de publicar, correr:  node apps-script/testes/verificar.js
  * Versão: CFT_BACKEND_VERSAO (ver abaixo).
  */
-const CFT_BACKEND_VERSAO = '2026-11-22 abertura';
+const CFT_BACKEND_VERSAO = '2026-11-22b abertura';
 
 /**
  * Router. Substituir SHEET_ID pela cópia de teste primeiro.
@@ -4421,11 +4421,20 @@ const InscricaoSite = {
     put(migIdx, new Date());
     sh.appendRow(linha);
     const row = sh.getLastRow();
+    // A folha transforma "00123456" em 123456 e "+351…" em número. Onde isso
+    // aconteceria, a célula passa a texto e o valor é escrito de novo.
+    linha.forEach((val, idx) => {
+      if (this.perdeZeros_(val)) sh.getRange(row, idx + 1).setNumberFormat('@').setValue(val);
+    });
 
     // Atletas + número de inscrição + o que o site já sabe (irmão, pagamento, espera).
     Backfill.migrateRow_(row, sh, atl);
     let arow = atl.getLastRow();
     if (String(atl.getRange(arow, ATL_COLS.id_inscricao).getValue()) !== id) arow = Inscricoes._findRow(id);
+    ['cc', 'telefone', 'contacto_emerg', 'tshirt_num'].forEach(key => {
+      const val = this.clean_(r[key]);
+      if (this.perdeZeros_(val)) atl.getRange(arow, ATL_COLS[key]).setNumberFormat('@').setValue(val);
+    });
     const numero = maxNum + 1;
     const stamp = Utilities.formatDate(new Date(), 'Europe/Lisbon', 'yyyy-MM-dd HH:mm');
     const notas = [];
@@ -4439,6 +4448,11 @@ const InscricaoSite = {
     ]]);
     atl.getRange(arow, ATL_COLS.num_inscricao).setValue(numero);
     return { id: id, numero: numero, espera: espera, cheias: cheias };
+  },
+
+  // Texto só com algarismos que começa por 0 ou + (CC, telemóvel, número da camisola).
+  perdeZeros_(v) {
+    return typeof v === 'string' && /^\s*(0|\+)[\d\s]*$/.test(v) && /\d/.test(v);
   },
 
   // Já existe uma inscrição com este código? Devolve a resposta dada da primeira vez.

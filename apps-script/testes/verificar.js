@@ -51,17 +51,19 @@ console.log('\n1. Conteúdo do ficheiro único');
 function Folha(nome, headers) { this.nome = nome; this.linhas = [headers.slice()]; }
 Folha.prototype.getLastRow = function () { return this.linhas.length; };
 Folha.prototype.getLastColumn = function () { return this.linhas[0].length; };
-Folha.prototype.appendRow = function (r) { const l = r.slice(); while (l.length < this.linhas[0].length) l.push(''); this.linhas.push(l); };
+// Como a folha verdadeira: texto só com algarismos vira número, a não ser que a célula esteja em formato de texto.
+const comoFolha = (v) => (typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : v);
+Folha.prototype.appendRow = function (r) { const l = r.map(comoFolha); while (l.length < this.linhas[0].length) l.push(''); this.linhas.push(l); };
 Folha.prototype.getRange = function (r, c, nr, nc) {
   const f = this; nr = nr || 1; nc = nc || 1;
   const cel = (i, j) => { const l = f.linhas[r - 1 + i] || []; const v = l[c - 1 + j]; return v === undefined ? '' : v; };
   return {
     getValues: () => Array.from({ length: nr }, (_, i) => Array.from({ length: nc }, (_, j) => cel(i, j))),
     getValue: () => cel(0, 0),
-    setValues: (vals) => vals.forEach((linha, i) => linha.forEach((v, j) => { while (f.linhas.length < r + i) f.linhas.push([]); f.linhas[r - 1 + i][c - 1 + j] = v; })),
-    setValue: (v) => { f.linhas[r - 1][c - 1] = v; },
+    setValues: (vals) => vals.forEach((linha, i) => linha.forEach((v, j) => { while (f.linhas.length < r + i) f.linhas.push([]); f.linhas[r - 1 + i][c - 1 + j] = comoFolha(v); })),
+    setValue(v) { f.linhas[r - 1][c - 1] = this.texto ? v : comoFolha(v); },
     getRichTextValue: () => null, getFormula: () => '',
-    setNumberFormat() { return this; }, setFontWeight() { return this; }, setBackground() { return this; }, setFontColor() { return this; }
+    setNumberFormat(fmt) { this.texto = fmt === '@'; return this; }, setFontWeight() { return this; }, setBackground() { return this; }, setFontColor() { return this; }
   };
 };
 
@@ -239,6 +241,20 @@ console.log('\n6. Comprovativo');
   const r2 = post(m, pedido({ ficheiro: { nome: 'ficheiro.docx', mime: 'application/msword', base64: 'AAAA' } }));
   ok(r2.ok && r2.data.recebido && r2.data.comprovativo === false && r2.data.comprovativo_erro === true, 'ficheiro inválido: inscrição feita, sem comprovativo', r2);
   ok(m.folhas.Atletas.linhas.length === 3, 'as duas inscrições ficaram registadas');
+}
+
+// ---------- 6b. Zeros à esquerda ----------
+console.log('\n6b. Zeros à esquerda');
+{
+  const m = novoMundo();
+  const r = post(m, pedido({}, { cc: '00123456', tshirt_num: '00', contacto_emerg: '00351912345678' }));
+  ok(r.ok && r.data.recebido, 'inscrição com CC a começar por zeros é aceite', r);
+  ok(col(m, 'cc')[0] === '00123456', 'CC mantém os zeros na aba Atletas', col(m, 'cc'));
+  ok(col(m, 'tshirt_num')[0] === '00' && col(m, 'contacto_emerg')[0] === '00351912345678', 'número da camisola e contacto mantêm os zeros');
+  const resp = m.folhas[Object.keys(m.folhas).find(k => /Respostas/.test(k))];
+  ok(resp.linhas[1].indexOf('00123456') >= 0, 'CC mantém os zeros na aba de respostas');
+  post(m, pedido());
+  ok(col(m, 'cc')[1] === 12345678, 'CC sem zeros fica como antes');
 }
 
 // ---------- 7. Erros ----------
