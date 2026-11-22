@@ -1190,6 +1190,14 @@
   .ed-pill .ed-tag { font-size:9px; letter-spacing:0.1em; opacity:0.65; margin-left:4px; }
   body[data-edicao="2027"] .ed-26 { display:none !important; }
   body[data-edicao="2026"] .ed-27 { display:none !important; }
+  .ed-arquivo-link { margin-left:auto; margin-right:12px; align-self:center; background:none; border:none; padding:6px 4px; font-family:var(--font-condensed); font-size:10.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--mid-gray); opacity:0.7; cursor:pointer; white-space:nowrap; }
+  .ed-arquivo-link:hover { opacity:1; text-decoration:underline; }
+  .ed-arquivo-link + .nav-banco { margin-left:0; }
+  body[data-edicao="2026"] .nav-banco { margin-left:auto; }
+  .arquivo-banner { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:10px 24px; background:#d4845a; color:#fff; font-size:13.5px; }
+  .arquivo-banner b { font-family:var(--font-condensed); letter-spacing:0.12em; text-transform:uppercase; }
+  .arquivo-banner button { background:#fff; color:#1c1c18; border:none; border-radius:4px; padding:7px 14px; font-family:var(--font-condensed); font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; }
+  body[data-edicao="2026"] .nav { box-shadow: inset 0 -3px 0 #d4845a; }
   .nav-banco { margin-left:auto; align-self:center; display:flex; align-items:baseline; gap:7px; padding:6px 13px; border:1px solid var(--sand); border-radius:6px; background:var(--beige-light); cursor:pointer; white-space:nowrap; }
   .nav-banco:hover { border-color:var(--sand-dark); }
   .nav-banco .nb-lbl { font-family:var(--font-condensed); font-size:9.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--mid-gray); }
@@ -1211,7 +1219,6 @@
   <div class="nav-inner">
     <div class="nav-editions">
       <button class="ed-pill" id="ed-pill-2027" onclick="setEdicao('2027')">2027</button>
-      <button class="ed-pill" id="ed-pill-2026" onclick="setEdicao('2026')">2026<span class="ed-tag">arquivo</span></button>
     </div>
     <div class="tab ed-27" data-panel="plano2027">Plano 2027</div>
     <div class="tab active" data-panel="overview">Visão geral</div>
@@ -1227,11 +1234,17 @@
         <div class="more-item" data-panel="eliminados"   onclick="showTab('eliminados'); document.getElementById('nav-more-menu').classList.remove('open');">Eliminados <span class="tab-count" id="tc-eliminados">0</span></div>
       </div>
     </div>
+    <button class="ed-arquivo-link ed-27" id="ed-pill-2026" onclick="setEdicao('2026')" title="Abrir os dados de 2026 (só para consulta)">Arquivo 2026</button>
     <div class="nav-banco" onclick="goBancoReal()" title="Saldo real da conta APDFE — clica para ver e editar">
       <span class="nb-lbl">🏦 conta</span><b id="nav-banco-val">—</b>
     </div>
   </div>
 </nav>
+
+<div class="arquivo-banner ed-26" role="status">
+  <span><b>Arquivo 2026</b> · estás a ver os dados do campo de 2026, não os de 2027.</span>
+  <button type="button" onclick="setEdicao('2027')">← Voltar a 2027</button>
+</div>
 
 <div class="container">
 
@@ -5995,7 +6008,7 @@ function finPie(items, size){
 // Contabilidade 98,40€/mês; Google Workspace 16,20€/mês (nov 2025 foi 28,20€ —
 // acerto pontual; desde dez cobra estável); manutenção de conta 8,32€/mês
 // desde abril 2026 (fim da isenção de 2 anos).
-const FIN_FIXOS_MES = { contabilidade: 98.40, workspace: 16.20, banco: 8.32 };
+const FIN_FIXOS_MES = { contabilidade: 98.40, workspace: 28.20, banco: 8.32 };  // Workspace 28,20 €/mês desde nov/2026 (extrato)
 const FIN_RESERVA = 1500;  // o que deixar na conta para aguentar o ano
 
 // Saldo real da conta (introduzido à mão) — é este que manda no fecho de
@@ -6054,7 +6067,7 @@ function finPrevisao(m, st){
       <div class="fin-prev-block">
         <h4>Custos fixos até ao CFT 2027</h4>
         <div class="fin-prev-big">${fmt(fixosAno)}<span style="font-size:13px;font-family:var(--font-body)">/ano</span></div>
-        <p>Contabilidade <b>${fmt(anual.contabilidade)}</b> (98,40€/mês) · Workspace <b>${fmt(anual.workspace)}</b> (16,20€/mês) · banco <b>${fmt(anual.banco)}</b> (8,32€/mês desde abril).</p>
+        <p>Contabilidade <b>${fmt(anual.contabilidade)}</b> (98,40€/mês) · Workspace <b>${fmt(anual.workspace)}</b> (28,20€/mês) · banco <b>${fmt(anual.banco)}</b> (8,32€/mês desde abril).</p>
         <p>A contabilidade é ${pct(fixosAno ? anual.contabilidade / fixosAno : 0)} disto — renegociar ou pedir 2 orçamentos vale ~200–400€/ano. No Workspace, nov 2025 cobrou 28,20€ (acerto pontual); confirma que só há 1 utilizador pago.</p>
       </div>
       <div class="fin-prev-block">
@@ -6246,7 +6259,6 @@ const EDICAO_KEY = 'cft_edicao_v1';
 function setEdicao(ano){
   ano = ano === '2026' ? '2026' : '2027';
   const mudou = document.body.dataset.edicao && document.body.dataset.edicao !== ano;
-  try { localStorage.setItem(EDICAO_KEY, ano); } catch (e) {}
   document.body.dataset.edicao = ano;
   const cfg = EDICOES[ano];
   CFT_START_DATE = new Date(cfg.inicio); CFT_WEEK2_DATE = new Date(cfg.sem2); CFT_DEADLINE_DEFAULT = new Date(cfg.prazo);
@@ -6271,15 +6283,15 @@ function goBancoReal(){ setEdicao('2027'); }
 
 // ============ BANCO · saldo real partilhado (chip no nav + Plano 2027) ============
 // Fonte: extrato NovoBanco (APDFE). Atualizar à mão quando houver movimentos.
-const BANCO_REAL_KEY = 'cft_banco_real_v1';
+const BANCO_REAL_KEY = 'cft_banco_real_v2';  // v2 (22/11/2026): ignora valores antigos guardados no browser
 function fmt2(v){ return (Number(v) || 0).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function bancoRealLoad(){
   try {
     const s = JSON.parse(localStorage.getItem(BANCO_REAL_KEY));
     if (s && isFinite(Number(s.valor))) return s;
   } catch (e) {}
-  // 30/07/2026: 1.059,62€ após fecho 2026 (4.000€ Tiago + 4.000€ Miguel + 2.157,40€ gastos Tiago)
-  return { valor: 1059.62, data: '2026-07-30' };
+  // Extrato NovoBanco de 13/11/2026 (exportado a 22/11): 345,94 €.
+  return { valor: 345.94, data: '2026-11-13' };
 }
 function bancoRealSet(v){
   const valor = Number(v) || 0;
@@ -6378,7 +6390,7 @@ function renderPlano2027(){
     <div class="p27-kpi">
       <div class="p27-kpi-label">Custos fixos</div>
       <div class="p27-kpi-num">${fmt2(fixosMes)}<span style="font-size:13px;font-family:var(--font-body)">/mês</span></div>
-      <div class="p27-kpi-sub">contabilidade 98,40 · Workspace 16,20 · banco 8,32</div>
+      <div class="p27-kpi-sub">contabilidade 98,40 · Workspace 28,20 · banco 8,32</div>
     </div>
     <div class="p27-kpi">
       <div class="p27-kpi-label">Fôlego da conta</div>
@@ -6445,9 +6457,9 @@ function renderPlano2027(){
 window.addEventListener('DOMContentLoaded', () => {
   Auth.init();
   // Edição ativa (2027 por defeito) + chip do banco
-  let ed = '2027';
-  try { ed = localStorage.getItem(EDICAO_KEY) || '2027'; } catch (e) {}
-  setEdicao(ed);
+  // Abre sempre em 2027; o arquivo 2026 só se abre de propósito (link discreto no menu).
+  try { localStorage.removeItem(EDICAO_KEY); } catch (e) {}
+  setEdicao('2027');
   updateNavBanco();
   // Wire sortable headers
   document.querySelectorAll('.th-sort').forEach(th => {
