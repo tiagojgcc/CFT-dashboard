@@ -3174,40 +3174,6 @@ async function promoverDescontoClube(){
   }
 }
 
-// ============ TASKS ============
-function renderTasks(){
-  const tasks = [
-    {group:'Urgente · hoje', color:'var(--orange-accent)', items:[
-      {title:'Contactar Martim Barbosa — pagou só 50€', meta:'jmgsb1@gmail.com', date:'Hoje', dateClass:'urgent'},
-      {title:'Contactar Afonso Estrócio — pagou só 50€', meta:'lady.j.estrocio@gmail.com', date:'Hoje', dateClass:'urgent'},
-      {title:'Verificar Francisco Abelheira', meta:'Pedir novo comprovativo (scan ilegível)', date:'Hoje', dateClass:'urgent'},
-      {title:'Verificar Rita Costa', meta:'Pedir novo comprovativo (imagem ilegível)', date:'Hoje', dateClass:'urgent'},
-      {title:'Resolver Leonor Moreira', meta:'Ficheiro vazio · sem pagamento', date:'Hoje', dateClass:'urgent'},
-      {title:'Recolher IBAN de 3 atletas', meta:'Gustavo Carvalho · Tiago Gomes · Vasco Rodrigues', date:'Urgente', dateClass:'urgent'},
-    ]},
-    {group:'Em breve · maio', color:'var(--sand-dark)', items:[
-      {title:'Email a todos os encarregados — aviso prazo', meta:'Aproximação do término do prazo (21 jun)', date:'1 jun', dateClass:'soon'},
-    ]},
-    {group:'Pré-campo · julho', color:'var(--green-dark)', items:[
-      {title:'Enviar email com informações práticas', meta:'Local, horários, material a trazer', date:'1 jul', dateClass:'ok'},
-      {title:'Lembrete "falta 1 semana"', meta:'Confirmar todos os pagamentos', date:'5 jul', dateClass:'ok'},
-    ]},
-  ];
-  document.getElementById('task-sections').innerHTML = tasks.map(g => `
-    <div class="task-group">
-      <div class="task-group-title"><span class="dot" style="background:${g.color}"></span>${g.group}<span class="rule"></span></div>
-      ${g.items.map(t => `<div class="task-item${g.color === 'var(--orange-accent)' ? ' urgent' : ''}">
-        <div class="task-check" onclick="this.closest('.task-item').classList.toggle('done');this.classList.toggle('checked');this.textContent=this.classList.contains('checked')?'✓':'';"></div>
-        <div>
-          <div class="task-title">${t.title}</div>
-          <div class="task-meta">${t.meta}</div>
-        </div>
-        <div class="task-date ${t.dateClass}">${t.date}</div>
-      </div>`).join('')}
-    </div>
-  `).join('');
-}
-
 // ============ HISTÓRICO (backend) ============
 function fmtTs(t){
   if (!t) return '';
@@ -5089,8 +5055,8 @@ async function enviarAgradecimentoBulk(){
 }
 
 // ---- Quem se identificou no questionário --------------------------------
-// A identificação no questionário é opcional e escrita à mão ("Rita Costa"
-// para "Rita Oliveira Costa"), por isso o cruzamento é por tokens: o nome
+// A identificação no questionário é opcional e escrita à mão ("Ana Silva"
+// para "Ana Maria Silva"), por isso o cruzamento é por tokens: o nome
 // dado tem de estar todo contido no nome inscrito. Falha para o lado seguro —
 // um nome ambíguo ou inexistente não exclui ninguém, porque mandar o lembrete
 // a quem já respondeu custa um pedido de desculpa (que o email já traz) e não
