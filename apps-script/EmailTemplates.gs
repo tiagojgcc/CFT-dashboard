@@ -308,7 +308,7 @@ const EmailTemplates = {
 
   _footer() {
     const C = this.C;
-    return `<div style="background:${C.charcoal};color:${C.beige};padding:24px 40px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:11px;line-height:1.6;">
+    return `<div style="background-color:${C.charcoal};color:${C.beige};padding:24px 40px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:11px;line-height:1.6;">
       <div>
         <div>
           <div style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:${C.greenBright};margin-bottom:6px;">Campo de Formação Técnica</div>
@@ -324,8 +324,8 @@ const EmailTemplates = {
     return `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">${this._googleFontsLink()}<meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0;padding:0;}
 @media (min-width:620px){.cft-h1{font-size:64px!important}.cft-ph{font-size:54px!important}.cft-l{display:inline-block!important;width:150px!important;vertical-align:top!important;padding-top:3px!important}.cft-v{display:inline-block!important;width:60%!important;vertical-align:top!important;margin-top:0!important}}
 </style></head>
-<body style="margin:0;padding:0;background:#f0eee9;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;color:${C.charcoal};">
-  <div style="max-width:680px;margin:0 auto;background:${C.beige};">
+<body style="margin:0;padding:0;background-color:#f0eee9;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;color:${C.charcoal};">
+  <div style="max-width:680px;margin:0 auto;background-color:${C.beige};">
     ${this._fluido(this._header(edition) + content + this._signature() + this._footer())}
   </div>
 </body></html>`;
@@ -362,7 +362,7 @@ const EmailTemplates = {
         <div class="cft-v" style="margin-top:3px;font-family:${italic ? "'Playfair Display',Georgia,serif" : "'DM Sans','Helvetica Neue',Arial,sans-serif"};font-style:${italic ? 'italic' : 'normal'};font-size:${italic ? '19px' : '15px'};font-weight:${italic ? 400 : 500};color:${C.charcoal};">${value}</div>
       </div>`
     ).join('');
-    return `<div style="margin:0 40px;background:${C.offWhite};padding:8px 5% 16px 5%;border:1px solid ${C.beigeMid};">
+    return `<div style="margin:0 40px;background-color:${C.offWhite};padding:8px 5% 16px 5%;border:1px solid ${C.beigeMid};">
       ${title ? `<div style="font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:${C.greenDark};padding:18px 0 4px 0;">${this._esc(title)}</div>` : ''}
       ${rowsHtml}
     </div>`;
@@ -744,7 +744,7 @@ const EmailTemplates = {
       'Produtos de higiene pessoal',
       'Medicação habitual ou ocasional, se aplicável — entregue identificada (nome + posologia) a um treinador no check-in'
     ].map(x => `<tr>
-      <td valign="top" width="22" style="width:22px;padding:9px 14px 9px 0;border-bottom:1px solid ${C.beigeMid};"><span style="display:inline-block;width:8px;height:8px;background:${C.greenBright};border-radius:50%;">&nbsp;</span></td>
+      <td valign="top" width="22" style="width:22px;padding:9px 14px 9px 0;border-bottom:1px solid ${C.beigeMid};"><span style="display:inline-block;width:8px;height:8px;background-color:${C.greenBright};border-radius:50%;">&nbsp;</span></td>
       <td valign="top" style="padding:9px 0;border-bottom:1px solid ${C.beigeMid};${sans}font-size:15px;color:${C.charcoal};line-height:1.55;">${x}</td>
     </tr>`).join('');
     const body = `
@@ -757,7 +757,7 @@ const EmailTemplates = {
         ${this._greeting(ee, data)}
         ${this._para(`Falta pouco para o arranque do <b>Campus de Formação Técnica 2027</b> e queremos deixar-lhe toda a informação necessária para uma semana tranquila.`)}
       </div>
-      <div style="margin:20px 40px 0 40px;background:${C.nearBlack};color:${C.beige};padding:28px 30px;">
+      <div style="margin:20px 40px 0 40px;background-color:${C.nearBlack};color:${C.beige};padding:28px 30px;">
         <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenBright};margin-bottom:18px;">Datas</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;"><tr>
           ${semana('1.ª semana', '12 a 18', true)}
@@ -781,7 +781,7 @@ const EmailTemplates = {
         `)}
         ${logBlock('Encerramento (sábado)', p15(`Os pais podem estar no pavilhão a partir das <b style="color:${C.greenDark};">9h30</b>; a atividade final começa às <b style="color:${C.greenDark};">10h00</b>. Encerramento e levantamento dos atletas entre as <b style="color:${C.greenDark};">12h15</b> e as <b style="color:${C.greenDark};">13h30</b>.`), true)}
       </div>
-      <div style="margin:8px 40px 0 40px;background:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.greenDark};padding:20px 24px;">
+      <div style="margin:8px 40px 0 40px;background-color:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.greenDark};padding:20px 24px;">
         <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenDark};margin-bottom:8px;">Local</div>
         <div style="${bebas}font-size:30px;line-height:1;color:${C.nearBlack};letter-spacing:0.01em;text-transform:uppercase;">Escola Básica Integrada Diogo Bernardes</div>
         <div style="${serif}font-size:17px;color:${C.midGray};margin-top:6px;">Pct Frei Agostinho da Cruz, Ponte da Barca</div>
@@ -794,16 +794,16 @@ const EmailTemplates = {
         ${logBlock('Alimentação', p15(`São asseguradas todas as refeições (pequeno-almoço, lanche da manhã, almoço, lanche da tarde, jantar e ceia). Não é necessário trazer alimentos; os atletas podem trazer snacks individuais, se quiserem.`))}
         ${logBlock('Segurança', p15(`Os atletas nunca saem do recinto sem acompanhamento dos treinadores. A ida à praia fluvial decorre numa zona de baía vigiada por nadadores-salvadores.`), true)}
       </div>
-      <div style="margin:8px 40px 0 40px;background:${C.offWhite};border:1px solid ${C.beigeMid};padding:20px 24px;">
+      <div style="margin:8px 40px 0 40px;background-color:${C.offWhite};border:1px solid ${C.beigeMid};padding:20px 24px;">
         <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenDark};margin-bottom:8px;">Atletas da 2.ª semana (e das duas semanas)</div>
         ${p15(`Todos os atletas terminam e são levantados no sábado. Os inscritos na 2.ª semana — quer façam só a 2.ª semana, quer façam as duas — entram no domingo para o novo check-in.`)}
       </div>
-      <div style="margin:24px 40px 0 40px;background:${C.greenDark};color:${C.white};padding:28px 30px;">
+      <div style="margin:24px 40px 0 40px;background-color:${C.greenDark};color:${C.white};padding:28px 30px;">
         <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenBright};margin-bottom:8px;">Contacto durante o campus</div>
         <p style="${sans}font-size:14px;color:rgba(255,255,255,0.85);line-height:1.55;margin:0 0 12px 0;">Para qualquer necessidade ao longo da semana:</p>
         <a href="tel:+351963474592" style="display:inline-block;text-decoration:none;${bebas}font-size:54px;line-height:0.9;color:${C.white};letter-spacing:0.03em;">963 474 592</a>
       </div>
-      <div style="margin:24px 40px 0 40px;padding:16px 22px;background:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};">
+      <div style="margin:24px 40px 0 40px;padding:16px 22px;background-color:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};">
         <div style="${cond}font-size:11px;letter-spacing:0.22em;color:${C.orange};margin-bottom:4px;">Nota</div>
         <div style="${sans}font-size:14px;color:${C.charcoal};line-height:1.55;">Os atletas inscritos após 22 de junho poderão receber a t-shirt CFT em data posterior ao início do campus.</div>
       </div>
@@ -844,12 +844,12 @@ const EmailTemplates = {
         ${this._para(intro)}
         ${this._para(`Antes de arrumarmos de vez as bolas ${edicao !== 'este ano' ? `do ${this._esc(edicao)}` : 'desta edição'}, pedimos-lhe uma última coisa: <b>3 minutos</b> para nos dizer como correu. É um questionário curto, em <b>4 fases</b>, quase tudo respondido com um toque — e nenhuma pergunta é obrigatória.`)}
       </div>
-      <div style="margin:0 40px;background:${C.greenDark};padding:28px 30px;">
+      <div style="margin:0 40px;background-color:${C.greenDark};padding:28px 30px;">
         <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenBright};margin-bottom:10px;">Questionário de satisfação</div>
         <p style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:14px;color:rgba(255,255,255,0.9);line-height:1.6;margin:0 0 18px 0;">4 fases curtas · menos de 3 minutos · respostas confidenciais</p>
-        <a href="${surveyLink}" style="display:inline-block;text-decoration:none;background:${C.white};color:${C.greenDark};${cond}font-size:15px;letter-spacing:0.18em;padding:15px 26px;">Responder agora →</a>
+        <a href="${surveyLink}" style="display:inline-block;text-decoration:none;background-color:${C.white};color:${C.greenDark};${cond}font-size:15px;letter-spacing:0.18em;padding:15px 26px;">Responder agora →</a>
       </div>
-      <div style="margin:20px 40px 0 40px;background:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};padding:16px 22px;">
+      <div style="margin:20px 40px 0 40px;background-color:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};padding:16px 22px;">
         <div style="${cond}font-size:11px;letter-spacing:0.22em;color:${C.orange};margin-bottom:4px;">Respondam a meias</div>
         <div style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:14px;color:${C.charcoal};line-height:1.55;">A fase <b>«No campo»</b> é sobre os treinos, os treinadores e a vida no campus — como os pais não estiveram lá dentro, pedimos que essa parte seja respondida <b>em conjunto com ${hasName ? `${a.oA} ${this._esc(this.firstName(data.atleta))}` : 'o vosso atleta'}</b>.</div>
       </div>
@@ -888,18 +888,18 @@ const EmailTemplates = {
         ${this._greeting(ee, data)}
         ${this._para(`Desculpe voltar a incomodar. Há duas semanas pedimos-lhe 3 minutos para nos dizer como correu ${edicao}, e estamos a insistir uma última vez — é destas respostas que sai a próxima edição.`)}
       </div>
-      <div style="margin:0 40px 24px 40px;background:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};padding:16px 22px;">
+      <div style="margin:0 40px 24px 40px;background-color:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};padding:16px 22px;">
         <div style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:14px;color:${C.charcoal};line-height:1.55;"><b>Se já respondeu, não precisa de fazer nada.</b></div>
       </div>
       <div style="padding:0 40px 24px 40px;">
         ${this._para(`Se ainda não respondeu: são <b>4 fases curtas</b>, menos de <b>3 minutos</b>, e nenhuma pergunta é obrigatória.`)}
       </div>
-      <div style="margin:0 40px;background:${C.greenDark};padding:28px 30px;">
+      <div style="margin:0 40px;background-color:${C.greenDark};padding:28px 30px;">
         <div style="${cond}font-size:12px;letter-spacing:0.22em;color:${C.greenBright};margin-bottom:10px;">Questionário de satisfação</div>
         <p style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:14px;color:rgba(255,255,255,0.9);line-height:1.6;margin:0 0 18px 0;">4 fases curtas · menos de 3 minutos · respostas confidenciais</p>
-        <a href="${surveyLink}" style="display:inline-block;text-decoration:none;background:${C.white};color:${C.greenDark};${cond}font-size:15px;letter-spacing:0.18em;padding:15px 26px;">Responder agora →</a>
+        <a href="${surveyLink}" style="display:inline-block;text-decoration:none;background-color:${C.white};color:${C.greenDark};${cond}font-size:15px;letter-spacing:0.18em;padding:15px 26px;">Responder agora →</a>
       </div>
-      <div style="margin:20px 40px 0 40px;background:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};padding:16px 22px;">
+      <div style="margin:20px 40px 0 40px;background-color:${C.offWhite};border:1px solid ${C.beigeMid};border-left:4px solid ${C.orange};padding:16px 22px;">
         <div style="${cond}font-size:11px;letter-spacing:0.22em;color:${C.orange};margin-bottom:4px;">Respondam a meias</div>
         <div style="font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:14px;color:${C.charcoal};line-height:1.55;">A fase <b>«No campo»</b> é sobre os treinos, os treinadores e a vida no campus — como os pais não estiveram lá dentro, pedimos que essa parte seja respondida <b>em conjunto com ${hasName ? `${a.oA} ${this._esc(this.firstName(data.atleta))}` : 'o vosso atleta'}</b>.</div>
       </div>
@@ -936,16 +936,16 @@ const EmailTemplates = {
         ${this._para(`Se quiser fazer surpresa no Natal, este postal já tem o nome ${data.gen_atleta === 'f' ? 'da' : 'do'} ${this._esc(nome)}. Pode imprimir ou enviar por WhatsApp.`)}
       </div>
       <div style="padding:8px 40px 0 40px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.nearBlack};border-radius:10px;overflow:hidden;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.nearBlack};border-radius:10px;overflow:hidden;">
           <tr><td style="padding:0;line-height:0;font-size:0;">
             <a href="${url}" style="text-decoration:none;"><img src="${this.POSTAL_IMG_URL}" width="520" alt="Bola de basquetebol com um laço, ao lado de uma árvore de Natal" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:10px 10px 0 0;"></a>
           </td></tr>
-          <tr><td style="padding:22px 20px 24px 20px;background:${C.nearBlack};">
+          <tr><td style="padding:22px 20px 24px 20px;background-color:${C.nearBlack};">
             <div style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${gold};">${this._esc(nome)}, tens um presente à tua espera em julho</div>
             <div class="cft-ph" style="font-family:'Bebas Neue','Arial Narrow',Impact,sans-serif;font-size:36px;line-height:1;letter-spacing:0.01em;color:${C.offWhite};text-transform:uppercase;margin:12px 0 14px 0;">Este verão<br>vais ao <span style="color:${gold};">CFT!</span></div>
             <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:${C.offWhite};">Uma semana de basquetebol e amigos para a vida.</div>
             <div style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:${C.sand};margin-top:16px;">${this._esc(quando)} · Ponte da Barca · 5ª edição</div>
-            <div style="margin-top:22px;"><a href="${url}" style="display:block;background:${gold};color:${C.nearBlack};font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;text-align:center;padding:15px 16px;border-radius:6px;">Abrir o postal &rarr;</a></div>
+            <div style="margin-top:22px;"><a href="${url}" style="display:block;background-color:${gold};color:${C.nearBlack};font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;text-align:center;padding:15px 16px;border-radius:6px;">Abrir o postal &rarr;</a></div>
             <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.4;color:${C.sand};text-align:center;margin-top:10px;">Para imprimir, guardar ou enviar por WhatsApp</div>
           </td></tr>
         </table>
