@@ -115,7 +115,7 @@
     .hero-bg {
       position: absolute;
       inset: 0;
-      background-image: url('assets/photo6.jpg');
+      background-image: url('https://cdn.jsdelivr.net/gh/tiagojgcc/CFT-dashboard@43be7284101f24299d1dea1864bd33e460875c31/site/assets/photo6.jpg');
       background-size: cover;
       background-position: center 30%;
       filter: brightness(0.45) saturate(0.7);
@@ -973,6 +973,10 @@
       .valores-grid { grid-template-columns: 1fr; }
     }
   </style>
+<script>
+// As fotografias vêm de uma CDN gratuita para poupar tráfego do Netlify. Se falhar, usa a cópia do site.
+(function(){var i=new Image();i.onerror=function(){var st=document.createElement('style');st.textContent=".hero-bg{background-image:url('assets/photo6.jpg') !important}";document.head.appendChild(st);};i.src='https://cdn.jsdelivr.net/gh/tiagojgcc/CFT-dashboard@43be7284101f24299d1dea1864bd33e460875c31/site/assets/photo6.jpg';})();
+</script>
 </head>
 <body>
 
@@ -1034,7 +1038,7 @@
     <div class="section-inner">
       <div class="sobre-grid">
         <div class="sobre-img-wrap reveal">
-          <img src="assets/photo3.jpg" alt="Atletas CFT em Ponte da Barca" class="sobre-img-main" />
+          <img src="https://cdn.jsdelivr.net/gh/tiagojgcc/CFT-dashboard@43be7284101f24299d1dea1864bd33e460875c31/site/assets/photo3.jpg" onerror="this.onerror=null;this.src='assets/photo3.jpg'" alt="Atletas CFT em Ponte da Barca" class="sobre-img-main" />
           <div class="sobre-img-badge">
             <div class="sobre-badge-num">5ª</div>
             <div class="sobre-badge-text">Edição · 2027</div>
@@ -1136,10 +1140,10 @@
     </div>
 
     <div class="campo-galeria">
-      <img src="assets/photo1.jpg" alt="Atletas CFT" loading="lazy" />
-      <img src="assets/photo4.jpg" alt="Jogadores no campo" loading="lazy" />
-      <img src="assets/photo5.jpg" alt="Momento de equipa" loading="lazy" />
-      <img src="assets/photo7.jpg" alt="Sessão de análise" loading="lazy" />
+      <img src="https://cdn.jsdelivr.net/gh/tiagojgcc/CFT-dashboard@43be7284101f24299d1dea1864bd33e460875c31/site/assets/photo1.jpg" onerror="this.onerror=null;this.src='assets/photo1.jpg'" alt="Atletas CFT" loading="lazy" />
+      <img src="https://cdn.jsdelivr.net/gh/tiagojgcc/CFT-dashboard@43be7284101f24299d1dea1864bd33e460875c31/site/assets/photo4.jpg" onerror="this.onerror=null;this.src='assets/photo4.jpg'" alt="Jogadores no campo" loading="lazy" />
+      <img src="https://cdn.jsdelivr.net/gh/tiagojgcc/CFT-dashboard@43be7284101f24299d1dea1864bd33e460875c31/site/assets/photo5.jpg" onerror="this.onerror=null;this.src='assets/photo5.jpg'" alt="Momento de equipa" loading="lazy" />
+      <img src="https://cdn.jsdelivr.net/gh/tiagojgcc/CFT-dashboard@43be7284101f24299d1dea1864bd33e460875c31/site/assets/photo7.jpg" onerror="this.onerror=null;this.src='assets/photo7.jpg'" alt="Sessão de análise" loading="lazy" />
     </div>
   </section>
 
@@ -1150,7 +1154,7 @@
       <h2 class="section-title reveal" style="text-align: center;">Os<br />Treinadores</h2>
 
       <div class="treinadores-hero reveal">
-        <img src="assets/treinadores.png" alt="Treinadores CFT" />
+        <img loading="lazy" src="https://cdn.jsdelivr.net/gh/tiagojgcc/CFT-dashboard@43be7284101f24299d1dea1864bd33e460875c31/site/assets/treinadores.jpg" onerror="this.onerror=null;this.src='assets/treinadores.jpg'" alt="Treinadores CFT" />
       </div>
 
       <div class="treinadores-intro">
@@ -1361,8 +1365,8 @@
 
   <!-- GALERIA EXTRA -->
   <div style="display: grid; grid-template-columns: 1fr 1fr; height: 480px; overflow: hidden;">
-    <img src="assets/photo2.jpg" alt="Grupo de atletas CFT" style="width:100%; height:100%; object-fit: cover; object-position: center top; filter: brightness(0.8) saturate(0.7);" />
-    <img src="assets/photo7.jpg" alt="Sessão CFT" style="width:100%; height:100%; object-fit: cover; object-position: center 30%; filter: brightness(0.8) saturate(0.7);" />
+    <img src="https://cdn.jsdelivr.net/gh/tiagojgcc/CFT-dashboard@43be7284101f24299d1dea1864bd33e460875c31/site/assets/photo2.jpg" onerror="this.onerror=null;this.src='assets/photo2.jpg'" alt="Grupo de atletas CFT" style="width:100%; height:100%; object-fit: cover; object-position: center top; filter: brightness(0.8) saturate(0.7);" />
+    <img src="https://cdn.jsdelivr.net/gh/tiagojgcc/CFT-dashboard@43be7284101f24299d1dea1864bd33e460875c31/site/assets/photo7.jpg" onerror="this.onerror=null;this.src='assets/photo7.jpg'" alt="Sessão CFT" style="width:100%; height:100%; object-fit: cover; object-position: center 30%; filter: brightness(0.8) saturate(0.7);" />
   </div>
 
   <!-- CONTACTO -->
