@@ -22,8 +22,9 @@
   @media print {
     body { background: #fff; padding: 0; }
     h1, .acoes, p, label { display: none; }
-    #img { max-width: 150mm; box-shadow: none; border-radius: 0; margin: 12mm auto; }
+    #img { width: 100%; max-width: none; height: auto; max-height: 275mm; object-fit: contain; box-shadow: none; border-radius: 0; margin: 0 auto; display: block; }
   }
+  @page { size: A4 portrait; margin: 10mm; }
 </style>
 </head>
 <body>

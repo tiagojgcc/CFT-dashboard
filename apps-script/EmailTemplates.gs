@@ -945,11 +945,10 @@ const EmailTemplates = {
             <div class="cft-ph" style="font-family:'Bebas Neue','Arial Narrow',Impact,sans-serif;font-size:36px;line-height:1;letter-spacing:0.01em;color:${C.offWhite};text-transform:uppercase;margin:12px 0 14px 0;">Este verão<br>vais ao <span style="color:${gold};">CFT!</span></div>
             <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:${C.offWhite};">Uma semana de basquetebol e amigos para a vida.</div>
             <div style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:${C.sand};margin-top:16px;">${this._esc(quando)} · Ponte da Barca · 5ª edição</div>
+            <div style="margin-top:22px;"><a href="${url}" style="display:block;background:${gold};color:${C.nearBlack};font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;text-align:center;padding:15px 16px;border-radius:6px;">Abrir o postal &rarr;</a></div>
+            <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.4;color:${C.sand};text-align:center;margin-top:10px;">Para imprimir, guardar ou enviar por WhatsApp</div>
           </td></tr>
         </table>
-      </div>
-      <div style="padding:16px 40px 0 40px;">
-        <a href="${url}" style="display:inline-block;background:${C.charcoal};color:${C.offWhite};font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;text-decoration:none;padding:13px 22px;border-radius:4px;">Abrir o postal para imprimir ou enviar</a>
       </div>`;
   },
 
