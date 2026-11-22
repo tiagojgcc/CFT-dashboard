@@ -936,11 +936,11 @@ const EmailTemplates = {
         ${this._para(`Se quiser fazer surpresa no Natal, este postal já tem o nome ${data.gen_atleta === 'f' ? 'da' : 'do'} ${this._esc(nome)}. Pode imprimir ou enviar por WhatsApp.`)}
       </div>
       <div style="padding:8px 40px 0 40px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.nearBlack};border-radius:10px;overflow:hidden;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.nearBlack}" style="background-color:${C.nearBlack};border-radius:10px;overflow:hidden;">
           <tr><td style="padding:0;line-height:0;font-size:0;">
             <a href="${url}" style="text-decoration:none;"><img src="${this.POSTAL_IMG_URL}" width="520" alt="Bola de basquetebol com um laço, ao lado de uma árvore de Natal" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:10px 10px 0 0;"></a>
           </td></tr>
-          <tr><td style="padding:22px 20px 24px 20px;background-color:${C.nearBlack};">
+          <tr><td bgcolor="${C.nearBlack}" style="padding:22px 20px 24px 20px;background-color:${C.nearBlack};">
             <div style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${gold};">${this._esc(nome)}, tens um presente à tua espera em julho</div>
             <div class="cft-ph" style="font-family:'Bebas Neue','Arial Narrow',Impact,sans-serif;font-size:36px;line-height:1;letter-spacing:0.01em;color:${C.offWhite};text-transform:uppercase;margin:12px 0 14px 0;">Este verão<br>vais ao <span style="color:${gold};">CFT!</span></div>
             <div style="font-family:'DM Sans',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:${C.offWhite};">Uma semana de basquetebol e amigos para a vida.</div>
