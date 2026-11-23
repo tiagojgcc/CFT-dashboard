@@ -1115,6 +1115,7 @@
     /* Table — scroll horizontal interno (não cria scroll context para o sticky vertical) */
     .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { min-width: 720px; }
+    .fin-prev-tbl, .p27-tbl { min-width: 0; }
     /* no telemóvel o toolbar empilha + sticky pode ficar desalinhado, simplifica */
     #panel-list .table-wrap thead { position: static; }
     th, td { padding: 5px 4px; font-size: 11.5px; }
@@ -1606,7 +1607,7 @@
       #panel-financas .fin-prev.open .fin-prev-toggle .arr { transform:rotate(180deg); }
       #panel-financas .fin-prev-body { display:none; padding:16px 18px 18px; }
       #panel-financas .fin-prev.open .fin-prev-body { display:block; }
-      #panel-financas .fin-prev-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:14px; }
+      #panel-financas .fin-prev-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr)); gap:14px; }
       #panel-financas .fin-prev-block { background:var(--beige-light); border-radius:6px; padding:12px 14px; }
       #panel-financas .fin-prev-block h4 { font-family:var(--font-condensed); font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--mid-gray); margin:0 0 8px; }
       #panel-financas .fin-prev-big { font-family:var(--font-display); font-size:24px; line-height:1.1; margin:2px 0; }
@@ -1616,6 +1617,8 @@
       #panel-financas .fin-prev-tbl th:first-child, #panel-financas .fin-prev-tbl td:first-child { text-align:left; }
       #panel-financas .fin-prev-tbl td { padding:5px 6px; text-align:right; font-variant-numeric:tabular-nums; border-bottom:1px solid rgba(0,0,0,.05); }
       #panel-financas .fin-prev-tbl tr.rec td { font-weight:700; color:var(--green-dark); }
+      #panel-financas .fin-prev-block { min-width:0; overflow-x:auto; }
+      @media (max-width: 820px) { #panel-financas .fin-prev-tbl { font-size:11.5px; } #panel-financas .fin-prev-tbl th, #panel-financas .fin-prev-tbl td { padding:4px 3px; } }
       /* Despesas agrupadas por categoria */
       #panel-financas .fin-group-head td { background:var(--beige-light); padding:7px 8px; border-bottom:1px solid var(--sand); }
       #panel-financas .fin-group-total td { font-weight:700; font-size:12px; padding:6px 8px; border-bottom:2px solid var(--sand); }
@@ -1811,6 +1814,8 @@
       #panel-plano2027 .p27-form input#p27-new-label { flex:1; min-width:180px; }
       #panel-plano2027 .p27-add-btn { padding:8px 16px; border:none; background:var(--green-dark); color:#fff; font-weight:600; font-size:13px; border-radius:4px; cursor:pointer; }
       #panel-plano2027 .p27-note { font-size:12px; color:var(--mid-gray); margin-top:10px; line-height:1.5; }
+      #panel-plano2027 .card { min-width:0; overflow-x:auto; }
+      @media (max-width: 640px) { #panel-plano2027 .p27-tbl { font-size:12px; } #panel-plano2027 .p27-tbl th, #panel-plano2027 .p27-tbl td { padding:6px 4px; } }
       #panel-plano2027 .p27-preco-input { width:70px; padding:5px 7px; border:1px solid var(--sand); background:var(--beige-light); border-radius:4px; font-size:13px; text-align:right; }
       @media (max-width: 640px) {
         #panel-plano2027 .p27-kpis { grid-template-columns:1fr 1fr; gap:8px; }
@@ -2304,6 +2309,8 @@ document.addEventListener('click', e => {
 const PLANO_MARK = 'plano';
 const PLANO_SEED = [{"t": "Analisar dashboard, site, questionário e números de 2026", "p": "2026-11-19", "d": "Claude", "n": "Conclusões nesta página", "f": true}, {"t": "Preços 2027: Natal 350 € até 24/12, 375 € até 31/3, 395 € depois; 315/335/355 € com desconto (10%)", "p": "2026-11-21", "d": "Tiago", "n": "Final a 20/11 (Tiago + Miguel). Externo 290. Publicado no site, regulamento, Form e Dashboard.", "f": true}, {"t": "Idades e vagas: 8 a 16 anos (nascidos 2011–2019), 60 vagas por semana", "p": "2026-11-21", "d": "Tiago", "n": "Decidido a 19/11. Grupos e quartos ficam com os treinadores", "f": true}, {"t": "Inscrições: página própria no camposft.com que envia para o Google Form", "p": "2026-11-21", "d": "Tiago", "n": "Decidido a 19/11. Dados caem no mesmo Sheet e o Dashboard não muda", "f": true}, {"t": "Dizer ao Claude onde está alojado o camposft.com e como se publica", "p": "2026-11-21", "d": "Tiago", "n": "Netlify, conta geral@camposft.com, projeto 'camposft'", "f": true}, {"t": "Form 2027 e Sheet \"CFT 2027 (Respostas)\" criados e testados", "p": "2026-11-21", "d": "Tiago + Claude", "n": "Inscrição de teste entrou no Sheet. Falta apagar a linha de teste.", "f": true}, {"t": "Criar o Sheet 2027 ligado ao Form e correr setupSheets", "p": "2026-11-24", "d": "Tiago", "n": "setupSheets e trigger instalados a 19/11", "f": true}, {"t": "Atualizar o Dashboard e o Apps Script para 2027 (preços, datas, Config, edição 5)", "p": "2026-11-24", "d": "Claude", "n": "Feito 20/11: 3 escalões (Natal 350/315 até 24/12, 375/335, 395/355), email automático, contador de clube. Tiago publicou a Nova versão.", "f": true}, {"t": "Email automático de confirmação de inscrição com valor a pagar, IBAN e próximos passos", "p": "2026-11-24", "d": "Claude", "n": "Ativo desde 20/11. Testado: email «Inscrição feita» chegou com valores, sinal e IBAN.", "f": true}, {"t": "Página de inscrição no site (design CFT) ligada ao Form 2027, com envio do comprovativo", "p": "2026-11-24", "d": "Claude", "n": "camposft.com/inscricao.html no ar; abre sozinha a 27/11 às 00:00", "f": true}, {"t": "Site camposft.com versão 2027 publicado (5ª edição, 2 semanas, 8–16 anos, 3 escalões de preço)", "p": "2026-11-25", "d": "Claude", "n": "Publicado a 19/11. FAQ ainda por fazer", "f": true}, {"t": "Email às famílias de 2026 (inscrições abertas)", "p": "2026-11-25", "d": "Tiago + Claude", "n": "Agendado no geral@ para quarta 25/11 às 10:00, 71 famílias em BCC. Texto aprovado pelo Tiago a 22/11.", "f": true}, {"t": "Confirmar pavilhão, alojamento, refeições e seguro para 11–24 jul", "p": "2026-11-26", "d": "Miguel", "n": "Pavilhão e datas (11–17 e 18–24/7) confirmados pelo Miguel a 20/11. Seguro: há apólice AP (franquia 50 €), a Cátia está a ver a nova apólice para 2027. Falta: alojamento e refeições.", "f": false}, {"t": "Decidir a campanha de Natal", "p": "2026-11-26", "d": "Tiago", "n": "Decidido 20/11: sem brinde; 350 € (315 € c/ desconto) só até 24/12; postal para os pais oferecerem; lembrete «últimos dias» a 18/12.", "f": true}, {"t": "Teste ponta a ponta: inscrição fictícia → Sheet → Dashboard → email", "p": "2026-11-26", "d": "Tiago + Claude", "n": "20/11: site → Sheet → Dashboard → email testado; linhas de teste apagadas.", "f": true}, {"t": "Mensagem de WhatsApp para os treinadores + post de abertura no Instagram", "p": "2026-11-27", "d": "Claude", "n": "Só WhatsApp aos treinadores (sem cartazes nem circulares aos clubes). Texto revisto a 22/11. Post de abertura agendado para sexta 27/11 às 21:00.", "f": true}, {"t": "Abrir inscrições", "p": "2026-11-27", "d": "Tiago", "n": "", "f": false}, {"t": "Rever finanças com os extratos bancários", "p": "2026-11-30", "d": "Tiago + Claude", "n": "Extratos jul–nov recebidos; a ser tratado na conversa «Finanças · Orçamento 2027» (orcamento-cft-2027-v2.xlsx). Falta jan–jun 2026.", "f": false}, {"t": "Rever as primeiras inscrições e pagamentos no Dashboard", "p": "2026-12-04", "d": "Tiago", "n": "", "f": false}, {"t": "Campanha de Natal: postal, posts e emails", "p": "2026-12-08", "d": "Tiago + Claude", "n": "Materiais prontos (postal, póster, post, story, textos). Falta o OK do Tiago para publicar/enviar.", "f": false}, {"t": "Ligação direta à Meta (API/MCP) para publicar, agendar e ver estatísticas", "p": "2026-12-15", "d": "Tiago + Claude", "n": "Depois de abrir as inscrições (27/11)", "f": false}, {"t": "Calendário de Instagram: 1 post por semana até julho", "p": "2027-01-15", "d": "Tiago + Claude", "n": "", "f": false}, {"t": "Ronda pelos clubes para grupos de 8+ atletas", "p": "2027-01-31", "d": "Tiago", "n": "Em 2026 os grupos chegaram só em maio–julho", "f": false}, {"t": "Lembrete do fim do desconto (email + Instagram)", "p": "2027-03-20", "d": "Claude", "n": "", "f": false}, {"t": "Rever o jantar com o fornecedor e reduzir deslocações entre espaços", "p": "2027-05-15", "d": "Miguel", "n": "", "f": false}, {"t": "Plano de treinos: noite mais intensa, torneios a meio da semana, condição física", "p": "2027-05-31", "d": "Tiago", "n": "Com o coordenador técnico", "f": false}, {"t": "Encomendar equipamentos", "p": "2027-05-31", "d": "Tiago", "n": "", "f": false}, {"t": "Aviso do prazo final de pagamento", "p": "2027-06-07", "d": "Tiago", "n": "Template já existe no Dashboard", "f": false}, {"t": "Pack de informação aos pais: horário, material, regras, contactos, quartos", "p": "2027-06-20", "d": "Claude", "n": "3 semanas antes", "f": false}, {"t": "Prazo final da 2ª prestação", "p": "2027-06-21", "d": "Tiago", "n": "Confirmado: resto até 21/6. Sem pagamento: aviso + 7 dias, depois inscrição anulada (regulamento).", "f": false}, {"t": "Questionário 2027 feito de raiz como página do camposft.com", "p": "2027-06-30", "d": "Claude", "n": "Piloto para inscrições no site em 2028", "f": false}, {"t": "Seguro, staff (treinadores + fisio) e distribuição de quartos fechados", "p": "2027-07-01", "d": "Miguel", "n": "", "f": false}, {"t": "Plano de comunicação durante o campo (stories diárias, mensagem aos pais)", "p": "2027-07-05", "d": "Tiago + Claude", "n": "", "f": false}, {"t": "Semana 1 do CFT 2027", "p": "2027-07-11", "d": "Tiago", "n": "11 a 17 de julho", "f": false}, {"t": "Semana 2 do CFT 2027", "p": "2027-07-18", "d": "Tiago", "n": "18 a 24 de julho", "f": false}, {"t": "Enviar o questionário de satisfação", "p": "2027-07-27", "d": "Tiago", "n": "", "f": false}, {"t": "Balanço financeiro e preços 2028", "p": "2027-09-15", "d": "Tiago", "n": "", "f": false}, {"t": "Construir inscrições diretas no site para 2028", "p": "2027-10-31", "d": "Claude", "n": "", "f": false}];
 let plShowAllDone = false;
+let plLoaded = false;     // true depois de dados frescos do servidor
+let plImporting = false;
 function plItems(){
   return (tarefasBackend || []).filter(t => t.id_atleta === PLANO_MARK).map(t => {
     let m = {}; try { m = JSON.parse(t.descricao || '{}') || {}; } catch (e) {}
@@ -2328,8 +2335,10 @@ function renderPlano(){
   const items = plItems();
   if (!items.length) {
     if (meta) meta.textContent = '';
-    host.innerHTML = `<div class="pl-import">O plano partilhado ainda não está no Dashboard. Carrega uma vez em baixo para trazer as ${PLANO_SEED.length} tarefas do plano (${PLANO_SEED.filter(x => x.f).length} já feitas). Depois o Tiago e o Miguel veem e marcam aqui as mesmas tarefas.
-      <div style="margin-top:12px"><button class="p27-add-btn" id="pl-import-btn" onclick="plImport()">Trazer o plano para o Dashboard</button> <span id="pl-import-st" style="font-size:12px;color:var(--mid-gray)"></span></div></div>`;
+    // Sem botão: na 1ª vez que alguém abre com sessão iniciada (dados frescos do
+    // servidor), o plano entra sozinho na Sheet. Depois já lá está para os dois.
+    host.innerHTML = `<div class="pl-import" id="pl-import-st">A carregar o plano…</div>`;
+    if (plLoaded && edAno() === '2027' && !plImporting) plImport();
     return;
   }
   const hoje = new Date().toISOString().slice(0, 10);
@@ -2376,26 +2385,30 @@ async function plAdd(ev){
   } catch (e) { toast('Não foi possível adicionar: ' + e.message, true); }
 }
 async function plImport(){
-  const btn = document.getElementById('pl-import-btn'); const st = document.getElementById('pl-import-st');
-  if (btn) btn.disabled = true;
+  if (plImporting) return;
+  plImporting = true;
+  const st = () => document.getElementById('pl-import-st');
   try {
     // Volta a ler do servidor: se o outro admin já importou, não duplica.
-    if (st) st.textContent = 'A verificar…';
     const all = await Api.getAll();
     if (all && all.tarefas) tarefasBackend = all.tarefas;
-    if (plItems().length) { renderPlano(); return; }
+    // Se já existir alguma tarefa do plano, só acrescenta as que faltam (retoma
+    // uma cópia interrompida sem duplicar).
+    const ja = new Set(plItems().map(t => t.titulo));
     let n = 0;
     for (const x of PLANO_SEED) {
+      if (ja.has(x.t)) { n++; continue; }
       const r = await Api.tarefa_create(x.t, JSON.stringify({ prazo: x.p, dono: x.d, nota: x.n }), PLANO_MARK, '');
       if (x.f && r && r.id) await Api.tarefa_resolve(r.id);
-      n++; if (st) st.textContent = `A trazer… ${n} de ${PLANO_SEED.length}`;
+      n++; if (st()) st().textContent = `A preparar o plano… ${n} de ${PLANO_SEED.length}`;
     }
     const fresh = await Api.getAll();
     if (fresh && fresh.tarefas) tarefasBackend = fresh.tarefas;
-    renderPlano(); toast('Plano trazido para o Dashboard');
+    renderPlano();
   } catch (e) {
-    if (st) st.textContent = 'Parou: ' + e.message + '. Carrega outra vez para continuar.';
-    if (btn) btn.disabled = false;
+    if (st()) st().textContent = 'Não foi possível carregar o plano agora (' + e.message + '). Tenta «Atualizar» daqui a pouco.';
+  } finally {
+    plImporting = false;
   }
 }
 
@@ -4967,6 +4980,7 @@ async function refreshNow(){
     tarefasBackend = all.tarefas || [];
     financasBackend = all.financas || { despesas: [], margemAlvo: 35 };
     finState = financasBackend;
+    plLoaded = true;
     renderAll();
   } catch (e) {
     // Resposta de outra edição (trocou-se de 2026/2027 a meio): ignora, já vem outra a caminho.
