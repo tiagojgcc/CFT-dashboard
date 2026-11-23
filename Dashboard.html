@@ -1177,7 +1177,7 @@
   .arquivo-banner { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:10px 24px; background:#d4845a; color:#fff; font-size:13.5px; }
   .arquivo-banner b { font-family:var(--font-condensed); letter-spacing:0.12em; text-transform:uppercase; }
   .arquivo-banner button { background:#fff; color:#1c1c18; border:none; border-radius:4px; padding:7px 14px; font-family:var(--font-condensed); font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; }
-  .nav-banco { margin-left:auto; align-self:center; display:flex; align-items:baseline; gap:7px; padding:6px 13px; border:1px solid var(--sand); border-radius:6px; background:var(--beige-light); cursor:pointer; white-space:nowrap; }
+  .nav-banco { display:flex; align-items:baseline; gap:7px; padding:6px 13px; border:1px solid var(--sand); border-radius:6px; background:var(--beige-light); cursor:pointer; white-space:nowrap; }
   .nav-banco:hover { border-color:var(--sand-dark); }
   .nav-banco .nb-lbl { font-family:var(--font-condensed); font-size:9.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--mid-gray); }
   .nav-banco b { font-family:var(--font-display); font-size:17px; color:var(--charcoal); font-weight:400; }
@@ -1210,7 +1210,7 @@
   .side .tab-count:not(.warn) { background:rgba(255,255,255,0.14); color:var(--off-white); }
   .si { width:16px; text-align:center; font-size:13px; opacity:0.8; flex-shrink:0; letter-spacing:0; }
   .side-foot { margin-top:auto; padding-top:16px; display:flex; flex-direction:column; gap:8px; }
-  .side .nav-banco { margin:0 !important; align-self:stretch; box-sizing:border-box; justify-content:space-between; background:rgba(255,255,255,0.06); border-color:rgba(255,255,255,0.12); }
+  .side .nav-banco { margin:0; align-self:stretch; box-sizing:border-box; justify-content:space-between; background:rgba(255,255,255,0.06); border-color:rgba(255,255,255,0.12); }
   .side .nav-banco:hover { border-color:rgba(255,255,255,0.3); }
   .side .nav-banco .nb-lbl { color:#e6dcc8; display:inline; }
   .side .nav-banco b { color:var(--off-white); }
@@ -1390,7 +1390,7 @@
 
       <div class="list-actionbar">
         <span class="sel-info" id="sel-info">0 selecionados</span>
-        <button class="compose-btn" id="compose-btn" disabled onclick="openCompose()">Enviar email</button>
+        <button class="compose-btn" id="compose-btn" disabled onclick="openCompose()" title="Cria um rascunho no Gmail para cada atleta selecionado (nada é enviado)">Criar rascunhos</button>
 </div>
     </div>
 
@@ -1747,7 +1747,7 @@
         <button class="quick-template" id="agradecimento-btn" onclick="enviarAgradecimentoBulk()" title="Cria 1 único rascunho no Gmail 'Agradecimento + questionário de satisfação' com todos os encarregados (atletas ativos com email) em BCC. O link do questionário vai sem pré-preenchimento.">🙏 Agradecimento + questionário · todos em BCC</button>
         <button class="quick-template" id="lembrete-questionario-btn" onclick="enviarLembreteQuestionarioBulk()" title="Cria 1 único rascunho no Gmail 'Lembrete questionário' em BCC, excluindo quem se identificou na resposta. Quem respondeu em anónimo volta a receber — o email pede desculpa e diz para não responder outra vez.">🔁 Lembrete questionário · quem não se identificou</button>
         </div>
-        <div class="com-note">Cada botão cria um rascunho no Gmail de geral@camposft.com e pede confirmação antes. Nada é enviado sem abrires o rascunho. Para escrever a famílias escolhidas, seleciona-as em Inscrições e usa «Enviar email».</div>
+        <div class="com-note">Cada botão cria um rascunho no Gmail de geral@camposft.com e pede confirmação antes. Nada é enviado sem abrires o rascunho. Para escrever a famílias escolhidas, seleciona-as em Inscrições e usa «Criar rascunhos».</div>
       </div>
       <div class="card">
         <div class="card-head"><div class="card-title">Últimos emails preparados</div><div class="card-meta" id="com-meta">—</div></div>
@@ -1886,7 +1886,7 @@
       <label><input type="checkbox" value="2"> Semana 2</label>
     </div>
     <div class="field-label">Motivo da alteração (obrigatório, ≥10 caracteres)</div>
-    <textarea id="sem-motivo" placeholder="Ex: encarregado pediu para trocar semana 2 por semana 3 por motivos familiares." oninput="checkSemBtn()"></textarea>
+    <textarea id="sem-motivo" placeholder="Ex: encarregado pediu para trocar a semana 1 pela semana 2 por motivos familiares." oninput="checkSemBtn()"></textarea>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeSem()">Cancelar</button>
       <button class="btn-confirm" id="sem-confirm-btn" onclick="confirmSem()" disabled>Guardar</button>
@@ -1978,7 +1978,7 @@
     <div class="modal-title">Marcar como resolvido</div>
     <div class="modal-sub" id="modal-sub">—</div>
     <div class="field-label">Nota (obrigatória)</div>
-    <textarea id="modal-nota" placeholder="Ex: encarregado enviou comprovativo por whatsapp. valor 330€ confirmado." oninput="checkModalBtn()"></textarea>
+    <textarea id="modal-nota" placeholder="Ex: encarregado enviou comprovativo por WhatsApp. Valor 350 € confirmado." oninput="checkModalBtn()"></textarea>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-confirm" id="modal-confirm-btn" onclick="confirmResolve()" disabled>Confirmar</button>
@@ -2224,7 +2224,18 @@ function toast(msg, isError){
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => showTab(t.dataset.panel)));
 function openSide(){ document.body.classList.add('side-open'); }
 function closeSide(){ document.body.classList.remove('side-open'); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSide(); });
+// Esc fecha o menu do telemóvel e qualquer janela aberta; clicar fora da janela também fecha.
+const MODAL_CLOSE = { 'modal-overlay': () => closeModal(), 'compose-overlay': () => closeCompose(), 'sem-overlay': () => closeSem(),
+  'opcao-overlay': () => closeOpcao(), 'del-overlay': () => closeDel(), 'atleta-detail-overlay': () => closeAtletaDetail(), 'task-overlay': () => closeNewTask() };
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  closeSide();
+  document.querySelectorAll('.modal-overlay.open').forEach(o => { const f = MODAL_CLOSE[o.id]; if (f) f(); else o.classList.remove('open'); });
+});
+document.addEventListener('click', e => {
+  const o = e.target;
+  if (o && o.classList && o.classList.contains('modal-overlay') && o.classList.contains('open') && MODAL_CLOSE[o.id] && o.id !== 'modal-overlay' && o.id !== 'compose-overlay') MODAL_CLOSE[o.id]();
+});
 function showTab(id){
   closeSide();
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.panel === id));
@@ -2483,7 +2494,7 @@ function renderAlertStrip(){
     <div class="alert-strip">
       <div class="alert-strip-l">⚠ Atenção</div>
       <div class="alert-strip-msg"><b>${total}</b> inscritos com pagamento problemático ou em falta. ${errado.length > 0 ? errado.length + ' valores incorretos · ' : ''}${semPag.length > 0 ? semPag.length + ' sem comprovativo' : ''}.</div>
-      <button class="alert-strip-btn" onclick="showTab('list'); quickFilter('problema');">Ver na Lista →</button>
+      <button class="alert-strip-btn" onclick="showTab('list'); quickFilter('problema');">Ver em Inscrições →</button>
     </div>
   `;
 }
@@ -5253,7 +5264,7 @@ function renderActionsMini(){
     rows.push(`<div class="actions-mini-row">
       <span class="am-icon warn">!</span>
       <span class="am-text">Pagamento em falta · <b>${reenviar.length}</b> atleta${reenviar.length === 1 ? '' : 's'} sem contacto há &gt; 7 dias</span>
-      <button class="am-cta" onclick="showTab('list'); quickFilter('problema');">ver na lista</button>
+      <button class="am-cta" onclick="showTab('list'); quickFilter('problema');">ver inscrições</button>
     </div>`);
   }
 
@@ -5263,7 +5274,7 @@ function renderActionsMini(){
     rows.push(`<div class="actions-mini-row">
       <span class="am-icon">⚠</span>
       <span class="am-text"><b>${porConfirmar.length}</b> pagamento${porConfirmar.length === 1 ? '' : 's'} por confirmar manualmente</span>
-      <button class="am-cta" onclick="showTab('list');">ver na lista</button>
+      <button class="am-cta" onclick="showTab('list');">ver inscrições</button>
     </div>`);
   }
 
@@ -5715,7 +5726,7 @@ async function renderSatisfacao(force){
   if (sub) sub.textContent = rows.length + ' resposta' + (rows.length === 1 ? '' : 's');
   if (rows.length === 0) {
     body.innerHTML = `<div class="sf-empty">Ainda sem respostas ao questionário.<br>
-      <span style="text-transform:none;letter-spacing:0;">Envia o email «Agradecimento + questionário» na Lista — as respostas aparecem aqui automaticamente.</span></div>`;
+      <span style="text-transform:none;letter-spacing:0;">Envia o email «Agradecimento + questionário» em Comunicação — as respostas aparecem aqui automaticamente.</span></div>`;
     return;
   }
   const S = sfStats(rows);
@@ -6543,7 +6554,8 @@ function setEdicao(ano){
   if (be) be.textContent = ano === '2026' ? '4ª edição · 2026 · arquivo' : '5ª edição · 2027 · em preparação';
   showTab('overview');
 }
-function goBancoReal(){ setEdicao('2027'); }
+// O chip «Conta» abre o Plano e prazos, onde está o saldo editável.
+function goBancoReal(){ setEdicao('2027'); showTab('plano2027'); closeSide(); }
 
 // ============ BANCO · saldo real partilhado (chip no nav + Plano 2027) ============
 // Fonte: extrato NovoBanco (APDFE). Atualizar à mão quando houver movimentos.
