@@ -710,6 +710,8 @@
   .ba-num { font-family: var(--font-condensed); font-weight: 700; color: var(--mid-gray); text-align: center; font-size: 12px; }
   .ba-data { font-family: var(--font-condensed); color: var(--mid-gray); font-size: 11.5px; }
   .ba-valor { font-family: var(--font-display); font-size: 18px; color: var(--green-dark); }
+  .ba-valor .pago-edit { border:1px solid #d9c9a8; border-radius:5px; background:#fff; padding:5px 7px; font-size:15px; text-align:right; }
+  .ba-valor .pago-edit:focus { outline:2px solid var(--green-bright); }
   .ba-links { display: inline-flex; gap: 6px; flex-wrap: wrap; }
   .ba-action { display: inline-flex; gap: 6px; align-items: center; }
   /* ✓✓ duplo no atleta da Lista quando bank_confirmed */
@@ -2400,7 +2402,10 @@ function renderComunicacao(){
     const a = String(h.depois || ''), b = String(h.motivo || '');
     const tpl = TEMPLATE_LABELS[a] ? a : (TEMPLATE_LABELS[b] ? b : '');
     const assunto = tpl === a ? b : a;
-    ev.push({ ts: h.timestamp, label: TEMPLATE_LABELS[tpl] || (tpl || 'Email'), assunto, quem: h.atleta || '', bulk: h.tipo !== 'email_rascunho' });
+    const auto = h.utilizador === 'site';
+    let quem = h.atleta || '';
+    if (auto && (!quem || quem === '(múltiplos)')) { const m = assunto.split('·'); quem = m.length > 1 ? m[m.length - 1].trim() : ''; }
+    ev.push({ ts: h.timestamp, label: auto ? 'Email automático do site' : (TEMPLATE_LABELS[tpl] || (tpl || 'Email')), assunto, quem, bulk: h.tipo !== 'email_rascunho' && !auto, auto });
   });
   ev.sort((x, y) => new Date(y.ts) - new Date(x.ts));
   const meta = document.getElementById('com-meta');
@@ -2411,7 +2416,7 @@ function renderComunicacao(){
     const when = isNaN(d) ? '' : d.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' }).replace('.', '');
     return `<div class="com-row"><div class="com-when">${when}</div>
       <div class="com-what"><b>${escHtml(e.label)}</b>${e.quem && e.quem !== '(múltiplos)' ? ' · ' + escHtml(e.quem) : ''}<small>${escHtml(e.assunto)}</small></div>
-      <span class="com-tag">${e.bulk ? 'vários' : '1 família'}</span></div>`;
+      <span class="com-tag">${e.auto ? 'enviado' : (e.bulk ? 'vários' : '1 família')}</span></div>`;
   }).join('');
 }
 
@@ -4198,19 +4203,21 @@ function renderBanco(){
   const filter = filterEl ? filterEl.value : 'pendente';
   // Lista os atletas com pagamento > 0 (faz sentido confirmar quem pagou)
   const all = (data || []).filter(r => Number(r.val_pago) > 0);
+  // Comprovativo enviado mas valor ainda não lido (leitura automática falhou ou ainda não correu)
+  const porLer = (data || []).filter(r => r.ativo && r.comprovativo_url && !(Number(r.val_pago) > 0) && !r.bank_confirmed_em);
   let filtered;
   if (filter === 'confirmado') filtered = all.filter(r => r.bank_confirmed_em);
-  else if (filter === 'todos') filtered = all;
-  else filtered = all.filter(r => !r.bank_confirmed_em);  // pendente
+  else if (filter === 'todos') filtered = porLer.concat(all);
+  else filtered = porLer.concat(all.filter(r => !r.bank_confirmed_em));  // pendente
   // Sort por nº de inscrição (= ordem cronológica)
-  filtered.sort((a, b) => (a.num || 9999) - (b.num || 9999));
+  filtered.sort((a, b) => ((Number(a.val_pago) > 0) - (Number(b.val_pago) > 0)) || (a.num || 9999) - (b.num || 9999));
   // Counters
   const confirmados = all.filter(r => r.bank_confirmed_em).length;
-  const pendentes   = all.length - confirmados;
+  const pendentes   = all.length - confirmados + porLer.length;
   const tcBanco = document.getElementById('tc-banco');
   if (tcBanco) tcBanco.textContent = pendentes;
   const sub = document.getElementById('banco-summary');
-  if (sub) sub.textContent = `${pendentes} por confirmar · ${confirmados} confirmados em conta · de ${all.length} atletas com pagamento`;
+  if (sub) sub.textContent = `${pendentes} por confirmar · ${confirmados} confirmados em conta · de ${all.length + porLer.length} atletas com pagamento`;
   const host = document.getElementById('banco-items');
   if (!host) return;
   if (filtered.length === 0) {
@@ -4234,7 +4241,11 @@ function bancoRenderAtleta(r){
     ? `<a href="${escAttr(ext.url)}" target="_blank" rel="noopener" class="trab-btn" title="Abrir extrato bancário do mês de inscrição">🗂 ${escHtml(ext.name)}${ext.hint ? ' (' + ext.hint + ')' : ''}</a>`
     : '<span style="color:var(--mid-gray);font-size:11px;">sem extrato</span>';
   const tsLabel = r.ts ? new Date(r.ts).toLocaleDateString('pt-PT', { day:'2-digit', month:'2-digit', year:'2-digit' }) : '—';
-  const action = isConf
+  const semValor = !(Number(r.val_pago) > 0);
+  const action = semValor
+    ? `<button class="trab-btn" onclick="ocrComprovativo('${r.id}')" title="Tentar ler outra vez o valor do comprovativo">🔍 Ler</button>
+       <span style="color:var(--mid-gray);font-size:10.5px;">ou escreve o valor ao lado</span>`
+    : isConf
     ? `<button class="trab-btn" onclick="bancoUnconfirmAtleta('${r.id}')">↺ Desfazer</button>
        <span style="color:var(--mid-gray);font-size:10.5px;">por ${escHtml(r.bank_confirmed_por || '')} · ${fmtRelativeShort(r.bank_confirmed_em)}</span>`
     : `<button class="trab-btn ok" onclick="bancoConfirmAtleta('${r.id}')">✓ Confirmar entrada</button>`;
@@ -4242,7 +4253,9 @@ function bancoRenderAtleta(r){
     <span class="ba-num">${r.num != null ? String(r.num).padStart(2,'0') : '—'}</span>
     <span class="ba-data">${tsLabel}</span>
     <span class="ba-nome"><b>${escHtml(r.nome)}</b><br><small style="color:var(--mid-gray)">${escHtml(r.clube || '')}</small></span>
-    <span class="ba-valor">${r.val_pago}€</span>
+    <span class="ba-valor">${semValor
+      ? `<input class="pago-edit" type="number" min="0" step="1" placeholder="valor?" style="width:76px" title="O valor do comprovativo não foi lido sozinho. Abre o comprovativo e escreve o valor." onblur="savePagamento('${r.id}', this.value, 0)" onkeydown="if(event.key==='Enter')this.blur();"><br><small style="font-family:var(--font-body);font-size:10.5px;color:#b5651d">valor por ler</small>`
+      : r.val_pago + '€'}</span>
     <span class="ba-links">${compLink} ${extLink}</span>
     <span class="ba-action">${action}</span>
   </div>`;
@@ -5256,10 +5269,21 @@ function renderActionsMini(){
   // Linha 2: Pagamento em falta · sem contacto há > 7 dias
   const reenviar = data.filter(r => {
     if (!r.ativo) return false;
+    if (r.comprovativo_url && !(Number(r.val_pago) > 0)) return false;  // vai para «comprovativos por ler»
+    const idade = daysSince(r.ts);
+    if (idade !== null && idade < 7) return false;
     const st = paymentStatus(r).st;
     if (!['pendente','parcial','problema'].includes(st)) return false;
     return !recentlySentKind(r.id, 'problema', 7);
   });
+  const porLer = data.filter(r => r.ativo && r.comprovativo_url && !(Number(r.val_pago) > 0) && !r.bank_confirmed_em);
+  if (porLer.length > 0) {
+    rows.push(`<div class="actions-mini-row">
+      <span class="am-icon warn">€</span>
+      <span class="am-text"><b>${porLer.length}</b> comprovativo${porLer.length === 1 ? '' : 's'} sem valor lido · ver e escrever o valor</span>
+      <button class="am-cta" onclick="showTab('banco');">ver pagamentos</button>
+    </div>`);
+  }
   if (reenviar.length > 0) {
     rows.push(`<div class="actions-mini-row">
       <span class="am-icon warn">!</span>
