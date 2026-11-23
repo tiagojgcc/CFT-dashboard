@@ -56,8 +56,6 @@
   }
 
   /* ============ TABS ============ */
-  .nav { background: var(--white); border-bottom: 1px solid var(--sand); }
-  .nav-inner { max-width: 1480px; margin: 0 auto; padding: 0 24px; display: flex; gap: 0; align-items: stretch; }
   .tab {
     padding: 11px 18px 9px; font-family: var(--font-condensed); font-size: 12px; font-weight: 600;
     letter-spacing: 0.14em; text-transform: uppercase; color: var(--mid-gray);
@@ -599,21 +597,6 @@
   .donut-legend-row .lbl { flex: none; }
   .donut-legend-row .num { font-family: var(--font-condensed); font-weight: 700; color: var(--charcoal); margin-left: 4px; font-size: 13px; }
   /* Nav "⋯" dropdown menu */
-  .nav-more { position: relative; margin-left: auto; }
-  .nav-more-toggle { font-size: 18px; padding: 8px 14px !important; }
-  .nav-more-menu {
-    position: absolute; top: 100%; right: 0; background: var(--charcoal); color: var(--off-white);
-    min-width: 180px; border-radius: 0 0 6px 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-    display: none; z-index: 20; overflow: hidden;
-  }
-  .nav-more-menu.open { display: block; }
-  .more-item {
-    padding: 10px 14px; font-family: var(--font-condensed); font-size: 12px; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.08);
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .more-item:last-child { border-bottom: none; }
-  .more-item:hover { background: rgba(255,255,255,0.08); }
   /* Trabalho grid (alertas + tarefas lado-a-lado) */
   .trabalho-toolbar {
     display: flex; align-items: center; gap: 10px; padding: 10px 0;
@@ -719,6 +702,11 @@
     gap: 12px; align-items: center;
   }
   .banco-atleta-row.confirmado { background: #f1f8f1; border-color: var(--green-bright); }
+  @media (max-width: 720px) {
+    .banco-atleta-row { grid-template-columns: 28px minmax(0,1fr) auto; gap: 6px 10px; }
+    .banco-atleta-row .ba-data { display: none; }
+    .banco-atleta-row .ba-links, .banco-atleta-row .ba-action { grid-column: 2 / -1; flex-wrap: wrap; }
+  }
   .ba-num { font-family: var(--font-condensed); font-weight: 700; color: var(--mid-gray); text-align: center; font-size: 12px; }
   .ba-data { font-family: var(--font-condensed); color: var(--mid-gray); font-size: 11.5px; }
   .ba-valor { font-family: var(--font-display); font-size: 18px; color: var(--green-dark); }
@@ -1080,7 +1068,6 @@
   /* ============ MOBILE (tablet+phone) ============ */
   @media (max-width: 820px) {
     .container { padding: 10px 10px 40px; }
-    .nav-inner { padding: 0 12px; }
     .kpi-row { grid-template-columns: 1fr; }
     .grid-2, .grid-3 { grid-template-columns: 1fr; }
     /* Appbar: o flex container é .appbar-inner (não .appbar). Em mobile
@@ -1105,8 +1092,6 @@
     .live-meta { font-size: 9.5px; }       /* mantém o "sincronizado" mas mais pequeno */
     .ab-refresh { font-size: 11px; padding: 6px 10px; }
     /* Navegação: scroll horizontal */
-    .nav-tabs { overflow-x: auto; flex-wrap: nowrap; }
-    .nav-tab { white-space: nowrap; flex-shrink: 0; }
     /* Lista — toolbar empilhada */
     .list-toolbar { padding: 8px; gap: 6px; }
     .list-toolbar input, .list-toolbar select { font-size: 12px; height: 34px; flex: 1 1 100%; min-width: 0; }
@@ -1185,16 +1170,10 @@
 <!-- ================ TABS ================ -->
 <style>
   /* Seletor de edição (2026 arquivo · 2027 atual) + chip do banco */
-  .nav-editions { display:flex; align-items:center; gap:5px; margin-right:16px; padding:8px 0; }
-  .ed-pill { border:1px solid var(--sand); background:var(--beige-light); color:var(--mid-gray); font-family:var(--font-condensed); font-size:11.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; padding:6px 13px; border-radius:14px; cursor:pointer; }
-  .ed-pill.active { background:var(--charcoal); color:var(--off-white); border-color:var(--charcoal); }
-  .ed-pill .ed-tag { font-size:9px; letter-spacing:0.1em; opacity:0.65; margin-left:4px; }
   body[data-edicao="2027"] .ed-26 { display:none !important; }
   body[data-edicao="2026"] .ed-27 { display:none !important; }
   .ed-arquivo-link { margin-left:auto; margin-right:12px; align-self:center; background:none; border:none; padding:6px 4px; font-family:var(--font-condensed); font-size:10.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--mid-gray); opacity:0.7; cursor:pointer; white-space:nowrap; }
   .ed-arquivo-link:hover { opacity:1; text-decoration:underline; }
-  .ed-arquivo-link + .nav-banco { margin-left:0; }
-  body[data-edicao="2026"] .nav-banco { margin-left:auto; }
   .arquivo-banner { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:10px 24px; background:#d4845a; color:#fff; font-size:13.5px; }
   .arquivo-banner b { font-family:var(--font-condensed); letter-spacing:0.12em; text-transform:uppercase; }
   .arquivo-banner button { background:#fff; color:#1c1c18; border:none; border-radius:4px; padding:7px 14px; font-family:var(--font-condensed); font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; }
@@ -1219,9 +1198,9 @@
   body[data-edicao="2026"] .side-ed-lbl { color:#e9a27c; }
   .side-close { display:none; background:none; border:none; color:var(--sand); font-size:18px; cursor:pointer; padding:4px 6px; }
   .side-nav { display:flex; flex-direction:column; gap:2px; }
-  .side-sec { font-family:var(--font-condensed); font-size:9.5px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--mid-gray); padding:16px 10px 6px; }
+  .side-sec { font-family:var(--font-condensed); font-size:10px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:#a99c84; padding:18px 10px 6px; margin-top:6px; border-top:1px solid rgba(255,255,255,0.08); }
   .side .tab {
-    border-bottom:none; border-radius:6px; padding:9px 10px; color:var(--sand);
+    border-bottom:none; border-radius:6px; padding:9px 10px; color:#e6dcc8;
     font-size:12.5px; letter-spacing:0.1em; gap:10px;
   }
   .side .tab:hover { background:rgba(255,255,255,0.06); color:var(--off-white); }
@@ -1233,21 +1212,23 @@
   .side-foot { margin-top:auto; padding-top:16px; display:flex; flex-direction:column; gap:8px; }
   .side .nav-banco { margin:0 !important; align-self:stretch; box-sizing:border-box; justify-content:space-between; background:rgba(255,255,255,0.06); border-color:rgba(255,255,255,0.12); }
   .side .nav-banco:hover { border-color:rgba(255,255,255,0.3); }
-  .side .nav-banco .nb-lbl { color:var(--sand); display:inline; }
+  .side .nav-banco .nb-lbl { color:#e6dcc8; display:inline; }
   .side .nav-banco b { color:var(--off-white); }
-  .side .ed-arquivo-link { margin:0; align-self:stretch; text-align:center; border:1px dashed rgba(255,255,255,0.25); border-radius:6px; padding:8px; color:var(--sand); opacity:1; }
-  .side .ed-arquivo-link:hover { color:var(--off-white); text-decoration:none; border-color:rgba(255,255,255,0.5); }
+  .side .ed-arquivo-link { margin:0; align-self:stretch; text-align:center; border:1px solid rgba(255,255,255,0.35); border-radius:6px; padding:9px 8px; color:var(--off-white); opacity:1; background:transparent; }
+  .side .ed-arquivo-link:hover { text-decoration:none; background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.6); }
   body[data-edicao="2026"] .side .ed-arquivo-link { border-style:solid; border-color:#d4845a; color:#fff; background:#d4845a; }
   .side-scrim, .tabbar { display:none; }
   .container { max-width:1320px; }
-  @media (max-width: 820px) {
+  /* Abaixo de 1100px a barra lateral passa a menu (Mais) + barra de baixo:
+     com a barra fixa, a tabela das Inscrições deixava de caber. */
+  @media (max-width: 1100px) {
     .shell { display:block; }
     .side {
       position:fixed; top:0; left:0; bottom:0; height:auto; z-index:200; width:270px; max-width:85vw;
-      transform:translateX(-100%); transition:transform .2s ease; box-shadow:0 0 40px rgba(0,0,0,0.4);
+      transform:translateX(-100%); transition:transform .2s ease, visibility .2s; visibility:hidden;
       padding-bottom:calc(14px + env(safe-area-inset-bottom));
     }
-    body.side-open .side { transform:none; }
+    body.side-open .side { transform:none; visibility:visible; box-shadow:0 0 40px rgba(0,0,0,0.4); }
     body.side-open .side-scrim { display:block; position:fixed; inset:0; z-index:190; background:rgba(0,0,0,0.4); }
     .side-close { display:block; }
     .side .tab { padding:13px 12px; font-size:13.5px; }
@@ -1258,7 +1239,7 @@
     }
     .tabbar .tab, .tabbar-more {
       flex:1; flex-direction:column; gap:2px; padding:7px 2px; border:none; border-radius:6px; background:none;
-      color:var(--sand); font-family:var(--font-condensed); font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer;
+      color:#e6dcc8; font-family:var(--font-condensed); font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer;
       display:flex; align-items:center;
     }
     .tabbar .si { font-size:17px; width:auto; opacity:1; }
@@ -1268,18 +1249,6 @@
     .toast { bottom:calc(76px + env(safe-area-inset-bottom)); }
     .demo-toggle { bottom:calc(72px + env(safe-area-inset-bottom)); }
     .demo-panel { bottom:calc(108px + env(safe-area-inset-bottom)); }
-  }
-  @media (max-width: 720px) {
-    .nav-banco .nb-lbl { display:none; }
-    .nav-editions { margin-right:8px; }
-    /* Mobile: a barra desliza lateralmente em vez de cortar o último item
-       (chip da conta). Scrollbar escondida — arrasta-se com o dedo. */
-    .nav-inner { overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:0 14px; }
-    .nav-inner::-webkit-scrollbar { display:none; }
-    .nav-inner > * { flex-shrink:0; }
-    .tab { padding:11px 12px 9px; }
-    /* itens do menu ⋯ maiores para dedo */
-    .nav-more-menu .more-item { padding:15px 18px; font-size:13.5px; }
   }
 </style>
 <div class="shell">
@@ -1405,7 +1374,7 @@
   <!-- ============ LIST ============ -->
   <div class="panel" id="panel-list">
     <div class="panel-head">
-      <div class="panel-title">Lista</div>
+      <div class="panel-title">Inscrições</div>
       <div class="panel-sub" id="list-sub">—</div>
     </div>
 
@@ -1532,13 +1501,13 @@
   <!-- ============ ENTREGÁVEIS (PDFs para treinadores) ============ -->
   <div class="panel" id="panel-entregaveis">
     <div class="panel-head">
-      <div class="panel-title">Entregáveis</div>
+      <div class="panel-title">Logística</div>
       <div class="panel-sub">Listas formatadas para imprimir / dar aos treinadores</div>
     </div>
     <div style="margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--mid-gray);">Equipa técnica (completo)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
-      <button class="btn-confirm" style="padding:14px;" onclick="openEntregavel(1)">📄 Entregável Sem 1<br><small style="font-weight:normal;opacity:0.85;">12—18 jul</small></button>
-      <button class="btn-confirm" style="padding:14px;" onclick="openEntregavel(2)">📄 Entregável Sem 2<br><small style="font-weight:normal;opacity:0.85;">19—25 jul</small></button>
+      <button class="btn-confirm" style="padding:14px;" onclick="openEntregavel(1)">📄 Entregável Sem 1<br><small style="font-weight:normal;opacity:0.85;" class="ed-sem1">11—17 jul</small></button>
+      <button class="btn-confirm" style="padding:14px;" onclick="openEntregavel(2)">📄 Entregável Sem 2<br><small style="font-weight:normal;opacity:0.85;" class="ed-sem2">18—24 jul</small></button>
     </div>
     <div style="margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--mid-gray);">Sérgio (treinador principal)</div>
     <div style="margin-bottom:16px;">
@@ -1546,8 +1515,8 @@
     </div>
     <div style="margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--mid-gray);">Seguradora (nome, CC, NIF, nascimento)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
-      <button class="btn-confirm" style="padding:14px;" onclick="openSeguro(1)">🛡 Seguro Sem 1<br><small style="font-weight:normal;opacity:0.85;">cobertura 12—18 jul</small></button>
-      <button class="btn-confirm" style="padding:14px;" onclick="openSeguro(2)">🛡 Seguro Sem 2<br><small style="font-weight:normal;opacity:0.85;">cobertura 19—25 jul</small></button>
+      <button class="btn-confirm" style="padding:14px;" onclick="openSeguro(1)">🛡 Seguro Sem 1<br><small style="font-weight:normal;opacity:0.85;">cobertura <span class="ed-sem1">11—17 jul</span></small></button>
+      <button class="btn-confirm" style="padding:14px;" onclick="openSeguro(2)">🛡 Seguro Sem 2<br><small style="font-weight:normal;opacity:0.85;">cobertura <span class="ed-sem2">18—24 jul</span></small></button>
     </div>
     <div class="card" style="padding:18px;">
       <div class="card-title" style="margin-bottom:10px;">Camisolas — pedido por tamanho</div>
@@ -1562,7 +1531,7 @@
   <!-- ============ BANCO (confirmação manual de entradas em conta) ============ -->
   <div class="panel" id="panel-banco">
     <div class="panel-head">
-      <div class="panel-title">Confirmação em conta</div>
+      <div class="panel-title">Pagamentos</div>
       <div class="banco-toolbar">
         <select id="banco-filter" class="search" style="max-width:220px;">
           <option value="pendente">Por confirmar</option>
@@ -1832,9 +1801,16 @@
 
     <div class="card pl-card" id="pl-card">
       <style>
-        #pl-card .pl-cols { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:18px; }
-        #pl-card .pl-col-h { font-family:var(--font-condensed); font-size:11px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--mid-gray); padding:0 2px 8px; border-bottom:2px solid var(--sand); display:flex; justify-content:space-between; }
-        #pl-card .pl-col-h.done { border-bottom-color:var(--green-bright); }
+        #pl-card .pl-cols { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:16px; align-items:start; }
+        #pl-card .pl-col { border:1px solid var(--sand); border-radius:8px; background:var(--white); overflow:hidden; }
+        #pl-card .pl-col.done { background:#f6faf1; border-color:#b9d8a0; }
+        #pl-card .pl-list { padding:2px 12px; }
+        #pl-card .pl-flash { animation:plFlash 6s ease-out; }
+        @keyframes plFlash { 0%,40% { background:#fff1c2; box-shadow:inset 3px 0 0 #e0a800; } 100% { background:transparent; box-shadow:none; } }
+        #pl-card .pl-col-h { font-family:var(--font-condensed); font-size:13px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--off-white); background:var(--charcoal); padding:10px 14px; display:flex; justify-content:space-between; align-items:center; }
+        #pl-card .pl-col-h b { background:rgba(255,255,255,0.16); border-radius:999px; padding:1px 9px; font-size:12px; }
+        #pl-card .pl-col.done .pl-col-h { background:var(--green-dark); }
+        #pl-card .pl-item:last-child { border-bottom:none; }
         #pl-card .pl-item { display:grid; grid-template-columns:64px minmax(0,1fr) auto; gap:10px; align-items:start; padding:9px 2px; border-bottom:1px solid var(--beige-light); }
         #pl-card .pl-date { font-family:var(--font-condensed); font-size:12px; font-weight:700; letter-spacing:0.04em; color:var(--green-dark); padding-top:2px; }
         #pl-card .pl-item.late .pl-date { color:#c0392b; }
@@ -1846,11 +1822,11 @@
         #pl-card .pl-btn { border:1px solid var(--sand); background:var(--white); border-radius:4px; padding:5px 9px; font-size:12px; cursor:pointer; white-space:nowrap; font-family:var(--font-condensed); font-weight:700; letter-spacing:0.06em; }
         #pl-card .pl-btn:hover { border-color:var(--green-dark); color:var(--green-dark); }
         #pl-card .pl-btn:disabled { opacity:.5; cursor:wait; }
-        #pl-card .pl-form { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+        #pl-card .pl-form { display:flex; gap:8px; flex-wrap:wrap; padding:12px; border-top:1px solid var(--sand); background:var(--beige-light); }
         #pl-card .pl-form input, #pl-card .pl-form select { padding:8px 10px; border:1px solid var(--sand); background:var(--beige-light); font-size:13px; border-radius:4px; font-family:var(--font-body); }
         #pl-card .pl-form #pl-new-t { flex:1; min-width:200px; }
         #pl-card .pl-import { padding:18px; background:var(--beige-light); border-radius:6px; font-size:13.5px; line-height:1.5; }
-        #pl-card .pl-more { background:none; border:none; color:var(--mid-gray); font-size:12px; cursor:pointer; padding:10px 2px; text-decoration:underline; }
+        #pl-card .pl-more { background:none; border:none; color:var(--green-dark); font-size:12.5px; cursor:pointer; padding:10px 12px 12px; text-decoration:underline; }
         @media (max-width: 820px) { #pl-card .pl-cols { grid-template-columns:1fr; } }
       </style>
       <div class="card-head">
@@ -2043,7 +2019,7 @@ const VAGAS_SEM = 60;
 const EDICOES = {
   '2026': { ano: '2026', inicio: '2026-07-12', sem2: '2026-07-19', prazo: '2026-06-21', cutoff: '2026-03-31', abertura: '2025-11-01', pagar: '2026-07-25', agradec: '2026-07-26',
             semanas: { 1: 'Domingo 12 a sábado 18 de julho de 2026', 2: 'Domingo 19 a sábado 25 de julho de 2026' } },
-  '2027': { ano: '2027', inicio: '2027-07-11', sem2: '2027-07-18', prazo: '2027-06-21', cutoff: '2027-03-31', abertura: '2026-11-27', pagar: '2027-07-31', agradec: '2027-08-01',
+  '2027': { ano: '2027', inicio: '2027-07-11', sem2: '2027-07-18', prazo: '2027-06-21', cutoff: '2027-03-31', abertura: '2026-11-25', pagar: '2027-07-31', agradec: '2027-08-01',
             semanas: { 1: 'Domingo 11 a sábado 17 de julho de 2027', 2: 'Domingo 18 a sábado 24 de julho de 2027' } }
 };
 function edCfg(){ return EDICOES[(document.body && document.body.dataset.edicao) === '2026' ? '2026' : '2027']; }
@@ -2265,65 +2241,41 @@ function showTab(id){
   if (id === 'comunicacao') { renderComunicacao(); }
   if (id === 'satisfacao') { renderSatisfacao(); }
 }
-// Abre/fecha o menu "⋯". Posicionado como fixed (por cima de tudo): a
-// .nav-inner tem overflow-x:auto em mobile, o que cortaria um dropdown
-// posicionado com absolute dentro dela.
-function toggleMoreMenu(){
-  const menu = document.getElementById('nav-more-menu');
-  const toggle = document.querySelector('.nav-more-toggle');
-  if (!menu) return;
-  const willOpen = !menu.classList.contains('open');
-  if (willOpen) {
-    menu.style.position = 'fixed';
-    menu.style.zIndex = '9999';
-    menu.style.borderRadius = '8px';
-    if (window.innerWidth <= 720) {
-      // Mobile: folha centrada no ecrã — imune a scroll/zoom/overflow da barra.
-      menu.style.top = '110px';
-      menu.style.left = '16px';
-      menu.style.right = '16px';
-      menu.style.boxShadow = '0 12px 40px rgba(0,0,0,0.45)';
-    } else if (toggle) {
-      const r = toggle.getBoundingClientRect();
-      menu.style.top = Math.round(r.bottom) + 'px';
-      menu.style.right = Math.max(8, Math.round(window.innerWidth - r.right)) + 'px';
-      menu.style.left = 'auto';
-      menu.style.boxShadow = '';
-    }
-  }
-  menu.classList.toggle('open');
-}
-// Fecha o menu "⋯" se clicar fora
-document.addEventListener('click', e => {
-  const menu = document.getElementById('nav-more-menu');
-  const toggle = document.querySelector('.nav-more-toggle');
-  if (menu && menu.classList.contains('open') && !menu.contains(e.target) && e.target !== toggle) {
-    menu.classList.remove('open');
-  }
-});
 
 
 // ============ PLANO PARTILHADO (Tiago + Miguel) ============
 // Guardado na aba "Tarefas" da Sheet da edição, marcado com id_atleta='plano'.
 // A descrição leva {prazo, dono, nota} em JSON. 2 colunas: por fazer / feito.
 const PLANO_MARK = 'plano';
-const PLANO_SEED = [{"t": "Analisar dashboard, site, questionário e números de 2026", "p": "2026-11-19", "d": "Claude", "n": "Conclusões nesta página", "f": true}, {"t": "Preços 2027: Natal 350 € até 24/12, 375 € até 31/3, 395 € depois; 315/335/355 € com desconto (10%)", "p": "2026-11-21", "d": "Tiago", "n": "Final a 20/11 (Tiago + Miguel). Externo 290. Publicado no site, regulamento, Form e Dashboard.", "f": true}, {"t": "Idades e vagas: 8 a 16 anos (nascidos 2011–2019), 60 vagas por semana", "p": "2026-11-21", "d": "Tiago", "n": "Decidido a 19/11. Grupos e quartos ficam com os treinadores", "f": true}, {"t": "Inscrições: página própria no camposft.com que envia para o Google Form", "p": "2026-11-21", "d": "Tiago", "n": "Decidido a 19/11. Dados caem no mesmo Sheet e o Dashboard não muda", "f": true}, {"t": "Dizer ao Claude onde está alojado o camposft.com e como se publica", "p": "2026-11-21", "d": "Tiago", "n": "Netlify, conta geral@camposft.com, projeto 'camposft'", "f": true}, {"t": "Form 2027 e Sheet \"CFT 2027 (Respostas)\" criados e testados", "p": "2026-11-21", "d": "Tiago + Claude", "n": "Inscrição de teste entrou no Sheet. Falta apagar a linha de teste.", "f": true}, {"t": "Criar o Sheet 2027 ligado ao Form e correr setupSheets", "p": "2026-11-24", "d": "Tiago", "n": "setupSheets e trigger instalados a 19/11", "f": true}, {"t": "Atualizar o Dashboard e o Apps Script para 2027 (preços, datas, Config, edição 5)", "p": "2026-11-24", "d": "Claude", "n": "Feito 20/11: 3 escalões (Natal 350/315 até 24/12, 375/335, 395/355), email automático, contador de clube. Tiago publicou a Nova versão.", "f": true}, {"t": "Email automático de confirmação de inscrição com valor a pagar, IBAN e próximos passos", "p": "2026-11-24", "d": "Claude", "n": "Ativo desde 20/11. Testado: email «Inscrição feita» chegou com valores, sinal e IBAN.", "f": true}, {"t": "Página de inscrição no site (design CFT) ligada ao Form 2027, com envio do comprovativo", "p": "2026-11-24", "d": "Claude", "n": "camposft.com/inscricao.html no ar; abre sozinha a 27/11 às 00:00", "f": true}, {"t": "Site camposft.com versão 2027 publicado (5ª edição, 2 semanas, 8–16 anos, 3 escalões de preço)", "p": "2026-11-25", "d": "Claude", "n": "Publicado a 19/11. FAQ ainda por fazer", "f": true}, {"t": "Email às famílias de 2026 (inscrições abertas)", "p": "2026-11-25", "d": "Tiago + Claude", "n": "Agendado no geral@ para quarta 25/11 às 10:00, 71 famílias em BCC. Texto aprovado pelo Tiago a 22/11.", "f": true}, {"t": "Confirmar pavilhão, alojamento, refeições e seguro para 11–24 jul", "p": "2026-11-26", "d": "Miguel", "n": "Pavilhão e datas (11–17 e 18–24/7) confirmados pelo Miguel a 20/11. Seguro: há apólice AP (franquia 50 €), a Cátia está a ver a nova apólice para 2027. Falta: alojamento e refeições.", "f": false}, {"t": "Decidir a campanha de Natal", "p": "2026-11-26", "d": "Tiago", "n": "Decidido 20/11: sem brinde; 350 € (315 € c/ desconto) só até 24/12; postal para os pais oferecerem; lembrete «últimos dias» a 18/12.", "f": true}, {"t": "Teste ponta a ponta: inscrição fictícia → Sheet → Dashboard → email", "p": "2026-11-26", "d": "Tiago + Claude", "n": "20/11: site → Sheet → Dashboard → email testado; linhas de teste apagadas.", "f": true}, {"t": "Mensagem de WhatsApp para os treinadores + post de abertura no Instagram", "p": "2026-11-27", "d": "Claude", "n": "Só WhatsApp aos treinadores (sem cartazes nem circulares aos clubes). Texto revisto a 22/11. Post de abertura agendado para sexta 27/11 às 21:00.", "f": true}, {"t": "Abrir inscrições", "p": "2026-11-27", "d": "Tiago", "n": "", "f": false}, {"t": "Rever finanças com os extratos bancários", "p": "2026-11-30", "d": "Tiago + Claude", "n": "Extratos jul–nov recebidos; a ser tratado na conversa «Finanças · Orçamento 2027» (orcamento-cft-2027-v2.xlsx). Falta jan–jun 2026.", "f": false}, {"t": "Rever as primeiras inscrições e pagamentos no Dashboard", "p": "2026-12-04", "d": "Tiago", "n": "", "f": false}, {"t": "Campanha de Natal: postal, posts e emails", "p": "2026-12-08", "d": "Tiago + Claude", "n": "Materiais prontos (postal, póster, post, story, textos). Falta o OK do Tiago para publicar/enviar.", "f": false}, {"t": "Ligação direta à Meta (API/MCP) para publicar, agendar e ver estatísticas", "p": "2026-12-15", "d": "Tiago + Claude", "n": "Depois de abrir as inscrições (27/11)", "f": false}, {"t": "Calendário de Instagram: 1 post por semana até julho", "p": "2027-01-15", "d": "Tiago + Claude", "n": "", "f": false}, {"t": "Ronda pelos clubes para grupos de 8+ atletas", "p": "2027-01-31", "d": "Tiago", "n": "Em 2026 os grupos chegaram só em maio–julho", "f": false}, {"t": "Lembrete do fim do desconto (email + Instagram)", "p": "2027-03-20", "d": "Claude", "n": "", "f": false}, {"t": "Rever o jantar com o fornecedor e reduzir deslocações entre espaços", "p": "2027-05-15", "d": "Miguel", "n": "", "f": false}, {"t": "Plano de treinos: noite mais intensa, torneios a meio da semana, condição física", "p": "2027-05-31", "d": "Tiago", "n": "Com o coordenador técnico", "f": false}, {"t": "Encomendar equipamentos", "p": "2027-05-31", "d": "Tiago", "n": "", "f": false}, {"t": "Aviso do prazo final de pagamento", "p": "2027-06-07", "d": "Tiago", "n": "Template já existe no Dashboard", "f": false}, {"t": "Pack de informação aos pais: horário, material, regras, contactos, quartos", "p": "2027-06-20", "d": "Claude", "n": "3 semanas antes", "f": false}, {"t": "Prazo final da 2ª prestação", "p": "2027-06-21", "d": "Tiago", "n": "Confirmado: resto até 21/6. Sem pagamento: aviso + 7 dias, depois inscrição anulada (regulamento).", "f": false}, {"t": "Questionário 2027 feito de raiz como página do camposft.com", "p": "2027-06-30", "d": "Claude", "n": "Piloto para inscrições no site em 2028", "f": false}, {"t": "Seguro, staff (treinadores + fisio) e distribuição de quartos fechados", "p": "2027-07-01", "d": "Miguel", "n": "", "f": false}, {"t": "Plano de comunicação durante o campo (stories diárias, mensagem aos pais)", "p": "2027-07-05", "d": "Tiago + Claude", "n": "", "f": false}, {"t": "Semana 1 do CFT 2027", "p": "2027-07-11", "d": "Tiago", "n": "11 a 17 de julho", "f": false}, {"t": "Semana 2 do CFT 2027", "p": "2027-07-18", "d": "Tiago", "n": "18 a 24 de julho", "f": false}, {"t": "Enviar o questionário de satisfação", "p": "2027-07-27", "d": "Tiago", "n": "", "f": false}, {"t": "Balanço financeiro e preços 2028", "p": "2027-09-15", "d": "Tiago", "n": "", "f": false}, {"t": "Construir inscrições diretas no site para 2028", "p": "2027-10-31", "d": "Claude", "n": "", "f": false}];
+const PLANO_SEED = [{"t": "Analisar dashboard, site, questionário e números de 2026", "p": "2026-11-19", "d": "Claude", "n": "Conclusões nesta página", "f": true}, {"t": "Preços 2027: Natal 350 € até 24/12, 375 € até 31/3, 395 € depois; 315/335/355 € com desconto (10%)", "p": "2026-11-21", "d": "Tiago", "n": "Final a 20/11 (Tiago + Miguel). Externo 290. Publicado no site, regulamento, Form e Dashboard.", "f": true}, {"t": "Idades e vagas: 8 a 16 anos (nascidos 2011–2019), 60 vagas por semana", "p": "2026-11-21", "d": "Tiago", "n": "Decidido a 19/11. Grupos e quartos ficam com os treinadores", "f": true}, {"t": "Inscrições: página própria no camposft.com que envia para o Google Form", "p": "2026-11-21", "d": "Tiago", "n": "Decidido a 19/11. Dados caem no mesmo Sheet e o Dashboard não muda", "f": true}, {"t": "Dizer ao Claude onde está alojado o camposft.com e como se publica", "p": "2026-11-21", "d": "Tiago", "n": "Netlify, conta geral@camposft.com, projeto 'camposft'", "f": true}, {"t": "Form 2027 e Sheet \"CFT 2027 (Respostas)\" criados e testados", "p": "2026-11-21", "d": "Tiago + Claude", "n": "Inscrição de teste entrou no Sheet. Falta apagar a linha de teste.", "f": true}, {"t": "Criar o Sheet 2027 ligado ao Form e correr setupSheets", "p": "2026-11-24", "d": "Tiago", "n": "setupSheets e trigger instalados a 19/11", "f": true}, {"t": "Atualizar o Dashboard e o Apps Script para 2027 (preços, datas, Config, edição 5)", "p": "2026-11-24", "d": "Claude", "n": "Feito 20/11: 3 escalões (Natal 350/315 até 24/12, 375/335, 395/355), email automático, contador de clube. Tiago publicou a Nova versão.", "f": true}, {"t": "Email automático de confirmação de inscrição com valor a pagar, IBAN e próximos passos", "p": "2026-11-24", "d": "Claude", "n": "Ativo desde 20/11. Testado: email «Inscrição feita» chegou com valores, sinal e IBAN.", "f": true}, {"t": "Página de inscrição no site (design CFT) ligada ao Form 2027, com envio do comprovativo", "p": "2026-11-24", "d": "Claude", "n": "camposft.com/inscricao.html no ar; abre sozinha a 25/11 às 09:30", "f": true}, {"t": "Site camposft.com versão 2027 publicado (5ª edição, 2 semanas, 8–16 anos, 3 escalões de preço)", "p": "2026-11-25", "d": "Claude", "n": "Publicado a 19/11. FAQ ainda por fazer", "f": true}, {"t": "Email às famílias de 2026 (inscrições abertas)", "p": "2026-11-25", "d": "Tiago + Claude", "n": "Agendado no geral@ para quarta 25/11 às 10:00, 71 famílias em BCC. Texto aprovado pelo Tiago a 22/11.", "f": true}, {"t": "Confirmar pavilhão, alojamento, refeições e seguro para 11–24 jul", "p": "2026-11-26", "d": "Miguel", "n": "Pavilhão e datas (11–17 e 18–24/7) confirmados pelo Miguel a 20/11. Seguro: há apólice AP (franquia 50 €), a Cátia está a ver a nova apólice para 2027. Falta: alojamento e refeições.", "f": false}, {"t": "Decidir a campanha de Natal", "p": "2026-11-26", "d": "Tiago", "n": "Decidido 20/11: sem brinde; 350 € (315 € c/ desconto) só até 24/12; postal para os pais oferecerem; lembrete «últimos dias» a 18/12.", "f": true}, {"t": "Teste ponta a ponta: inscrição fictícia → Sheet → Dashboard → email", "p": "2026-11-26", "d": "Tiago + Claude", "n": "20/11: site → Sheet → Dashboard → email testado; linhas de teste apagadas.", "f": true}, {"t": "Mensagem de WhatsApp para os treinadores + post de abertura no Instagram", "p": "2026-11-27", "d": "Claude", "n": "Só WhatsApp aos treinadores (sem cartazes nem circulares aos clubes). Texto revisto a 22/11. Post de abertura agendado para sexta 27/11 às 21:00.", "f": true}, {"t": "Abrir inscrições", "p": "2026-11-25", "d": "Tiago", "n": "Abrem sozinhas a 25/11 às 09:30; email às famílias às 10:00; divulgação pública 27/11 às 21:00", "f": false}, {"t": "Rever finanças com os extratos bancários", "p": "2026-11-30", "d": "Tiago + Claude", "n": "Extratos jul–nov recebidos; a ser tratado na conversa «Finanças · Orçamento 2027» (orcamento-cft-2027-v2.xlsx). Falta jan–jun 2026.", "f": false}, {"t": "Rever as primeiras inscrições e pagamentos no Dashboard", "p": "2026-12-04", "d": "Tiago", "n": "", "f": false}, {"t": "Campanha de Natal: postal, posts e emails", "p": "2026-12-08", "d": "Tiago + Claude", "n": "Materiais prontos (postal, póster, post, story, textos). Falta o OK do Tiago para publicar/enviar.", "f": false}, {"t": "Ligação direta à Meta (API/MCP) para publicar, agendar e ver estatísticas", "p": "2026-12-15", "d": "Tiago + Claude", "n": "Depois de abrir as inscrições (25/11)", "f": false}, {"t": "Calendário de Instagram: 1 post por semana até julho", "p": "2027-01-15", "d": "Tiago + Claude", "n": "", "f": false}, {"t": "Ronda pelos clubes para grupos de 8+ atletas", "p": "2027-01-31", "d": "Tiago", "n": "Em 2026 os grupos chegaram só em maio–julho", "f": false}, {"t": "Lembrete do fim do desconto (email + Instagram)", "p": "2027-03-20", "d": "Claude", "n": "", "f": false}, {"t": "Rever o jantar com o fornecedor e reduzir deslocações entre espaços", "p": "2027-05-15", "d": "Miguel", "n": "", "f": false}, {"t": "Plano de treinos: noite mais intensa, torneios a meio da semana, condição física", "p": "2027-05-31", "d": "Tiago", "n": "Com o coordenador técnico", "f": false}, {"t": "Encomendar equipamentos", "p": "2027-05-31", "d": "Tiago", "n": "", "f": false}, {"t": "Aviso do prazo final de pagamento", "p": "2027-06-07", "d": "Tiago", "n": "Template já existe no Dashboard", "f": false}, {"t": "Pack de informação aos pais: horário, material, regras, contactos, quartos", "p": "2027-06-20", "d": "Claude", "n": "3 semanas antes", "f": false}, {"t": "Prazo final da 2ª prestação", "p": "2027-06-21", "d": "Tiago", "n": "Confirmado: resto até 21/6. Sem pagamento: aviso + 7 dias, depois inscrição anulada (regulamento).", "f": false}, {"t": "Questionário 2027 feito de raiz como página do camposft.com", "p": "2027-06-30", "d": "Claude", "n": "Piloto para inscrições no site em 2028", "f": false}, {"t": "Seguro, staff (treinadores + fisio) e distribuição de quartos fechados", "p": "2027-07-01", "d": "Miguel", "n": "", "f": false}, {"t": "Plano de comunicação durante o campo (stories diárias, mensagem aos pais)", "p": "2027-07-05", "d": "Tiago + Claude", "n": "", "f": false}, {"t": "Semana 1 do CFT 2027", "p": "2027-07-11", "d": "Tiago", "n": "11 a 17 de julho", "f": false}, {"t": "Semana 2 do CFT 2027", "p": "2027-07-18", "d": "Tiago", "n": "18 a 24 de julho", "f": false}, {"t": "Enviar o questionário de satisfação", "p": "2027-07-27", "d": "Tiago", "n": "", "f": false}, {"t": "Balanço financeiro e preços 2028", "p": "2027-09-15", "d": "Tiago", "n": "", "f": false}, {"t": "Construir inscrições diretas no site para 2028", "p": "2027-10-31", "d": "Claude", "n": "", "f": false}];
 let plShowAllDone = false;
+let plFlashId = null;      // tarefa acabada de mexer: fica destacada uns segundos
+let plFlashTimer = null;
 let plLoaded = false;     // true depois de dados frescos do servidor
 let plImporting = false;
 function plItems(){
   return (tarefasBackend || []).filter(t => t.id_atleta === PLANO_MARK).map(t => {
     let m = {}; try { m = JSON.parse(t.descricao || '{}') || {}; } catch (e) {}
-    return { id: t.id, titulo: t.titulo, prazo: m.prazo || '', dono: m.dono || '', nota: m.nota || '', feito: t.estado === 'resolvida', quando: t.resolvido_em };
+    return { id: t.id, titulo: t.titulo, prazo: m.prazo || '', dono: m.dono || '', nota: m.nota || '', feito: t.estado === 'resolvida', quando: t.resolvido_em || '', por: t.resolvido_por || '', criado: t.criado_em || '' };
   });
 }
 function plFmt(iso){ if (!iso) return '—'; const [y,m,d] = iso.split('-').map(Number); return new Date(y, m-1, d).toLocaleDateString('pt-PT', { day:'numeric', month:'short' }).replace('.', ''); }
+function plQuem(email){
+  const e = String(email || '').toLowerCase();
+  if (e.indexOf('alvespbm') === 0) return 'Miguel';
+  if (e.indexOf('tiagojgcc') === 0) return 'Tiago';
+  return e ? e.split('@')[0] : '';
+}
+function plWhen(v){ const d = v ? new Date(v) : null; return d && !isNaN(d) ? d.toLocaleDateString('pt-PT', { day:'numeric', month:'short' }).replace('.', '') : ''; }
 function plRow(t, hoje){
   const late = !t.feito && t.prazo && t.prazo < hoje;
-  return `<div class="pl-item${t.feito ? ' done' : ''}${late ? ' late' : ''}">
+  // As que já vinham feitas do plano antigo foram marcadas no momento da cópia: não mostra essa data.
+  const marcadaNaCopia = t.criado && t.quando && Math.abs(new Date(t.quando) - new Date(t.criado)) < 10 * 60000;
+  const feitoTxt = t.feito && t.quando && !marcadaNaCopia ? `feito a ${plWhen(t.quando)}${t.por ? ' por ' + escHtml(plQuem(t.por)) : ''} · ` : '';
+  return `<div class="pl-item${t.feito ? ' done' : ''}${late ? ' late' : ''}${t.id === plFlashId ? ' pl-flash' : ''}" data-pl="${t.id}">
     <div class="pl-date">${plFmt(t.prazo)}</div>
     <div><div class="pl-t">${escHtml(t.titulo)}</div>
-      <div class="pl-m">${t.dono ? `<span class="pl-who">${escHtml(t.dono)}</span>` : ''}${late ? '<b style="color:#c0392b">em atraso</b> ' : ''}${escHtml(t.nota)}</div></div>
+      <div class="pl-m">${t.dono ? `<span class="pl-who">${escHtml(t.dono)}</span>` : ''}${late ? '<b style="color:#c0392b">em atraso</b> ' : ''}${feitoTxt}${escHtml(t.nota)}</div></div>
     ${t.feito
       ? `<button class="pl-btn" onclick="plToggle('${t.id}', false, this)" title="Voltar a pôr por fazer">↺</button>`
       : `<button class="pl-btn" onclick="plToggle('${t.id}', true, this)" title="Marcar como feito">✓ Feito</button>`}
@@ -2343,13 +2295,15 @@ function renderPlano(){
   }
   const hoje = new Date().toISOString().slice(0, 10);
   const todo = items.filter(t => !t.feito).sort((a, b) => (a.prazo || '9').localeCompare(b.prazo || '9'));
-  const done = items.filter(t => t.feito).sort((a, b) => (b.prazo || '').localeCompare(a.prazo || ''));
+  const tsOf = t => { const d = t.quando ? new Date(t.quando).getTime() : 0; return isNaN(d) ? 0 : d; };
+  const done = items.filter(t => t.feito).sort((a, b) => (tsOf(b) - tsOf(a)) || (b.prazo || '').localeCompare(a.prazo || ''));
   const late = todo.filter(t => t.prazo && t.prazo < hoje).length;
   if (meta) meta.textContent = `${done.length} de ${items.length} feitas${late ? ' · ' + late + ' em atraso' : ''}`;
-  const doneShown = plShowAllDone ? done : done.slice(0, 8);
+  let doneShown = plShowAllDone ? done : done.slice(0, 8);
+  if (plFlashId && !doneShown.some(t => t.id === plFlashId)) { const f = done.find(t => t.id === plFlashId); if (f) doneShown = [f].concat(doneShown); }
   host.innerHTML = `<div class="pl-cols">
-    <div><div class="pl-col-h"><span>Por fazer</span><span>${todo.length}</span></div>
-      ${todo.map(t => plRow(t, hoje)).join('') || '<div class="pl-m" style="padding:12px 2px">Tudo feito 🎉</div>'}
+    <div class="pl-col"><div class="pl-col-h"><span>Por fazer</span><b>${todo.length}</b></div>
+      <div class="pl-list">${todo.map(t => plRow(t, hoje)).join('') || '<div class="pl-m" style="padding:12px 2px">Tudo feito 🎉</div>'}</div>
       <form class="pl-form" onsubmit="plAdd(event)">
         <input id="pl-new-t" placeholder="Nova tarefa (ex.: encomendar medalhas)" required minlength="3">
         <input id="pl-new-d" type="date" required aria-label="Prazo">
@@ -2357,20 +2311,34 @@ function renderPlano(){
         <button class="p27-add-btn" type="submit">Adicionar</button>
       </form>
     </div>
-    <div><div class="pl-col-h done"><span>Feito</span><span>${done.length}</span></div>
-      ${doneShown.map(t => plRow(t, hoje)).join('')}
+    <div class="pl-col done"><div class="pl-col-h"><span>Feito</span><b>${done.length}</b></div>
+      <div class="pl-list">${doneShown.map(t => plRow(t, hoje)).join('') || '<div class="pl-m" style="padding:12px 2px">Ainda nada.</div>'}</div>
       ${done.length > doneShown.length ? `<button class="pl-more" onclick="plShowAllDone=true;renderPlano()">Ver as ${done.length} feitas</button>` : ''}
     </div>
   </div>`;
+  if (plFlashId) {
+    const el = host.querySelector(`[data-pl="${plFlashId}"]`);
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+function plFlash(id){
+  plFlashId = id;
+  clearTimeout(plFlashTimer);
+  plFlashTimer = setTimeout(() => { plFlashId = null; }, 6000);
 }
 async function plToggle(id, feito, btn){
   if (btn) btn.disabled = true;
   const t = (tarefasBackend || []).find(x => x.id === id);
-  const antes = t ? t.estado : null;
-  if (t) t.estado = feito ? 'resolvida' : 'pendente';
+  const antes = t ? { estado: t.estado, em: t.resolvido_em, por: t.resolvido_por } : null;
+  if (t) {
+    t.estado = feito ? 'resolvida' : 'pendente';
+    t.resolvido_em = feito ? new Date().toISOString() : '';
+    t.resolvido_por = feito ? (document.getElementById('ab-user') || {}).textContent || '' : '';
+  }
+  plFlash(id);
   renderPlano();
   try { await (feito ? Api.tarefa_resolve(id) : Api.tarefa_reopen(id)); toast(feito ? 'Marcado como feito' : 'Voltou a por fazer'); }
-  catch (e) { if (t) t.estado = antes; renderPlano(); toast('Não foi possível guardar: ' + e.message, true); }
+  catch (e) { if (t && antes) { t.estado = antes.estado; t.resolvido_em = antes.em; t.resolvido_por = antes.por; } renderPlano(); toast('Não foi possível guardar: ' + e.message, true); }
 }
 async function plAdd(ev){
   ev.preventDefault();
@@ -2381,7 +2349,7 @@ async function plAdd(ev){
   try {
     const r = await Api.tarefa_create(titulo, JSON.stringify({ prazo, dono, nota: '' }), PLANO_MARK, '');
     tarefasBackend = [{ id: r.id, titulo, descricao: JSON.stringify({ prazo, dono, nota: '' }), id_atleta: PLANO_MARK, estado: 'pendente' }].concat(tarefasBackend || []);
-    renderPlano(); toast('Tarefa adicionada');
+    plFlash(r.id); renderPlano(); toast('Tarefa adicionada');
   } catch (e) { toast('Não foi possível adicionar: ' + e.message, true); }
 }
 async function plImport(){
@@ -2825,7 +2793,9 @@ function sortRows(rows){
 // ============ TABLE / LIST ============
 function getFilteredRows(){
   const cc = clubeCounts();
-  const search = document.getElementById('search').value.toLowerCase();
+  // Sem acentos dos dois lados: «goncalo» encontra «Gonçalo», «joao» encontra «João».
+  const semAcentos = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const search = semAcentos(document.getElementById('search').value.trim());
   const fSem = document.getElementById('filt-sem').value;
   const fClube = document.getElementById('filt-clube').value;
   const fTipo = document.getElementById('filt-tipo').value;
@@ -2841,7 +2811,7 @@ function getFilteredRows(){
         r.encarregado || raw.encarregado || '',
         raw.email,
         r.telefone || raw.telefone || ''
-      ].map(s => String(s || '').toLowerCase()).join(' || ');
+      ].map(semAcentos).join(' || ');
       const hit = haystack.includes(search) || (ibanNorm && ibanNorm.includes(searchNorm));
       if (!hit) return false;
     }
@@ -3972,7 +3942,7 @@ function openEntregavel(semana){
     </tr>`;
   }).join('');
   const html = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
-<title>CFT 2026 — Semana ${semana} — Entregável treinadores</title>
+<title>CFT ${edAno()} — Semana ${semana} — Entregável treinadores</title>
 <style>
   @page { size: A4 landscape; margin: 12mm; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 14px; }
@@ -4015,7 +3985,7 @@ function openEntregavel(semana){
   </tr></thead>
   <tbody>${rows}</tbody>
 </table>
-<footer>CFT 2026 · Campo de Formação Técnica · APDFE</footer>
+<footer>CFT ${edAno()} · Campo de Formação Técnica · APDFE</footer>
 </body></html>`;
   const w = window.open('', '_blank');
   if (!w) { toast('Bloqueador de popups impede abrir. Permite popups para este site.', true); return; }
@@ -4056,7 +4026,7 @@ function openListaSergio(){
     </div>`;
   }).join('');
   const html = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
-<title>CFT 2026 — Lista Sérgio</title>
+<title>CFT ${edAno()} — Lista Sérgio</title>
 <style>
   @page { size: A4 portrait; margin: 14mm; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 14px; }
@@ -4082,7 +4052,7 @@ function openListaSergio(){
 <header>
   <div class="left">
     <h1>Lista Sérgio · Atletas por clube</h1>
-    <div class="sub">4ª edição · 2026 · semanas indicadas em S1/S2 ao lado de cada atleta</div>
+    <div class="sub">${edAno() === '2026' ? '4ª edição · 2026' : '5ª edição · 2027'} · semanas indicadas em S1/S2 ao lado de cada atleta</div>
   </div>
   <div class="right">
     <div><b>${atletas.length}</b> atletas · ${clubesOrdenados.length} clube${clubesOrdenados.length === 1 ? '' : 's'}</div>
@@ -4090,7 +4060,7 @@ function openListaSergio(){
   </div>
 </header>
 <div class="clubes-grid">${blocosClube || '<div style="color:#888;font-style:italic;">Sem atletas.</div>'}</div>
-<footer>CFT 2026 · Campo de Formação Técnica · APDFE</footer>
+<footer>CFT ${edAno()} · Campo de Formação Técnica · APDFE</footer>
 </body></html>`;
   const w = window.open('', '_blank');
   if (!w) { toast('Bloqueador de popups impede abrir. Permite popups para este site.', true); return; }
@@ -4153,7 +4123,7 @@ function openCamisolas(){
   }
   const totalCamisolas = expanded.filter(x => x.sem === 1 || x.sem === 2).length + semOutros.length;
   const html = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
-<title>CFT 2026 — Camisolas</title>
+<title>CFT ${edAno()} — Camisolas</title>
 <style>
   @page { size: A4 portrait; margin: 14mm; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 14px; }
@@ -4172,7 +4142,7 @@ function openCamisolas(){
 <div class="no-print" style="background:#1a1a1a;color:#fff;padding:10px 14px;border-radius:6px;margin-bottom:14px;">
   📄 Para guardar como PDF: <b>Ctrl+P</b> → "Guardar como PDF".
 </div>
-<header><h1>CFT — Camisolas</h1><div class="sub">Encomenda · 4ª edição · 2026 · ${totalCamisolas} camisolas</div></header>
+<header><h1>CFT — Camisolas</h1><div class="sub">Encomenda · ${edAno() === '2026' ? '4ª edição · 2026' : '5ª edição · 2027'} · ${totalCamisolas} camisolas</div></header>
 ${sec1}${sec2}${secOutros}
 </body></html>`;
   const w = window.open('', '_blank');
@@ -5479,7 +5449,7 @@ function openSeguro(semana){
     <td class="num">${falta(a.nasc)}</td>
   </tr>`).join('');
   const html = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
-<title>CFT 2026 — Seguro — Semana ${semana}</title>
+<title>CFT ${edAno()} — Seguro — Semana ${semana}</title>
 <style>
   @page { size: A4 portrait; margin: 14mm; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 14px; }
@@ -5506,7 +5476,7 @@ function openSeguro(semana){
   <div class="top">
     <div class="left">
       <h1>Seguro · Semana ${semana}</h1>
-      <div class="sub">Campo de Formação Técnica · 4ª edição · 2026 · Ponte da Barca</div>
+      <div class="sub">Campo de Formação Técnica · ${edAno() === '2026' ? '4ª edição · 2026' : '5ª edição · 2027'} · Ponte da Barca</div>
     </div>
     <div class="right">
       <div><b>${out.length}</b> atletas a segurar</div>
@@ -5529,7 +5499,7 @@ function openSeguro(semana){
   <tbody>${rows}</tbody>
 </table>
 ${semDados ? `<div style="margin-top:10px;font-size:11px;color:#c0392b;">⚠ ${semDados} atleta${semDados === 1 ? ' tem' : 's têm'} CC, NIF ou data de nascimento em falta no formulário de inscrição.</div>` : ''}
-<footer>CFT 2026 · Campo de Formação Técnica · APDFE</footer>
+<footer>CFT ${edAno()} · Campo de Formação Técnica · APDFE</footer>
 </body></html>`;
   const w = window.open('', '_blank');
   if (!w) { toast('Bloqueador de popups impede abrir. Permite popups para este site.', true); return; }
@@ -6555,6 +6525,8 @@ function setEdicao(ano){
   const cfg = EDICOES[ano];
   CFT_START_DATE = new Date(cfg.inicio); CFT_WEEK2_DATE = new Date(cfg.sem2); CFT_DEADLINE_DEFAULT = new Date(cfg.prazo);
   document.querySelectorAll('.ed-ano').forEach(el => { el.textContent = ano; });
+  document.querySelectorAll('.ed-sem1').forEach(el => { el.textContent = ano === '2026' ? '12—18 jul' : '11—17 jul'; });
+  document.querySelectorAll('.ed-sem2').forEach(el => { el.textContent = ano === '2026' ? '19—25 jul' : '18—24 jul'; });
   // Cada edição lê a sua Sheet: ao trocar, volta a carregar os dados dessa edição.
   if (mudou && typeof Auth !== 'undefined' && Auth.token) {
     const cached = Api.getCachedSync();
@@ -6603,7 +6575,7 @@ const P27_DL_KEY_V1 = 'cft_plano2027_dl_v1';
 const P27_DL_DEFAULT = [
   { d: '2026-09-15', l: 'Balanço 2026 + definir preços 2027 (com o Miguel)', done: true },
   { d: '2026-11-21', l: 'Pavilhão e datas confirmados (Miguel)', done: true },
-  { d: '2026-11-27', l: 'Abrir inscrições (email às famílias; divulgação pública no dia 28)' },
+  { d: '2026-11-25', l: 'Abrir inscrições (email às famílias; divulgação pública a 27/11)' },
   { d: '2026-12-24', l: 'Fim do preço de Natal (350 € / 315 € com desconto)' },
   { d: '2027-03-31', l: 'Fim do 2º escalão (375 € / 335 € com desconto)' },
   { d: '2027-06-07', l: 'Enviar aviso de prazo de pagamento' },
