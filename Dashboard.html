@@ -5879,6 +5879,7 @@ function renderAll(){
   // dos atletas (taxa de resposta) agora que `data` está carregado.
   const sfPanel = document.getElementById('panel-satisfacao');
   if (sfPanel && sfPanel.classList.contains('active') && sfCache) renderSatisfacao();
+  renderBanco();   // mantém o contador da barra lateral certo mesmo sem abrir Pagamentos
   renderPlano();
   renderComunicacao();
 }
