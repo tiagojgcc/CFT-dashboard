@@ -1262,6 +1262,7 @@
   </div>
   <nav class="side-nav">
     <div class="tab active" data-panel="overview"><span class="si">◎</span>Hoje</div>
+    <div class="tab ed-27" data-panel="jornal"><span class="si">✎</span>Jornal <span class="tab-count" id="tc-jornal" style="display:none">novo</span></div>
     <div class="tab" data-panel="list"><span class="si">☰</span>Inscrições <span class="tab-count warn" id="tc-list">0</span></div>
     <div class="tab" data-panel="banco"><span class="si">€</span>Pagamentos <span class="tab-count" id="tc-banco">0</span></div>
     <div class="tab" data-panel="comunicacao"><span class="si">✉</span>Comunicação</div>
@@ -1470,6 +1471,30 @@
     .sf-txt-item { overflow-wrap: anywhere; }
     .sf-read li { overflow-wrap: anywhere; }
   </style>
+  <style>
+    .jn-wrap { max-width: 760px; }
+    .jn-day { margin-bottom: 14px; }
+    .jn-date { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--green-dark); }
+    .jn-title { font-family: var(--font-display); font-size: 22px; line-height: 1.1; margin: 4px 0 10px; text-transform: uppercase; }
+    .jn-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+    .jn-item { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; font-size: 14px; line-height: 1.45; }
+    .jn-ic { width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-top: 1px; }
+    .jn-ok .jn-ic { background: var(--green-pale); color: var(--green-dark); }
+    .jn-atencao .jn-ic { background: #fde9dc; color: var(--orange-accent); }
+    .jn-info .jn-ic { background: var(--sand); color: var(--charcoal); }
+    .jn-nao .jn-ic { background: var(--sand); color: var(--mid-gray); }
+    .jn-area { font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid-gray); margin-right: 6px; }
+    .jn-item p { margin: 0; overflow-wrap: anywhere; }
+    .jn-new { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: var(--green-bright); color: var(--charcoal); font-size: 10px; letter-spacing: 0.1em; vertical-align: middle; }
+  </style>
+  <div class="panel" id="panel-jornal">
+    <div class="panel-head">
+      <div class="panel-title">Jornal do CFT</div>
+      <div class="panel-sub"><span id="jn-sub">—</span> · <a href="#" onclick="renderJornal(true); return false;" style="color:var(--green-dark);">↻ atualizar</a></div>
+    </div>
+    <div class="jn-wrap" id="jn-body"><div class="card">A carregar…</div></div>
+  </div>
+
   <div class="panel" id="panel-satisfacao">
     <div class="panel-head">
       <div class="panel-title">Satisfação · questionário</div>
@@ -2253,7 +2278,62 @@ function showTab(id){
   if (id === 'plano2027') { renderPlano2027(); renderPlano(); }
   if (id === 'comunicacao') { renderComunicacao(); }
   if (id === 'satisfacao') { renderSatisfacao(); }
+  if (id === 'jornal') { renderJornal(); }
 }
+
+// ============ JORNAL DO CFT ============
+// Resumo diário igual para o Tiago e o Miguel. Lê jornal/jornal.json (mesmo site).
+// O ficheiro é público: só números e estados, nunca dados pessoais.
+let JORNAL = null;
+function jnEsc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+async function loadJornal(force){
+  if (JORNAL && !force) return JORNAL;
+  const r = await fetch('jornal/jornal.json?v=' + Date.now(), { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  JORNAL = await r.json();
+  return JORNAL;
+}
+function jornalVisto(){ try { return localStorage.getItem('cft_jornal_visto') || ''; } catch(e){ return ''; } }
+function marcarJornalVisto(d){ try { localStorage.setItem('cft_jornal_visto', d); } catch(e){} }
+async function badgeJornal(){
+  try {
+    const j = await loadJornal();
+    const ult = (j.entradas || [])[0];
+    const b = document.getElementById('tc-jornal');
+    if (b && ult) b.style.display = ult.data > jornalVisto() ? '' : 'none';
+  } catch(e){}
+}
+async function renderJornal(force){
+  const body = document.getElementById('jn-body');
+  const sub = document.getElementById('jn-sub');
+  try {
+    const j = await loadJornal(force);
+    const ent = (j.entradas || []).slice().sort((a,b) => a.data < b.data ? 1 : -1);
+    const visto = jornalVisto();
+    const ICON = { ok: '✓', atencao: '!', info: 'i', nao: '?' };
+    if (!ent.length) { body.innerHTML = '<div class="card">Ainda não há entradas.</div>'; sub.textContent = '—'; return; }
+    sub.textContent = ent.length + (ent.length === 1 ? ' dia' : ' dias');
+    body.innerHTML = ent.map(e => {
+      const d = new Date(e.data + 'T12:00:00');
+      const dl = d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' });
+      const novo = visto && e.data > visto ? '<span class="jn-new">novo</span>' : '';
+      const itens = (e.itens || []).map(it => {
+        const t = ICON[it.tipo] ? it.tipo : 'info';
+        return '<li class="jn-item jn-' + t + '"><span class="jn-ic">' + ICON[t] + '</span><p>' +
+          (it.area ? '<span class="jn-area">' + jnEsc(it.area) + '</span>' : '') + jnEsc(it.texto) + '</p></li>';
+      }).join('');
+      return '<div class="card jn-day"><div class="jn-date">' + jnEsc(dl) + novo + '</div>' +
+        (e.titulo ? '<div class="jn-title">' + jnEsc(e.titulo) + '</div>' : '') +
+        '<ul class="jn-list">' + itens + '</ul></div>';
+    }).join('');
+    marcarJornalVisto(ent[0].data);
+    const b = document.getElementById('tc-jornal'); if (b) b.style.display = 'none';
+  } catch(err) {
+    body.innerHTML = '<div class="card">Não foi possível carregar o jornal (' + jnEsc(err.message) + ').</div>';
+  }
+}
+badgeJornal();
+
 
 
 // ============ PLANO PARTILHADO (Tiago + Miguel) ============

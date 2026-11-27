@@ -1,0 +1,26 @@
+{
+  "nota": "Jornal do CFT. Este ficheiro é público (repositório público): só números e estados, nunca nomes, contactos ou valores de famílias.",
+  "entradas": [
+    {
+      "data": "2026-11-27",
+      "titulo": "Primeira inscrição e divulgação pública às 21:00",
+      "itens": [
+        { "tipo": "ok", "area": "Inscrições", "texto": "Já temos 1 inscrição." },
+        { "tipo": "ok", "area": "Instagram", "texto": "Retomado sem avisos: seguimos 8 pais/treinadores de clubes de Famalicão e Aveiro. 1121 seguidores (eram 1079 a 21/11). Continua todos os dias às 11h." },
+        { "tipo": "ok", "area": "Divulgação", "texto": "Post (Facebook + Instagram) às 21:00 e story às 21:05 agendados. Próximos posts agendados a 1, 4, 8, 12, 15 e 18/12 às 21:00, story a 10/12." },
+        { "tipo": "atencao", "area": "Site", "texto": "A página inicial ainda diz «as inscrições abrem a 27 de novembro». O botão de inscrição funciona. Fica assim até 4/12 para poupar créditos (decisão do Tiago)." },
+        { "tipo": "info", "area": "Site", "texto": "Sem alterações ao site até 4/12 (créditos do alojamento gratuito)." },
+        { "tipo": "info", "area": "Regulamento", "texto": "Versão formal pronta mas não publicada: falta a ata/estatutos finais e a revisão por um advogado. Continua em vigor o atual." }
+      ]
+    },
+    {
+      "data": "2026-11-25",
+      "titulo": "Inscrições abertas",
+      "itens": [
+        { "tipo": "ok", "area": "Inscrições", "texto": "Abriram sozinhas às 09:30, sem problemas." },
+        { "tipo": "ok", "area": "Email", "texto": "Email às famílias de 2026 enviado às 10:00." },
+        { "tipo": "atencao", "area": "Email", "texto": "No PC ficou bem, mas no telemóvel as letras ficaram demasiado grandes. Reduzir no próximo email." }
+      ]
+    }
+  ]
+}
