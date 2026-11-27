@@ -1472,11 +1472,27 @@
     .sf-read li { overflow-wrap: anywhere; }
   </style>
   <style>
-    .jn-wrap { max-width: 760px; }
-    .jn-day { margin-bottom: 14px; }
-    .jn-date { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--green-dark); }
-    .jn-title { font-family: var(--font-display); font-size: 22px; line-height: 1.1; margin: 4px 0 10px; text-transform: uppercase; }
-    .jn-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+    .jn-wrap { max-width: 980px; }
+    .jn-paper { background: var(--white); border: 1px solid var(--sand); border-radius: var(--radius-md); overflow: hidden; }
+    .jn-mast { background: var(--charcoal); color: var(--off-white); padding: 18px 22px 16px; }
+    .jn-mast-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--green-bright); }
+    .jn-mast-name { font-family: var(--font-display); font-size: 40px; line-height: 1; letter-spacing: 0.02em; text-transform: uppercase; margin: 8px 0 2px; }
+    .jn-mast-line { height: 3px; background: var(--green-bright); width: 64px; margin-top: 10px; }
+    .jn-head { padding: 18px 22px 6px; }
+    .jn-manchete { font-family: var(--font-display); font-size: 30px; line-height: 1.05; text-transform: uppercase; margin: 0 0 8px; }
+    .jn-resumo { font-size: 15.5px; line-height: 1.55; margin: 0; color: var(--charcoal); }
+    .jn-nums { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; padding: 14px 22px 4px; }
+    .jn-num { border-left: 3px solid var(--green-bright); padding: 2px 0 2px 10px; min-width: 0; }
+    .jn-num-val { font-family: var(--font-display); font-size: 26px; line-height: 1; }
+    .jn-num-lbl { font-family: var(--font-condensed); font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--green-dark); margin-top: 4px; }
+    .jn-num-nota { font-size: 12px; color: var(--mid-gray); margin-top: 2px; }
+    .jn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 1px solid var(--sand); margin-top: 14px; }
+    .jn-sec { padding: 16px 22px 18px; border-bottom: 1px solid var(--sand); min-width: 0; }
+    .jn-sec-l { border-right: 1px solid var(--sand); }
+    .jn-sec-wide { grid-column: 1 / -1; border-right: 0 !important; }
+    .jn-sec-t { font-family: var(--font-condensed); font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--charcoal); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .jn-sec-t::before { content: ''; width: 8px; height: 8px; background: var(--green-bright); border-radius: 2px; }
+    .jn-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
     .jn-item { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; font-size: 14px; line-height: 1.45; }
     .jn-ic { width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-top: 1px; }
     .jn-ok .jn-ic { background: var(--green-pale); color: var(--green-dark); }
@@ -1485,11 +1501,27 @@
     .jn-nao .jn-ic { background: var(--sand); color: var(--mid-gray); }
     .jn-area { font-family: var(--font-condensed); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid-gray); margin-right: 6px; }
     .jn-item p { margin: 0; overflow-wrap: anywhere; }
-    .jn-new { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: var(--green-bright); color: var(--charcoal); font-size: 10px; letter-spacing: 0.1em; vertical-align: middle; }
+    .jn-item a { color: var(--green-dark); }
+    .jn-meta { font-size: 12px; color: var(--mid-gray); margin-top: 2px; }
+    .jn-foot { padding: 12px 22px; font-size: 12px; color: var(--mid-gray); }
+    .jn-old { margin-top: 18px; }
+    .jn-old-t { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px; }
+    .jn-old details { background: var(--white); border: 1px solid var(--sand); border-radius: var(--radius-md); margin-bottom: 8px; }
+    .jn-old summary { cursor: pointer; padding: 12px 16px; font-size: 14px; }
+    .jn-old summary b { font-family: var(--font-condensed); letter-spacing: 0.08em; text-transform: uppercase; margin-right: 8px; color: var(--green-dark); }
+    .jn-old details > .jn-paper { border: 0; border-top: 1px solid var(--sand); border-radius: 0; }
+    @media (max-width: 720px) {
+      .jn-mast-name { font-size: 30px; }
+      .jn-manchete { font-size: 23px; }
+      .jn-nums { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .jn-grid { grid-template-columns: 1fr; }
+      .jn-sec-l { border-right: 0; }
+      .jn-mast, .jn-head, .jn-nums, .jn-sec, .jn-foot { padding-left: 16px; padding-right: 16px; }
+    }
   </style>
   <div class="panel" id="panel-jornal">
     <div class="panel-head">
-      <div class="panel-title">Jornal do CFT</div>
+      <div class="panel-title">Jornal</div>
       <div class="panel-sub"><span id="jn-sub">—</span> · <a href="#" onclick="renderJornal(true); return false;" style="color:var(--green-dark);">↻ atualizar</a></div>
     </div>
     <div class="jn-wrap" id="jn-body"><div class="card">A carregar…</div></div>
@@ -2298,35 +2330,45 @@ function marcarJornalVisto(d){ try { localStorage.setItem('cft_jornal_visto', d)
 async function badgeJornal(){
   try {
     const j = await loadJornal();
-    const ult = (j.entradas || [])[0];
+    const ult = jnEdicoes(j)[0];
     const b = document.getElementById('tc-jornal');
     if (b && ult) b.style.display = ult.data > jornalVisto() ? '' : 'none';
   } catch(e){}
+}
+function jnEdicoes(j){ return (j.edicoes || []).slice().sort((a,b) => a.data < b.data ? 1 : -1); }
+function jnPaper(e, full){
+  const ICON = { ok: '✓', atencao: '!', info: 'i', nao: '?' };
+  const d = new Date(e.data + 'T12:00:00');
+  const dl = d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const li = (it) => { const t = ICON[it.tipo] ? it.tipo : 'info';
+    return '<li class="jn-item jn-' + t + '"><span class="jn-ic">' + ICON[t] + '</span><p>' + (it.area ? '<span class="jn-area">' + jnEsc(it.area) + '</span>' : '') + jnEsc(it.texto) + '</p></li>'; };
+  const sec = (t, html, wide) => html ? '<div class="jn-sec' + (wide === true ? ' jn-sec-wide' : wide === 'l' ? ' jn-sec-l' : '') + '"><div class="jn-sec-t">' + t + '</div><ul class="jn-list">' + html + '</ul></div>' : '';
+  const acont = (e.aconteceu || []).map(li).join('');
+  const tarefas = (e.tarefas || []).map(t => '<li class="jn-item jn-info"><span class="jn-ic">○</span><p>' + jnEsc(t.texto) +
+    ((t.quem || t.prazo) ? '<span class="jn-meta"><br>' + jnEsc([t.quem, t.prazo].filter(Boolean).join(' · ')) + '</span>' : '') + '</p></li>').join('');
+  const ideias = (e.ideias || []).map(t => '<li class="jn-item jn-ok"><span class="jn-ic">✦</span><p>' + jnEsc(t) + '</p></li>').join('');
+  const conc = (e.concorrencia || []).map(c => { const safe = /^https:\/\//.test(c.link || '');
+    return '<li class="jn-item jn-info"><span class="jn-ic">◇</span><p>' + jnEsc(c.texto) + (safe ? ' <a href="' + jnEsc(c.link) + '" target="_blank" rel="noopener">fonte ↗</a>' : '') + '</p></li>'; }).join('');
+  const nums = (e.numeros || []).map(n => '<div class="jn-num"><div class="jn-num-val">' + jnEsc(n.val) + '</div><div class="jn-num-lbl">' + jnEsc(n.lbl) + '</div>' + (n.nota ? '<div class="jn-num-nota">' + jnEsc(n.nota) + '</div>' : '') + '</div>').join('');
+  return '<div class="jn-paper">' +
+    (full ? '<div class="jn-mast"><div class="jn-mast-top"><span>Nº ' + jnEsc(e.numero || '') + ' · ' + jnEsc(dl) + '</span><span>Leitura: 3 min</span></div><div class="jn-mast-name">Jornal do CFT</div><div class="jn-mast-line"></div></div>' : '') +
+    '<div class="jn-head">' + (e.manchete ? '<h2 class="jn-manchete">' + jnEsc(e.manchete) + '</h2>' : '') + (e.resumo ? '<p class="jn-resumo">' + jnEsc(e.resumo) + '</p>' : '') + '</div>' +
+    (nums ? '<div class="jn-nums">' + nums + '</div>' : '') +
+    '<div class="jn-grid">' + sec('O que aconteceu', acont, true) + sec('Tarefas', tarefas, 'l') + sec('Ideias', ideias) + sec('Concorrência', conc, true) + '</div>' +
+    '<div class="jn-foot">Igual para o Tiago e o Miguel · nova edição todos os dias às 07:00</div>' +
+  '</div>';
 }
 async function renderJornal(force){
   const body = document.getElementById('jn-body');
   const sub = document.getElementById('jn-sub');
   try {
     const j = await loadJornal(force);
-    const ent = (j.entradas || []).slice().sort((a,b) => a.data < b.data ? 1 : -1);
-    const visto = jornalVisto();
-    const ICON = { ok: '✓', atencao: '!', info: 'i', nao: '?' };
-    if (!ent.length) { body.innerHTML = '<div class="card">Ainda não há entradas.</div>'; sub.textContent = '—'; return; }
-    sub.textContent = ent.length + (ent.length === 1 ? ' dia' : ' dias');
-    body.innerHTML = ent.map(e => {
-      const d = new Date(e.data + 'T12:00:00');
-      const dl = d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' });
-      const novo = visto && e.data > visto ? '<span class="jn-new">novo</span>' : '';
-      const itens = (e.itens || []).map(it => {
-        const t = ICON[it.tipo] ? it.tipo : 'info';
-        return '<li class="jn-item jn-' + t + '"><span class="jn-ic">' + ICON[t] + '</span><p>' +
-          (it.area ? '<span class="jn-area">' + jnEsc(it.area) + '</span>' : '') + jnEsc(it.texto) + '</p></li>';
-      }).join('');
-      return '<div class="card jn-day"><div class="jn-date">' + jnEsc(dl) + novo + '</div>' +
-        (e.titulo ? '<div class="jn-title">' + jnEsc(e.titulo) + '</div>' : '') +
-        '<ul class="jn-list">' + itens + '</ul></div>';
-    }).join('');
-    marcarJornalVisto(ent[0].data);
+    const ed = jnEdicoes(j);
+    if (!ed.length) { body.innerHTML = '<div class="card">Ainda não há edições.</div>'; sub.textContent = '—'; return; }
+    sub.textContent = ed.length + (ed.length === 1 ? ' edição' : ' edições');
+    const old = ed.slice(1).map(e => '<details><summary><b>' + jnEsc(new Date(e.data + 'T12:00:00').toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' })) + '</b>' + jnEsc(e.manchete || '') + '</summary>' + jnPaper(e, false) + '</details>').join('');
+    body.innerHTML = jnPaper(ed[0], true) + (old ? '<div class="jn-old"><div class="jn-old-t">Edições anteriores</div>' + old + '</div>' : '');
+    marcarJornalVisto(ed[0].data);
     const b = document.getElementById('tc-jornal'); if (b) b.style.display = 'none';
   } catch(err) {
     body.innerHTML = '<div class="card">Não foi possível carregar o jornal (' + jnEsc(err.message) + ').</div>';

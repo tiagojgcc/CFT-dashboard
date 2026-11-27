@@ -1,25 +1,41 @@
 {
-  "nota": "Jornal do CFT. Este ficheiro é público (repositório público): só números e estados, nunca nomes, contactos ou valores de famílias.",
-  "entradas": [
+  "nota": "Jornal do CFT. Ficheiro PÚBLICO (repositório público): só números e estados. Nunca nomes, contactos, emails ou valores de famílias.",
+  "edicoes": [
     {
       "data": "2026-11-27",
-      "titulo": "Primeira inscrição e divulgação pública às 21:00",
-      "itens": [
-        { "tipo": "ok", "area": "Inscrições", "texto": "Já temos 1 inscrição." },
-        { "tipo": "ok", "area": "Instagram", "texto": "Retomado sem avisos: seguimos 8 pais/treinadores de clubes de Famalicão e Aveiro. 1121 seguidores (eram 1079 a 21/11). Continua todos os dias às 11h." },
-        { "tipo": "ok", "area": "Divulgação", "texto": "Post (Facebook + Instagram) às 21:00 e story às 21:05 agendados. Próximos posts agendados a 1, 4, 8, 12, 15 e 18/12 às 21:00, story a 10/12." },
-        { "tipo": "atencao", "area": "Site", "texto": "A página inicial ainda diz «as inscrições abrem a 27 de novembro». O botão de inscrição funciona. Fica assim até 4/12 para poupar créditos (decisão do Tiago)." },
-        { "tipo": "info", "area": "Site", "texto": "Sem alterações ao site até 4/12 (créditos do alojamento gratuito)." },
-        { "tipo": "info", "area": "Regulamento", "texto": "Versão formal pronta mas não publicada: falta a ata/estatutos finais e a revisão por um advogado. Continua em vigor o atual." }
-      ]
-    },
-    {
-      "data": "2026-11-25",
-      "titulo": "Inscrições abertas",
-      "itens": [
-        { "tipo": "ok", "area": "Inscrições", "texto": "Abriram sozinhas às 09:30, sem problemas." },
-        { "tipo": "ok", "area": "Email", "texto": "Email às famílias de 2026 enviado às 10:00." },
-        { "tipo": "atencao", "area": "Email", "texto": "No PC ficou bem, mas no telemóvel as letras ficaram demasiado grandes. Reduzir no próximo email." }
+      "numero": 1,
+      "manchete": "Inscrições abertas e primeira inscrição já cá está",
+      "resumo": "Quarta abrimos sem problemas e o email às famílias de 2026 saiu à hora. Hoje às 21:00 começa a divulgação pública, já tudo agendado. Só há um pormenor no site, que fica para 4/12.",
+      "numeros": [
+        { "lbl": "Inscrições", "val": "1", "nota": "de 120 vagas" },
+        { "lbl": "Seguidores IG", "val": "1121", "nota": "+42 desde 21/11" },
+        { "lbl": "Preço Natal", "val": "27 dias", "nota": "350 € até 24/12" },
+        { "lbl": "Posts agendados", "val": "7", "nota": "até 18/12" }
+      ],
+      "aconteceu": [
+        { "tipo": "ok", "area": "Quarta 25/11", "texto": "As inscrições abriram sozinhas às 09:30, sem problemas." },
+        { "tipo": "ok", "area": "Quarta 25/11", "texto": "Email às famílias de 2026 enviado às 10:00." },
+        { "tipo": "atencao", "area": "Quarta 25/11", "texto": "No PC o email ficou bem; no telemóvel as letras ficaram demasiado grandes." },
+        { "tipo": "ok", "area": "Hoje", "texto": "Primeira inscrição recebida." },
+        { "tipo": "ok", "area": "Hoje", "texto": "Instagram retomado sem avisos: seguidos 8 pais/treinadores de clubes de Famalicão e Aveiro." },
+        { "tipo": "ok", "area": "Hoje", "texto": "Post (Facebook + Instagram) às 21:00 e story às 21:05 agendados. Seguem-se 1, 4, 8, 12, 15 e 18/12 às 21:00 e story a 10/12." },
+        { "tipo": "atencao", "area": "Site", "texto": "A página inicial ainda diz «as inscrições abrem a 27 de novembro». O botão funciona. Fica assim até 4/12 para poupar créditos." }
+      ],
+      "tarefas": [
+        { "texto": "Reduzir o tamanho das letras no telemóvel antes do próximo email às famílias.", "quem": "Claude", "prazo": "próximo email" },
+        { "texto": "Corrigir a frase da página inicial no primeiro deploy do site.", "quem": "Claude", "prazo": "4/12" },
+        { "texto": "Seguro: nova apólice para 11 a 24/7 e cerca de 120 atletas (resposta da mediadora sobre a franquia ainda pendente).", "quem": "Tiago / Miguel", "prazo": "sem data" },
+        { "texto": "Regulamento formal: ata/estatutos finais e revisão por advogado antes de publicar.", "quem": "Tiago", "prazo": "sem data" }
+      ],
+      "ideias": [
+        "36% das famílias de 2026 vieram por um colega: pedir às famílias já inscritas que partilhem a story com o link.",
+        "Depois de 4/12, mostrar no site quantas vagas restam por semana (só quando houver números que ajudem).",
+        "Perto de 20/12, uma story «últimos dias do preço de Natal» (já está no calendário de posts)."
+      ],
+      "concorrencia": [
+        { "texto": "Campo de Neemias Queta (Lisboa, verão, com a Hoopers): edição 2026 em julho, com convidados da NBA. Ainda sem datas de 2027.", "link": "https://www.abola.pt/noticias/neemias-volta-a-fazer-campo-para-jovens-e-traz-amigos-dos-celtics-2026060519462645606" },
+        { "texto": "NBA Basketball School em Portugal (Warrior Symbol): escola ao longo do ano, não é campo residencial.", "link": "https://pr.nba.com/warrior-symbol-nba-basketball-school-portugal" },
+        { "texto": "Ainda não encontrei nenhum campo residencial de basquetebol no Norte com inscrições 2027 abertas." }
       ]
     }
   ]
