@@ -1262,6 +1262,7 @@
   </div>
   <nav class="side-nav">
     <div class="tab active" data-panel="overview"><span class="si">◎</span>Hoje</div>
+    <div class="tab ed-27" data-panel="jornal"><span class="si">✎</span>Jornal <span class="tab-count" id="tc-jornal" style="display:none">novo</span></div>
     <div class="tab" data-panel="list"><span class="si">☰</span>Inscrições <span class="tab-count warn" id="tc-list">0</span></div>
     <div class="tab" data-panel="banco"><span class="si">€</span>Pagamentos <span class="tab-count" id="tc-banco">0</span></div>
     <div class="tab" data-panel="comunicacao"><span class="si">✉</span>Comunicação</div>
@@ -1470,6 +1471,90 @@
     .sf-txt-item { overflow-wrap: anywhere; }
     .sf-read li { overflow-wrap: anywhere; }
   </style>
+  <style>
+    /* Jornal do CFT — formato briefing da manhã com a identidade CFT */
+    #panel-jornal .panel-head { display: none; }
+    .jn { max-width: 900px; margin: 0 auto; background: #FBF8F2; border: 1px solid #E5D9C4; color: #1C1C18; }
+    .jn-top { background: #F4EDE0; border-bottom: 1px solid #E5D9C4; padding: 28px 32px 26px; }
+    .jn-body { padding: 30px 32px 34px; }
+    .jn-name { font-family: "Playfair Display", Georgia, serif; font-weight: 700; font-size: 44px; line-height: 1; text-align: center; }
+    .jn-rule { border-top: 3px double #1C1C18; margin: 12px 0 8px; }
+    .jn-line { text-align: center; font-family: var(--font-condensed); font-weight: 700; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--green-dark); }
+    .jn h1 { font-family: "Playfair Display", Georgia, serif; font-weight: 700; font-size: 36px; line-height: 1.15; margin: 24px 0 10px; text-transform: none; letter-spacing: -0.01em; }
+    .jn-lead { font-size: 17px; line-height: 1.6; color: #5F5E57; margin: 0 0 14px; }
+    .jn svg { display: block; width: 100%; height: auto; }
+    .jn-acts { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 4px; }
+    .jn-act { padding: 2px 16px 0; border-left: 1px solid #E5D9C4; }
+    .jn-act:first-child { border-left: 0; padding-left: 0; }
+    .jn-act b { display: block; font-size: 14px; margin-bottom: 3px; }
+    .jn-act p { margin: 0; font-size: 14px; line-height: 1.5; color: #5F5E57; }
+    .jn-act.now b { color: var(--green-dark); }
+    .jn h2 { font-family: var(--font-condensed); font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--green-dark); margin: 0 0 14px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .jn h2 small { font-size: 11px; letter-spacing: .1em; color: #9A9483; font-weight: 600; }
+    .jn-sec { margin-bottom: 34px; }
+    .jn-sec:last-child { margin-bottom: 0; }
+    .jn-kpis { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 0; border-top: 1px solid #E5D9C4; border-bottom: 1px solid #E5D9C4; }
+    .jn-kpi { padding: 12px 10px; border-left: 1px solid #E5D9C4; cursor: pointer; background: none; border-top: 0; border-bottom: 0; border-right: 0; text-align: left; font: inherit; color: inherit; min-width: 0; }
+    .jn-kpi:first-child { border-left: 0; padding-left: 0; }
+    .jn-kpi:hover .jn-kpi-v { color: var(--green-dark); }
+    .jn-kpi-v { font-family: "Playfair Display", Georgia, serif; font-weight: 700; font-size: 28px; line-height: 1; }
+    .jn-kpi-v small { font-family: var(--font-body, inherit); font-size: 13px; font-weight: 400; color: #9A9483; }
+    .jn-kpi-l { font-size: 12.5px; color: #5F5E57; margin-top: 5px; line-height: 1.3; }
+    .jn-kpi.warn .jn-kpi-v { color: #B4552E; }
+    .jn-news { margin: 0 0 22px; }
+    .jn-news h3 { font-family: "Playfair Display", Georgia, serif; font-size: 21px; line-height: 1.25; margin: 0 0 6px; text-transform: none; letter-spacing: 0; }
+    .jn-news p { margin: 0; font-size: 15.5px; line-height: 1.65; color: #5F5E57; }
+    .jn-go { display: inline-block; margin-top: 6px; font-size: 13.5px; font-weight: 600; color: var(--green-dark); cursor: pointer; background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
+    .jn-tip { border-left: 3px solid var(--green-bright); padding: 4px 0 4px 18px; }
+    .jn-tip h3 { font-size: 18px; margin: 0 0 6px; text-transform: none; letter-spacing: 0; font-family: inherit; }
+    .jn-tip p { margin: 0 0 8px; font-size: 15px; line-height: 1.6; color: #5F5E57; }
+    .jn-tip .jn-why { font-size: 13.5px; }
+    .jn-acts-btn { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+    .jn-btn { font: 600 13px/1 var(--font-body, inherit); padding: 9px 14px; border-radius: 6px; border: 1.5px solid #1C1C18; background: #1C1C18; color: #FBF8F2; cursor: pointer; }
+    .jn-btn.ghost { background: transparent; color: #1C1C18; }
+    .jn-btn:disabled { opacity: .5; cursor: default; }
+    .jn-done { font-size: 13.5px; color: var(--green-dark); font-weight: 600; }
+    .jn ol { list-style: none; margin: 0; padding: 0; counter-reset: n; }
+    .jn ol li { counter-increment: n; display: grid; grid-template-columns: 24px 1fr; gap: 6px; margin-bottom: 14px; }
+    .jn ol li::before { content: counter(n); color: #B4AE9E; font-size: 15px; font-weight: 500; }
+    .jn ol b { display: block; font-size: 15.5px; margin-bottom: 2px; }
+    .jn ol span { font-size: 14.5px; line-height: 1.55; color: #5F5E57; }
+    .jn-board { width: 100%; border-collapse: collapse; font-size: 15px; background: none; }
+    .jn-board td { padding: 9px 0; border-bottom: 1px solid #E5D9C4; vertical-align: top; background: none; color: inherit; }
+    .jn-board td:first-child { font-weight: 700; width: 34%; padding-right: 12px; }
+    .jn-st { font-family: var(--font-condensed); font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+    .jn-st.ok { color: var(--green-dark); } .jn-st.pend { color: #B4552E; } .jn-st.conf { color: #9A9483; }
+    .jn-board small { display: block; color: #5F5E57; font-size: 13.5px; margin-top: 2px; }
+    .jn a { color: inherit; text-decoration: underline; text-decoration-color: #B4AE9E; text-underline-offset: 2px; }
+    .jn-old { max-width: 900px; margin: 18px auto 0; }
+    .jn-old-t { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--mid-gray); margin-bottom: 8px; }
+    .jn-old details { background: #FBF8F2; border: 1px solid #E5D9C4; margin-bottom: 8px; }
+    .jn-old summary { cursor: pointer; padding: 12px 16px; font-size: 14px; }
+    .jn-old summary b { font-family: var(--font-condensed); letter-spacing: .08em; text-transform: uppercase; margin-right: 8px; color: var(--green-dark); }
+    .jn-old details .jn { border: 0; border-top: 1px solid #E5D9C4; }
+    .jn-new { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--green-bright); color: #1C1C18; font-size: 10px; letter-spacing: .08em; vertical-align: middle; font-family: var(--font-condensed); font-weight: 700; }
+    @media (max-width: 720px) {
+      .jn-top, .jn-body { padding-left: 16px; padding-right: 16px; }
+      .jn-name { font-size: 34px; }
+      .jn h1 { font-size: 28px; }
+      .jn-lead, .jn-news p, .jn-tip p { font-size: 17px; }
+      .jn ol span { font-size: 16px; }
+      .jn-acts { grid-template-columns: 1fr; }
+      .jn-act { border-left: 0; border-top: 1px solid #E5D9C4; padding: 10px 0; }
+      .jn-act:first-child { border-top: 0; }
+      .jn-kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .jn-kpi { border-left: 0; padding-left: 0; border-bottom: 1px solid #E5D9C4; }
+      .jn-kpi:last-child { border-bottom: 0; }
+    }
+  </style>
+  <div class="panel" id="panel-jornal">
+    <div class="panel-head">
+      <div class="panel-title">Jornal</div>
+      <div class="panel-sub"><span id="jn-sub">—</span> · <a href="#" onclick="renderJornal(true); return false;" style="color:var(--green-dark);">↻ atualizar</a></div>
+    </div>
+    <div class="jn-wrap" id="jn-body"><div class="card">A carregar…</div></div>
+  </div>
+
   <div class="panel" id="panel-satisfacao">
     <div class="panel-head">
       <div class="panel-title">Satisfação · questionário</div>
@@ -2253,7 +2338,160 @@ function showTab(id){
   if (id === 'plano2027') { renderPlano2027(); renderPlano(); }
   if (id === 'comunicacao') { renderComunicacao(); }
   if (id === 'satisfacao') { renderSatisfacao(); }
+  if (id === 'jornal') { renderJornal(); }
 }
+
+// ============ JORNAL DO CFT ============
+// Briefing da manhã, igual para o Tiago e o Miguel. O texto vem de jornal/jornal.json
+// (escrito todos os dias às 07:00; ficheiro PÚBLICO: nunca dados pessoais). Os números
+// são calculados aqui, ao vivo, a partir dos dados do Dashboard. A «sugestão para hoje»
+// fica no Plano partilhado (aba Tarefas), por isso o que um marca o outro vê.
+let JORNAL = null;
+function jnEsc(t){ return escHtml(t == null ? '' : String(t)); }
+async function loadJornal(force){
+  if (JORNAL && !force) return JORNAL;
+  const r = await fetch('jornal/jornal.json?v=' + Date.now(), { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  JORNAL = await r.json();
+  return JORNAL;
+}
+function jnEdicoes(j){ return (j.edicoes || []).slice().sort((a, b) => a.data < b.data ? 1 : -1); }
+function jornalVisto(){ try { return localStorage.getItem('cft_jornal_visto') || ''; } catch(e){ return ''; } }
+function marcarJornalVisto(d){ try { localStorage.setItem('cft_jornal_visto', d); } catch(e){} }
+async function badgeJornal(){
+  try {
+    const ult = jnEdicoes(await loadJornal())[0];
+    const b = document.getElementById('tc-jornal');
+    if (b && ult) b.style.display = ult.data > jornalVisto() ? '' : 'none';
+  } catch(e){}
+}
+const JN_LINKS = { inscricoes: ['list', 'Ver inscrições'], pagamentos: ['banco', 'Ver pagamentos'], comunicacao: ['comunicacao', 'Abrir Comunicação'], plano: ['plano2027', 'Abrir o plano'], logistica: ['entregaveis', 'Abrir Logística'], financas: ['financas', 'Abrir Finanças'] };
+function jnGo(link){ const l = JN_LINKS[link]; return l ? `<button type="button" class="jn-go" onclick="showTab('${l[0]}')">${l[1]} →</button>` : ''; }
+function jnDias(iso){ const t = new Date(); t.setHours(0,0,0,0); const d = new Date(iso + 'T00:00:00'); return Math.round((d - t) / 86400000); }
+// Números ao vivo (só contagens; nada sai do Dashboard).
+function jnNumeros(){
+  if (edAno() !== '2027') return null;
+  const ativos = data || [];
+  const sem = { 1: 0, 2: 0 };
+  ativos.forEach(r => parseSems(r.semana).forEach(s => { if (sem[s] !== undefined) sem[s]++; }));
+  const ontem = Date.now() - 86400000;
+  const novas = ativos.filter(r => { const t = r.timestamp ? new Date(r.timestamp).getTime() : NaN; return !isNaN(t) && t >= ontem; }).length;
+  const semPag = ativos.filter(r => { const st = paymentStatus(r).st; return st === 'pendente' || st === 'problema'; }).length;
+  return { total: ativos.length, s1: sem[1], s2: sem[2], novas, semPag };
+}
+function jnKpis(){
+  const n = jnNumeros();
+  if (!n) return '';
+  const k = (v, of, l, tab, warn) => `<button type="button" class="jn-kpi${warn ? ' warn' : ''}" onclick="showTab('${tab}')"><div class="jn-kpi-v">${v}${of ? `<small> /${of}</small>` : ''}</div><div class="jn-kpi-l">${l}</div></button>`;
+  return `<div class="jn-sec"><h2>Números de agora <small>ao vivo do Dashboard</small></h2><div class="jn-kpis">
+    ${k(n.total, 2 * VAGAS_SEM, 'inscrições', 'list')}
+    ${k(n.s1, VAGAS_SEM, 'semana 1 · 11–17 jul', 'list')}
+    ${k(n.s2, VAGAS_SEM, 'semana 2 · 18–24 jul', 'list')}
+    ${k(n.novas, '', 'novas nas últimas 24 h', 'list')}
+    ${k(n.semPag, '', 'sem pagamento ou com valor errado', 'banco', n.semPag > 0)}
+  </div></div>`;
+}
+// Terreno do topo: o caminho até ao campo, com o preço a subir em degraus.
+function jnTerreno(dataIso){
+  const ini = new Date('2026-11-25T00:00:00'), fim = new Date('2027-07-24T00:00:00');
+  const x = d => 30 + 790 * Math.max(0, Math.min(1, (new Date(d + 'T00:00:00') - ini) / (fim - ini)));
+  const yOf = d => d <= '2026-12-24' ? 128 : d <= '2027-03-31' ? 100 : 74;
+  const xN = x('2026-12-25'), xA = x('2027-04-01'), xC1 = x('2027-07-11'), xC2 = x('2027-07-18');
+  const hx = x(dataIso), hy = yOf(dataIso);
+  const t = (X, Y, s, c, w) => `<text x="${X.toFixed(0)}" y="${Y}" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="12" font-weight="${w || 600}" letter-spacing="1" fill="${c || '#5F5E57'}">${s}</text>`;
+  return `<svg viewBox="0 0 840 170" role="img" aria-label="Caminho até ao campo: o preço sobe a 25 de dezembro e a 1 de abril; o campo é de 11 a 24 de julho.">
+    <path d="M20 128 L${(xN-8).toFixed(0)} 128 C${(xN-2).toFixed(0)} 128 ${(xN-2).toFixed(0)} 100 ${(xN+6).toFixed(0)} 100 L${(xA-8).toFixed(0)} 100 C${(xA-2).toFixed(0)} 100 ${(xA-2).toFixed(0)} 74 ${(xA+6).toFixed(0)} 74 L${(xC1-22).toFixed(0)} 74 C${(xC1-14).toFixed(0)} 74 ${(xC1-10).toFixed(0)} 50 ${(xC1-4).toFixed(0)} 42 C${(xC1+4).toFixed(0)} 32 ${(xC1+10).toFixed(0)} 34 ${((xC1+xC2)/2).toFixed(0)} 44 C${(xC2-2).toFixed(0)} 32 ${(xC2+6).toFixed(0)} 30 ${(xC2+12).toFixed(0)} 42 C${(xC2+16).toFixed(0)} 50 ${(xC2+18).toFixed(0)} 58 822 60" fill="none" stroke="#1C1C18" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${(xN-8).toFixed(0)}" cy="128" r="5" fill="#1C1C18"/>${t(xN-8, 152, '24/12')}
+    <circle cx="${(xA-8).toFixed(0)}" cy="100" r="5" fill="#1C1C18"/>${t(xA-8, 124, '31/3')}
+    <circle cx="${x('2027-06-21').toFixed(0)}" cy="74" r="4.5" fill="#B4AE9E"/>${t(x('2027-06-21'), 98, '21/6 · resto')}
+    <circle cx="${(xC1-4).toFixed(0)}" cy="42" r="9" fill="#1C1C18"/><circle cx="${(xC2+12).toFixed(0)}" cy="42" r="9" fill="#1C1C18"/>
+    ${t((xC1+xC2)/2 + 4, 16, 'CAMPO · JULHO', '#1C1C18', 700)}
+    <circle cx="${hx.toFixed(0)}" cy="${hy}" r="9" fill="#78C832"/>${t(hx, hy + 26, 'HOJE', '#2D6B3C', 700)}
+  </svg>`;
+}
+function jnActs(dataIso){
+  const dN = jnDias('2026-12-24');
+  const a = [
+    { on: dataIso <= '2026-12-24', h: 'Até 24 dez', p: '350 € ou 315 € com desconto.' + (dN >= 0 ? ` Faltam ${dN} dia${dN === 1 ? '' : 's'}.` : '') },
+    { on: dataIso > '2026-12-24' && dataIso <= '2027-03-31', h: '25 dez – 31 mar', p: '375 € ou 335 € com desconto. Em 2026, mais de metade inscreveu-se depois de março.' },
+    { on: dataIso > '2027-03-31', h: 'Abril – julho', p: '395 € ou 355 € com desconto. Resto pago até 21/6; campo de 11 a 24 de julho.' }
+  ];
+  return `<div class="jn-acts">${a.map(x => `<div class="jn-act${x.on ? ' now' : ''}"><b>${x.h}</b><p>${x.p}</p></div>`).join('')}</div>`;
+}
+// Sugestão do dia ligada ao Plano partilhado.
+function jnSugPlano(s){ return (typeof plItems === 'function' ? plItems() : []).find(t => t.titulo === s.titulo); }
+async function jnSugAcao(ed, feito, btn){
+  const e = jnEdicoes(JORNAL || {}).find(x => x.data === ed); if (!e || !e.sugestao) return;
+  const s = e.sugestao;
+  if (jnSugPlano(s)) { renderJornal(); return; }
+  btn.disabled = true;
+  const prazo = feito ? new Date().toISOString().slice(0, 10) : new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+  const nota = 'Sugestão do Jornal de ' + new Date(ed + 'T12:00:00').toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' }).replace('.', '');
+  try {
+    const desc = JSON.stringify({ prazo, dono: s.quem || 'Tiago + Miguel', nota });
+    const r = await Api.tarefa_create(s.titulo, desc, PLANO_MARK, '');
+    const novo = { id: r.id, titulo: s.titulo, descricao: desc, id_atleta: PLANO_MARK, estado: 'pendente', criado_em: new Date().toISOString() };
+    tarefasBackend = [novo].concat(tarefasBackend || []);
+    if (feito && r && r.id) { await Api.tarefa_resolve(r.id); novo.estado = 'resolvida'; novo.resolvido_em = new Date(Date.now() + 15 * 60000).toISOString(); novo.resolvido_por = (document.getElementById('ab-user') || {}).textContent || ''; }
+    toast(feito ? 'Marcado como feito (fica no Plano)' : 'Posto no Plano, prazo daqui a 3 dias');
+  } catch (err) { toast('Não foi possível guardar: ' + err.message, true); }
+  renderJornal();
+}
+function jnSugestao(e){
+  const s = e.sugestao; if (!s) return '';
+  const p = jnSugPlano(s);
+  const estado = p ? (p.feito ? `<span class="jn-done">✓ Feito${/[a-z]/i.test(plQuem(p.por)) ? ' por ' + jnEsc(plQuem(p.por)) : ''}</span>` : `<span class="jn-done">No plano até ${jnEsc(plFmt(p.prazo))}</span> <button type="button" class="jn-go" onclick="showTab('plano2027')">Abrir o plano →</button>`)
+    : `<button type="button" class="jn-btn" onclick="jnSugAcao('${e.data}', true, this)">✓ Feito</button><button type="button" class="jn-btn ghost" onclick="jnSugAcao('${e.data}', false, this)">Pôr no plano</button>`;
+  return `<div class="jn-sec"><h2>Sugestão para hoje</h2><div class="jn-tip">
+    <h3>${jnEsc(s.titulo)}</h3><p>${jnEsc(s.texto)}</p>
+    <p class="jn-why"><b>Quem:</b> ${jnEsc(s.quem || 'Tiago ou Miguel')}${s.tempo ? ' · <b>Tempo:</b> ' + jnEsc(s.tempo) : ''}</p>
+    ${s.porque ? `<p class="jn-why">Porquê: ${jnEsc(s.porque)}</p>` : ''}
+    <div class="jn-acts-btn">${estado}${s.link ? jnGo(s.link) : ''}</div></div></div>`;
+}
+function jnPaper(e, atual){
+  const dl = new Date(e.data + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).replace(/\./g, '');
+  const li = (x) => `<li><div><b>${jnEsc(x.titulo)}</b><span>${jnEsc(x.texto)}${x.quem ? ' Quem: ' + jnEsc(x.quem) + '.' : ''}</span>${x.link ? '<br>' + jnGo(x.link) : ''}</div></li>`;
+  const sec = (t, html) => html ? `<div class="jn-sec"><h2>${t}</h2>${html}</div>` : '';
+  const news = (e.noticias || []).map(n => `<div class="jn-news"><h3>${jnEsc(n.titulo)}</h3><p>${jnEsc(n.texto)}</p>${n.link ? jnGo(n.link) : ''}</div>`).join('');
+  const ST = { ok: 'ok', pend: 'pend', conf: 'conf' };
+  const julho = (e.julho || []).length ? `<table class="jn-board">${e.julho.map(r => `<tr><td>${jnEsc(r.area)}</td><td><span class="jn-st ${ST[r.estado] || 'conf'}">${jnEsc(r.rotulo || ({ ok: 'Confirmado', pend: 'Pendente', conf: 'Por confirmar' })[r.estado] || '')}</span><small>${jnEsc(r.nota)}</small></td></tr>`).join('')}</table>` : '';
+  const fora = (e.fora || []).map(f => `<p class="jn-lead" style="font-size:15.5px">${jnEsc(f.texto)}${/^https:\/\//.test(f.link || '') ? ` (<a href="${jnEsc(f.link)}" target="_blank" rel="noopener">fonte</a>)` : ''}</p>`).join('');
+  return `<article class="jn">
+    <div class="jn-top">
+      <div class="jn-name">Jornal do CFT</div><div class="jn-rule"></div>
+      <div class="jn-line">Nº ${jnEsc(e.numero)} · Ponte da Barca · ${jnEsc(dl)} · 3 min de leitura</div>
+      <h1>${jnEsc(e.manchete)}</h1>${e.lead ? `<p class="jn-lead">${jnEsc(e.lead)}</p>` : ''}
+      ${atual ? jnTerreno(e.data) + jnActs(e.data) : ''}
+    </div>
+    <div class="jn-body">
+      ${atual ? jnKpis() : ''}
+      ${sec('As notícias', news)}
+      ${jnSugestao(e)}
+      ${sec('Precisa de vocês', (e.pendentes || []).length ? '<ol>' + e.pendentes.map(li).join('') + '</ol>' : '')}
+      ${sec('Decidido', (e.decidido || []).length ? '<ol>' + e.decidido.map(li).join('') + '</ol>' : '')}
+      ${sec('A caminho de julho', julho)}
+      ${sec('Lá fora', fora)}
+    </div></article>`;
+}
+async function renderJornal(force){
+  const body = document.getElementById('jn-body');
+  const sub = document.getElementById('jn-sub');
+  if (!body) return;
+  try {
+    const ed = jnEdicoes(await loadJornal(force));
+    if (!ed.length) { body.innerHTML = '<div class="card">Ainda não há edições.</div>'; if (sub) sub.textContent = '—'; return; }
+    if (sub) sub.textContent = ed.length + (ed.length === 1 ? ' edição' : ' edições');
+    const old = ed.slice(1, 15).map(e => `<details><summary><b>${jnEsc(new Date(e.data + 'T12:00:00').toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' }).replace('.', ''))}</b>${jnEsc(e.manchete || '')}</summary>${jnPaper(e, false)}</details>`).join('');
+    body.innerHTML = jnPaper(ed[0], true) + (old ? `<div class="jn-old"><div class="jn-old-t">Edições anteriores</div>${old}</div>` : '') +
+      `<div class="jn-old" style="text-align:center;font-size:12px;color:var(--mid-gray)">Nova edição todos os dias às 07:00 · <a href="#" onclick="renderJornal(true);return false;">atualizar</a></div>`;
+    marcarJornalVisto(ed[0].data);
+    const b = document.getElementById('tc-jornal'); if (b) b.style.display = 'none';
+  } catch(err) {
+    body.innerHTML = '<div class="card">Não foi possível carregar o jornal (' + jnEsc(err.message) + ').</div>';
+  }
+}
+badgeJornal();
+
 
 
 // ============ PLANO PARTILHADO (Tiago + Miguel) ============
@@ -5861,6 +6099,7 @@ async function renderSatisfacao(force){
 }
 
 function renderAll(){
+  if (document.getElementById('panel-jornal') && document.getElementById('panel-jornal').classList.contains('active')) renderJornal();
   renderAppbar();
   renderTimeline();
   renderActionsMini();
