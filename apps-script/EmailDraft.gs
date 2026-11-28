@@ -45,11 +45,10 @@ const EmailDraft = {
     if (info.tipo !== 'interno' || info.desc) return null;
     const nSem = info.nSem || 0;
     if (nSem === 0) return null;
-    // Preço pronto com desconto: before cutoff = 295/sem · after = 330/sem
-    const prontoComDescTotal = (info.before ? 295 : 330) * nSem;
-    // Preço prestações com desconto: before = 330/sem · after = n/a (depois cutoff só pronto)
-    const prestComDescTotal = info.before ? (330 * nSem) : null;
-    return { pronto: prontoComDescTotal, prest: prestComDescTotal };
+    // 2027: o preço com desconto depende só da data de inscrição (mesmo total com ou sem sinal).
+    const esc = info.escalao || PRECOS_2027.escaloes[PRECOS_2027.escaloes.length - 1];
+    const total = esc.desc * nSem;
+    return { pronto: total, prest: total };
   },
 
   /** Constrói o objeto de dados (placeholders) a partir do atleta + contexto. */
